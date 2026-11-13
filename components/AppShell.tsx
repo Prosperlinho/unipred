@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <UIProvider>
         <div className="flex min-h-dvh flex-col pb-16 md:pb-0">
           <Header />
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-4 sm:py-6">{children}</main>
+          <main className="w-full flex-1">{children}</main>
           <Footer />
         </div>
         <BottomNav />

@@ -9,12 +9,56 @@
   --color-brand: #5eead4;
   --color-yes: #10b981;
   --color-no: #f43f5e;
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-brand-gold: #e2b05c;
+  --color-brand-teal: #3ba4ab;
 
   --animate-sheet-up: sheet-up 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
   --animate-pop-in: pop-in 0.18s ease-out;
   --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-hero-rise: hero-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-line-draw: line-draw 3.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-drift: drift 28s ease-in-out infinite alternate;
+  --animate-glow: glow 9s ease-in-out infinite alternate;
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes line-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes drift {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-6%);
+    }
+  }
+
+  @keyframes glow {
+    from {
+      opacity: 0.45;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0.9;
+      transform: scale(1.18);
+    }
+  }
 
   @keyframes sheet-up {
     from {
@@ -46,6 +90,12 @@
   }
 }
 
+/* Font families come from next/font CSS variables set on <html> in app/layout.tsx */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
 @layer base {
   html {
     color-scheme: dark;
@@ -55,8 +105,13 @@
   body {
     background: var(--color-bg);
     color: #e7ebf3;
-    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   button:not(:disabled),
