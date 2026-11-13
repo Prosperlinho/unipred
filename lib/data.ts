@@ -1,0 +1,43 @@
+import "server-only";
+import { cache } from "react";
+import { isSupabaseConfigured } from "@/lib/env";
+import { createClient } from "@/lib/supabase/server";
+import type { PlatformSettings, School } from "@/lib/types";
+
+const DEFAULT_SETTINGS: PlatformSettings = {
+  trade_fee_bps: 200,
+  min_trade_kobo: 10_000,
+  min_deposit_kobo: 10_000,
+  min_withdrawal_kobo: 100_000,
+};
+
+export const getSchools = cache(async (): Promise<School[]> => {
+  if (!isSupabaseConfigured) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.from("schools").select("*").order("name");
+  return (data ?? []) as School[];
+});
+
+export const getSettings = cache(async (): Promise<PlatformSettings> => {
+  if (!isSupabaseConfigured) return DEFAULT_SETTINGS;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("settings")
+    .select("trade_fee_bps, min_trade_kobo, min_deposit_kobo, min_withdrawal_kobo")
+    .eq("id", 1)
+    .maybeSingle<PlatformSettings>();
+  return data ?? DEFAULT_SETTINGS;
+});
+
+export function schoolMap(schools: School[]): Record<string, School> {
+  return Object.fromEntries(schools.map((s) => [s.id, s]));
+}
+
+/** Converts Supabase/Postgres errors into a message safe to show users. */
+export function friendlyError(message: string | undefined): string {
+  if (!message) return "Something went wrong. Please try again.";
+  if (message.includes("duplicate key") && message.includes("username")) return "That username is already taken.";
+  if (message.includes("violates check constraint")) return "Some details are invalid. Please check and try again.";
+  if (message.includes("JWT") || message.includes("not authenticated")) return "Your session expired. Please log in again.";
+  return message;
+}

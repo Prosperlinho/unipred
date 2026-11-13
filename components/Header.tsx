@@ -1,21 +1,21 @@
 "use client";
 
-import { Coins, Plus, TrendingUp } from "lucide-react";
+import { Plus, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMarkets } from "@/context/MarketContext";
-import { useUI } from "@/context/UIContext";
-import { formatCP } from "@/lib/format";
+import { formatNaira, initials } from "@/lib/format";
 
-const NAV = [
-  { href: "/", label: "Markets" },
-  { href: "/portfolio", label: "Portfolio" },
-];
+interface Props {
+  viewer: { username: string; balanceKobo: number; isAdmin: boolean } | null;
+}
 
-export function Header() {
-  const { hydrated, balance } = useMarkets();
-  const { setCreateOpen } = useUI();
+export function Header({ viewer }: Props) {
   const pathname = usePathname();
+  const nav = [
+    { href: "/", label: "Markets" },
+    ...(viewer ? [{ href: "/portfolio", label: "Portfolio" }, { href: "/wallet", label: "Wallet" }] : []),
+    ...(viewer?.isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur supports-[backdrop-filter]:bg-bg/75">
@@ -30,7 +30,7 @@ export function Header() {
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 md:flex">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -44,24 +44,44 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/portfolio"
-            className="flex items-center gap-1.5 rounded-xl border border-line bg-card px-2.5 py-1.5 text-sm"
-            aria-label="Your balance"
-          >
-            <Coins className="size-4 text-amber-300" />
-            <span className="font-bold tabular-nums text-white">{hydrated ? formatCP(balance) : "..."}</span>
-            <span className="text-xs text-muted">CP</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-sm font-bold text-black transition hover:brightness-110 active:scale-[0.98]"
-          >
-            <Plus className="size-4" strokeWidth={3} />
-            <span className="hidden sm:inline">Create Market</span>
-            <span className="sm:hidden">Create</span>
-          </button>
+          {viewer ? (
+            <>
+              <Link
+                href="/wallet"
+                className="flex items-center gap-1.5 rounded-xl border border-line bg-card px-2.5 py-1.5 text-sm"
+                aria-label="Wallet balance"
+              >
+                <Wallet className="size-4 text-amber-300" />
+                <span className="font-bold tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</span>
+              </Link>
+              <Link
+                href="/propose"
+                className="hidden items-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-sm font-bold text-black transition hover:brightness-110 sm:flex"
+              >
+                <Plus className="size-4" strokeWidth={3} />
+                Propose
+              </Link>
+              <Link
+                href="/profile"
+                className="flex size-8 items-center justify-center rounded-full bg-card-2 text-[11px] font-bold text-white ring-1 ring-line transition hover:ring-brand"
+                aria-label="Your profile"
+              >
+                {initials(viewer.username)}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-xl px-3 py-1.5 text-sm font-semibold text-white hover:bg-card">
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-xl bg-brand px-3 py-1.5 text-sm font-bold text-black transition hover:brightness-110"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

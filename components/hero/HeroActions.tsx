@@ -1,11 +1,7 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
-import { useUI } from "@/context/UIContext";
+import Link from "next/link";
 
-export function HeroActions() {
-  const { setCreateOpen } = useUI();
-
+export function HeroActions({ loggedIn }: { loggedIn: boolean }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
       <a
@@ -15,14 +11,13 @@ export function HeroActions() {
         Start Predicting
         <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
       </a>
-      <button
-        type="button"
-        onClick={() => setCreateOpen(true)}
+      <Link
+        href={loggedIn ? "/propose" : "/signup"}
         className="group flex items-center justify-center gap-3 rounded-full border border-white/40 bg-transparent px-8 py-4 font-medium text-white transition-colors hover:border-white hover:bg-white/5"
       >
-        Create a Market
+        {loggedIn ? "Propose a Market" : "Create Free Account"}
         <ArrowRight className="size-5 opacity-70 transition group-hover:translate-x-1 group-hover:opacity-100" />
-      </button>
+      </Link>
     </div>
   );
 }

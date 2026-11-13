@@ -1,101 +1,103 @@
-"use client";
-
-import { CheckCircle2, Clock, Lock, MessageCircle, TrendingUp, UserRound } from "lucide-react";
+import { Ban, CheckCircle2, Clock, Lock, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
 import { memo } from "react";
-import { probYes } from "@/lib/amm";
-import { compactCP, formatPrice, timeLeft } from "@/lib/format";
-import type { Market, Outcome } from "@/lib/types";
+import { SHARE_VALUE_KOBO, probYes } from "@/lib/amm";
+import { compactNaira, formatNaira, timeLeft } from "@/lib/format";
+import type { Market } from "@/lib/types";
 import { CategoryBadge } from "./CategoryBadge";
 import { ProbabilityBar } from "./ProbabilityBar";
 
 interface Props {
   market: Market;
   now: number;
-  onOpen: (marketId: string, side?: Outcome) => void;
+  schoolLabel?: string;
 }
 
-function MarketCardBase({ market, now, onOpen }: Props) {
+function MarketCardBase({ market, now, schoolLabel }: Props) {
   const p = probYes(market);
-  const closed = now >= market.closesAt;
-  const msLeft = market.closesAt - now;
-  const urgent = !closed && msLeft < 24 * 3_600_000;
+  const closesAt = new Date(market.closes_at).getTime();
+  const closed = now >= closesAt;
+  const urgent = !closed && closesAt - now < 24 * 3_600_000;
+  const live = market.status === "open" && !closed;
+  const href = `/markets/${market.id}`;
 
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 transition hover:border-white/15">
       <div className="flex items-center justify-between gap-2">
-        <CategoryBadge category={market.category} />
-        {market.resolution ? (
+        <div className="flex min-w-0 items-center gap-1.5">
+          <CategoryBadge category={market.category} />
+          {schoolLabel && (
+            <span className="truncate rounded-full bg-brand-gold/10 px-2 py-0.5 text-[11px] font-semibold text-brand-gold">
+              {schoolLabel}
+            </span>
+          )}
+        </div>
+        {market.status === "resolved" ? (
           <span
-            className={`inline-flex items-center gap-1 text-xs font-semibold ${
+            className={`inline-flex shrink-0 items-center gap-1 text-xs font-semibold ${
               market.resolution === "YES" ? "text-yes" : "text-no"
             }`}
           >
-            <CheckCircle2 className="size-3.5" /> Resolved {market.resolution}
+            <CheckCircle2 className="size-3.5" /> {market.resolution}
+          </span>
+        ) : market.status === "cancelled" ? (
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted">
+            <Ban className="size-3.5" /> Cancelled
           </span>
         ) : (
           <span
-            className={`inline-flex items-center gap-1 text-xs tabular-nums ${
-              closed ? "text-muted" : urgent ? "text-amber-300" : "text-muted"
+            className={`inline-flex shrink-0 items-center gap-1 text-xs tabular-nums ${
+              urgent ? "text-amber-300" : "text-muted"
             }`}
           >
             {closed ? <Lock className="size-3.5" /> : <Clock className="size-3.5" />}
-            {closed ? "Awaiting resolution" : timeLeft(market.closesAt, now)}
+            {closed ? "Awaiting result" : timeLeft(closesAt, now)}
           </span>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => onOpen(market.id)}
-        className="text-left text-[15px] font-semibold leading-snug text-white hover:underline hover:decoration-white/30 hover:underline-offset-4"
+      <Link
+        href={href}
+        className="text-[15px] font-semibold leading-snug text-white hover:underline hover:decoration-white/30 hover:underline-offset-4"
       >
         {market.question}
-      </button>
+      </Link>
 
-      <ProbabilityBar probYes={p} />
+      <ProbabilityBar probYes={market.status === "resolved" ? (market.resolution === "YES" ? 1 : 0) : p} />
 
       <div className="flex items-center gap-3 text-xs text-muted">
         <span className="inline-flex items-center gap-1">
           <TrendingUp className="size-3.5" />
-          {compactCP(market.volume)} CP vol
+          {compactNaira(market.volume_kobo)} vol
         </span>
         <span className="inline-flex items-center gap-1">
-          <MessageCircle className="size-3.5" />
-          {market.comments.length}
+          <Users className="size-3.5" />
+          {market.traders}
         </span>
-        {market.createdByUser && (
-          <span className="ml-auto inline-flex items-center gap-1 text-brand">
-            <UserRound className="size-3.5" />
-            Your market
-          </span>
-        )}
       </div>
 
-      {market.resolution || closed ? (
-        <button
-          type="button"
-          onClick={() => onOpen(market.id)}
-          className="rounded-xl border border-line py-2.5 text-sm font-semibold text-muted transition hover:bg-card-2 hover:text-white"
+      {live ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href={`${href}?side=YES`}
+            className="rounded-xl bg-yes/15 py-2.5 text-center text-sm font-semibold text-yes transition hover:bg-yes hover:text-black"
+          >
+            Buy YES <span className="tabular-nums opacity-80">{formatNaira(p * SHARE_VALUE_KOBO)}</span>
+          </Link>
+          <Link
+            href={`${href}?side=NO`}
+            className="rounded-xl bg-no/15 py-2.5 text-center text-sm font-semibold text-no transition hover:bg-no hover:text-black"
+          >
+            Buy NO <span className="tabular-nums opacity-80">{formatNaira((1 - p) * SHARE_VALUE_KOBO)}</span>
+          </Link>
+        </div>
+      ) : (
+        <Link
+          href={href}
+          className="rounded-xl border border-line py-2.5 text-center text-sm font-semibold text-muted transition hover:bg-card-2 hover:text-white"
         >
           View market
-        </button>
-      ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onOpen(market.id, "YES")}
-            className="rounded-xl bg-yes/15 py-2.5 text-sm font-semibold text-yes transition hover:bg-yes hover:text-black active:scale-[0.98]"
-          >
-            Buy YES <span className="tabular-nums opacity-80">{formatPrice(p)}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpen(market.id, "NO")}
-            className="rounded-xl bg-no/15 py-2.5 text-sm font-semibold text-no transition hover:bg-no hover:text-black active:scale-[0.98]"
-          >
-            Buy NO <span className="tabular-nums opacity-80">{formatPrice(1 - p)}</span>
-          </button>
-        </div>
+        </Link>
       )}
     </article>
   );

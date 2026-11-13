@@ -1,5 +1,6 @@
 import { TrendingUp } from "lucide-react";
 import type { CSSProperties } from "react";
+import type { Market } from "@/lib/types";
 import { HeroActions } from "./hero/HeroActions";
 import { HeroBackground } from "./hero/HeroBackground";
 import { HeroLiveCard } from "./hero/HeroLiveCard";
@@ -7,7 +8,13 @@ import { HeroLiveCard } from "./hero/HeroLiveCard";
 /** Staggered entrance: 0.3s initial delay, 0.15s between children. */
 const stagger = (i: number): CSSProperties => ({ animationDelay: `${0.3 + i * 0.15}s` });
 
-export function Hero() {
+interface Props {
+  loggedIn: boolean;
+  topMarket: Market | null;
+  topSchoolLabel?: string;
+}
+
+export function Hero({ loggedIn, topMarket, topSchoolLabel }: Props) {
   return (
     <section className="relative w-full overflow-hidden bg-slate-900" aria-labelledby="hero-title">
       <HeroBackground />
@@ -46,16 +53,16 @@ export function Hero() {
               className="mb-10 max-w-lg animate-hero-rise text-lg font-light leading-relaxed text-white/80 md:text-xl"
               style={stagger(3)}
             >
-              Trade on SUG elections, exam results, inter-faculty matches and campus gist. Start with 1,000 Campus
-              Points: no real money, all bragging rights.
+              Find your university, back your read on SUG elections, results, matches and campus gist, and get paid
+              in naira when you&apos;re right.
             </p>
 
             <div className="animate-hero-rise" style={stagger(4)}>
-              <HeroActions />
+              <HeroActions loggedIn={loggedIn} />
             </div>
           </div>
 
-          <HeroLiveCard />
+          <HeroLiveCard market={topMarket} schoolLabel={topSchoolLabel} />
         </div>
       </div>
     </section>

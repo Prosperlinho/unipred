@@ -1,32 +1,20 @@
 import type { Outcome, Pools } from "./types";
 
 /**
- * Constant Product Market Maker (CPMM) for binary YES/NO markets.
+ * Constant Product Market Maker (x * y = k) for binary markets.
+ * Mirrors buy_shares / sell_shares in supabase/migrations/0001_init.sql
+ * so the quotes shown in the UI match what the database executes.
  *
- * The AMM holds a reserve of YES tokens (y) and NO tokens (n) and keeps
- * y * n = k constant across trades. One YES + one NO token always
- * redeems for exactly 1 CP, so the AMM can "mint" complete sets from CP.
- *
- *   P(YES) = n / (y + n)        P(NO) = y / (y + n)
- *
- * Buying YES with `a` CP:
- *   1. Mint `a` complete sets      -> y + a, n + a
- *   2. Restore the invariant       -> y' = k / (n + a)
- *   3. Trader receives             -> (y + a) - y' YES shares
- * Fewer YES tokens left in the pool means YES becomes pricier.
- *
- * Selling `s` YES shares for `a` CP is the exact reverse: the trader deposits
- * `s` YES tokens and the AMM burns `a` complete sets so that
- *   (y + s - a)(n - a) = k
+ * Pools are measured in shares. One YES + one NO share always redeem for
+ * SHARE_VALUE_KOBO (N100), so N100 of stake mints one complete set.
+ *   P(YES) = no / (yes + no)
  */
 
-export const SHARE_PAYOUT = 1;
-const MIN_RESERVE = 1e-6;
+export const SHARE_VALUE_KOBO = 10_000;
 
 export function probYes(pools: Pools): number {
-  const total = pools.poolYes + pools.poolNo;
-  if (total <= 0) return 0.5;
-  return pools.poolNo / total;
+  const total = pools.pool_yes + pools.pool_no;
+  return total > 0 ? pools.pool_no / total : 0.5;
 }
 
 export function priceOf(pools: Pools, outcome: Outcome): number {
@@ -34,105 +22,78 @@ export function priceOf(pools: Pools, outcome: Outcome): number {
   return outcome === "YES" ? p : 1 - p;
 }
 
-/** Initial reserves that put the market at probability `p` for YES. */
-export function poolsForProbability(liquidity: number, p: number): Pools {
-  const prob = Math.min(0.97, Math.max(0.03, p));
-  return {
-    poolYes: 2 * liquidity * (1 - prob),
-    poolNo: 2 * liquidity * prob,
-  };
-}
-
 export interface BuyQuote {
-  cost: number;
+  amountKobo: number;
+  feeKobo: number;
   shares: number;
-  avgPrice: number;
-  payout: number;
-  profit: number;
+  avgPriceKobo: number;
+  payoutKobo: number;
+  profitKobo: number;
   roi: number;
-  priceBefore: number;
-  priceAfter: number;
   probYesAfter: number;
-  newPools: Pools;
 }
 
-export function quoteBuy(pools: Pools, outcome: Outcome, amount: number): BuyQuote | null {
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  const { poolYes: y, poolNo: n } = pools;
-  const k = y * n;
-  let newPools: Pools;
+export function quoteBuy(pools: Pools, outcome: Outcome, amountKobo: number, feeBps: number): BuyQuote | null {
+  if (!Number.isFinite(amountKobo) || amountKobo <= 0) return null;
+  const feeKobo = Math.floor((amountKobo * feeBps) / 10_000);
+  const sets = (amountKobo - feeKobo) / SHARE_VALUE_KOBO;
+  const k = pools.pool_yes * pools.pool_no;
+  let yes: number;
+  let no: number;
   let shares: number;
-
   if (outcome === "YES") {
-    const newNo = n + amount;
-    const newYes = k / newNo;
-    shares = y + amount - newYes;
-    newPools = { poolYes: newYes, poolNo: newNo };
+    no = pools.pool_no + sets;
+    yes = k / no;
+    shares = pools.pool_yes + sets - yes;
   } else {
-    const newYes = y + amount;
-    const newNo = k / newYes;
-    shares = n + amount - newNo;
-    newPools = { poolYes: newYes, poolNo: newNo };
+    yes = pools.pool_yes + sets;
+    no = k / yes;
+    shares = pools.pool_no + sets - no;
   }
-
-  if (shares <= 0 || newPools.poolYes < MIN_RESERVE || newPools.poolNo < MIN_RESERVE) {
-    return null;
-  }
-
-  const payout = shares * SHARE_PAYOUT;
+  if (!(shares > 0)) return null;
+  const payoutKobo = Math.floor(shares * SHARE_VALUE_KOBO);
   return {
-    cost: amount,
+    amountKobo,
+    feeKobo,
     shares,
-    avgPrice: amount / shares,
-    payout,
-    profit: payout - amount,
-    roi: (payout - amount) / amount,
-    priceBefore: priceOf(pools, outcome),
-    priceAfter: priceOf(newPools, outcome),
-    probYesAfter: probYes(newPools),
-    newPools,
+    avgPriceKobo: amountKobo / shares,
+    payoutKobo,
+    profitKobo: payoutKobo - amountKobo,
+    roi: (payoutKobo - amountKobo) / amountKobo,
+    probYesAfter: no / (yes + no),
   };
 }
 
 export interface SellQuote {
   shares: number;
-  proceeds: number;
-  avgPrice: number;
-  priceBefore: number;
-  priceAfter: number;
+  grossKobo: number;
+  feeKobo: number;
+  netKobo: number;
+  avgPriceKobo: number;
   probYesAfter: number;
-  newPools: Pools;
 }
 
-export function quoteSell(pools: Pools, outcome: Outcome, shares: number): SellQuote | null {
+export function quoteSell(pools: Pools, outcome: Outcome, shares: number, feeBps: number): SellQuote | null {
   if (!Number.isFinite(shares) || shares <= 0) return null;
-  const own = outcome === "YES" ? pools.poolYes : pools.poolNo;
-  const other = outcome === "YES" ? pools.poolNo : pools.poolYes;
-
-  // Solve a^2 - (own + s + other) a + s * other = 0 for the smaller root,
-  // using the numerically stable form a = 2c / (b + sqrt(b^2 - 4c)).
+  const own = outcome === "YES" ? pools.pool_yes : pools.pool_no;
+  const other = outcome === "YES" ? pools.pool_no : pools.pool_yes;
   const b = own + shares + other;
   const c = shares * other;
-  const disc = b * b - 4 * c;
-  if (disc < 0) return null;
-  const proceeds = (2 * c) / (b + Math.sqrt(disc));
-
-  const newOwn = own + shares - proceeds;
-  const newOther = other - proceeds;
-  if (proceeds <= 0 || newOther < MIN_RESERVE || newOwn < MIN_RESERVE) return null;
-
-  const newPools: Pools =
-    outcome === "YES"
-      ? { poolYes: newOwn, poolNo: newOther }
-      : { poolYes: newOther, poolNo: newOwn };
-
+  const sets = (2 * c) / (b + Math.sqrt(b * b - 4 * c));
+  const grossKobo = Math.floor(sets * SHARE_VALUE_KOBO);
+  const feeKobo = Math.floor((grossKobo * feeBps) / 10_000);
+  const netKobo = grossKobo - feeKobo;
+  if (netKobo <= 0) return null;
+  const newOwn = own + shares - sets;
+  const newOther = other - sets;
+  const yes = outcome === "YES" ? newOwn : newOther;
+  const no = outcome === "YES" ? newOther : newOwn;
   return {
     shares,
-    proceeds,
-    avgPrice: proceeds / shares,
-    priceBefore: priceOf(pools, outcome),
-    priceAfter: priceOf(newPools, outcome),
-    probYesAfter: probYes(newPools),
-    newPools,
+    grossKobo,
+    feeKobo,
+    netKobo,
+    avgPriceKobo: netKobo / shares,
+    probYesAfter: no / (yes + no),
   };
 }

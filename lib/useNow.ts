@@ -4,10 +4,10 @@ import { useCallback, useSyncExternalStore } from "react";
 
 /**
  * Current timestamp, refreshed every `intervalMs`.
- * Snapshots are bucketed so React sees a stable value between ticks,
- * and the server snapshot is 0 so prerendering never reads the clock.
+ * `serverNow` (passed down from a Server Component) is used for the server
+ * render and hydration so both produce identical markup.
  */
-export function useNow(intervalMs = 30_000): number {
+export function useNow(serverNow: number, intervalMs = 30_000): number {
   const subscribe = useCallback(
     (onChange: () => void) => {
       const id = window.setInterval(onChange, Math.min(intervalMs, 5_000));
@@ -16,9 +16,6 @@ export function useNow(intervalMs = 30_000): number {
     [intervalMs],
   );
   const getSnapshot = useCallback(() => Math.floor(Date.now() / intervalMs) * intervalMs, [intervalMs]);
+  const getServerSnapshot = useCallback(() => serverNow, [serverNow]);
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-function getServerSnapshot(): number {
-  return 0;
 }

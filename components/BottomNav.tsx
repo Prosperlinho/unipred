@@ -1,18 +1,23 @@
 "use client";
 
-import { Briefcase, LayoutGrid, PlusCircle } from "lucide-react";
+import { Briefcase, LayoutGrid, LogIn, PlusCircle, UserRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUI } from "@/context/UIContext";
 
-export function BottomNav() {
+export function BottomNav({ loggedIn }: { loggedIn: boolean }) {
   const pathname = usePathname();
-  const { setCreateOpen } = useUI();
-
-  const item = (active: boolean) =>
-    `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
-      active ? "text-white" : "text-muted"
-    }`;
+  const items = loggedIn
+    ? [
+        { href: "/", label: "Markets", Icon: LayoutGrid },
+        { href: "/portfolio", label: "Portfolio", Icon: Briefcase },
+        { href: "/propose", label: "Propose", Icon: PlusCircle },
+        { href: "/wallet", label: "Wallet", Icon: Wallet },
+        { href: "/profile", label: "Profile", Icon: UserRound },
+      ]
+    : [
+        { href: "/", label: "Markets", Icon: LayoutGrid },
+        { href: "/login", label: "Log in", Icon: LogIn },
+      ];
 
   return (
     <nav
@@ -20,18 +25,21 @@ export function BottomNav() {
       aria-label="Primary"
     >
       <div className="mx-auto flex max-w-md">
-        <Link href="/" className={item(pathname === "/")}>
-          <LayoutGrid className="size-5" />
-          Markets
-        </Link>
-        <button type="button" onClick={() => setCreateOpen(true)} className={item(false)}>
-          <PlusCircle className="size-5 text-brand" />
-          Create
-        </button>
-        <Link href="/portfolio" className={item(pathname === "/portfolio")}>
-          <Briefcase className="size-5" />
-          Portfolio
-        </Link>
+        {items.map(({ href, label, Icon }) => {
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
+                active ? "text-white" : "text-muted"
+              }`}
+            >
+              <Icon className={`size-5 ${href === "/propose" ? "text-brand" : ""}`} />
+              {label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
