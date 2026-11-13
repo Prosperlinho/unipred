@@ -25,7 +25,7 @@ export function Header() {
             <TrendingUp className="size-4" strokeWidth={3} />
           </span>
           <span className="hidden text-[17px] min-[380px]:inline">
-            Campus<span className="text-brand">Predict</span>
+            Uni<span className="text-brand">Pred</span>
           </span>
         </Link>
 

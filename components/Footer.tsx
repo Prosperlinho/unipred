@@ -33,7 +33,7 @@ export function Footer() {
     <footer className="mt-10 border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted sm:flex-row">
         <p className="text-center sm:text-left">
-          CampusPredict demo · Play-money Campus Points only. Data is saved in this browser.
+          UniPred demo · Play-money Campus Points only. Data is saved in this browser.
         </p>
         <button
           type="button"

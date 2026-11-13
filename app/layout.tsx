@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CampusPredict · Campus Prediction Markets",
+  title: "UniPred · Campus Prediction Markets",
   description: "Trade on campus politics, academics, sports and lifestyle using Campus Points.",
 };
 

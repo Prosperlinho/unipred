@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Portfolio } from "@/components/Portfolio";
 
 export const metadata: Metadata = {
-  title: "Portfolio · CampusPredict",
+  title: "Portfolio · UniPred",
 };
 
 export default function PortfolioPage() {
