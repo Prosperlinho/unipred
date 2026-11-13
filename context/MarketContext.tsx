@@ -4,10 +4,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { probYes, quoteBuy, quoteSell } from "@/lib/amm";
@@ -95,48 +93,65 @@ function checkTradable(market: Market | undefined, now: number): string | null {
   return null;
 }
 
-export function MarketProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState | null>(null);
-  const stateRef = useRef<AppState | null>(null);
+/* ------------------------------------------------------------------ */
+/* Tiny external store backed by localStorage                          */
+/* ------------------------------------------------------------------ */
 
-  const commit = useCallback((next: AppState) => {
-    stateRef.current = next;
-    setState(next);
-  }, []);
+let storeState: AppState | null = null;
+const listeners = new Set<() => void>();
 
-  // Load persisted state once on the client.
-  useEffect(() => {
-    commit(loadState());
-  }, [commit]);
+function emit() {
+  listeners.forEach((l) => l());
+}
 
-  // Persist on every change.
-  useEffect(() => {
-    if (!state) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Storage full or blocked (e.g. private mode); keep running in memory.
+function getSnapshot(): AppState {
+  if (storeState === null) storeState = loadState();
+  return storeState;
+}
+
+function getServerSnapshot(): AppState | null {
+  return null;
+}
+
+function setStore(next: AppState) {
+  storeState = next;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Storage full or blocked (e.g. private mode); keep running in memory.
+  }
+  emit();
+}
+
+function onStorage(e: StorageEvent) {
+  if (e.key !== STORAGE_KEY || !e.newValue) return;
+  try {
+    const parsed: unknown = JSON.parse(e.newValue);
+    if (isValidState(parsed)) {
+      storeState = parsed;
+      emit();
     }
-  }, [state]);
+  } catch {
+    // Ignore malformed updates from other tabs.
+  }
+}
 
+function subscribe(listener: () => void) {
+  listeners.add(listener);
   // Keep multiple open tabs in sync.
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key !== STORAGE_KEY || !e.newValue) return;
-      try {
-        const parsed: unknown = JSON.parse(e.newValue);
-        if (isValidState(parsed)) commit(parsed);
-      } catch {
-        // Ignore malformed updates from other tabs.
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [commit]);
+  if (listeners.size === 1) window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) window.removeEventListener("storage", onStorage);
+  };
+}
 
-  const current = useCallback((): AppState => {
-    return stateRef.current ?? createSeedState();
-  }, []);
+export function MarketProvider({ children }: { children: ReactNode }) {
+  // null during server render / hydration, then the persisted state on the client.
+  const state = useSyncExternalStore<AppState | null>(subscribe, getSnapshot, getServerSnapshot);
+
+  const commit = useCallback((next: AppState) => setStore(next), []);
+  const current = useCallback((): AppState => getSnapshot(), []);
 
   const buy = useCallback<MarketContextValue["buy"]>(
     (marketId, outcome, amount) => {
