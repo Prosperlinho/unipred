@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signUp } from "@/app/actions/auth";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
+import { SchoolCombobox } from "@/components/SchoolCombobox";
 import type { FormState, School } from "@/lib/types";
-
-const GROUPS: School["ownership"][] = ["Federal", "State", "Private"];
 
 export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: string }) {
   const [state, action] = useActionState<FormState, FormData>(signUp, {});
+  const [school, setSchool] = useState("");
 
   const v = state.values ?? {};
 
@@ -62,22 +62,7 @@ export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: str
         </Field>
       </div>
       <Field label="Your university" htmlFor="school_id" hint="Your feed opens on your school. You can browse others too.">
-        <select id="school_id" name="school_id" required defaultValue={v.school_id ?? ""} className={inputCls}>
-          <option value="" disabled>
-            Choose your university
-          </option>
-          {GROUPS.map((g) => (
-            <optgroup key={g} label={`${g} universities`}>
-              {schools
-                .filter((s) => s.ownership === g)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.short_name})
-                  </option>
-                ))}
-            </optgroup>
-          ))}
-        </select>
+        <SchoolCombobox id="school_id" name="school_id" schools={schools} value={school} onChange={setSchool} />
       </Field>
       <Field label="Date of birth" htmlFor="date_of_birth" hint="You must be 18 or older.">
         <input

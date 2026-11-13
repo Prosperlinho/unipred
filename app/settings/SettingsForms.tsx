@@ -4,13 +4,13 @@ import { BadgeCheck, Loader2 } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import { resolveBankAccount, savePayoutAccount, updateProfile } from "@/app/actions/settings";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
+import { SchoolCombobox } from "@/components/SchoolCombobox";
 import { useUI } from "@/context/UIContext";
 import type { FormState, PayoutAccount, Profile, School } from "@/lib/types";
 
-const GROUPS: School["ownership"][] = ["Federal", "State", "Private"];
-
 export function ProfileForm({ profile, schools }: { profile: Profile; schools: School[] }) {
   const [state, action] = useActionState<FormState, FormData>(updateProfile, {});
+  const [school, setSchool] = useState(profile.school_id);
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -30,19 +30,14 @@ export function ProfileForm({ profile, schools }: { profile: Profile; schools: S
         </Field>
       </div>
       <Field label="University" htmlFor="school_id">
-        <select id="school_id" name="school_id" defaultValue={profile.school_id} className={inputCls}>
-          {GROUPS.map((g) => (
-            <optgroup key={g} label={`${g} universities`}>
-              {schools
-                .filter((s) => s.ownership === g)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.short_name})
-                  </option>
-                ))}
-            </optgroup>
-          ))}
-        </select>
+        <SchoolCombobox
+          id="school_id"
+          name="school_id"
+          schools={schools}
+          value={school}
+          onChange={setSchool}
+          mySchoolId={profile.school_id}
+        />
       </Field>
       <FormMessage error={state.error} message={state.message} />
       <SubmitButton pendingText="Saving...">Save profile</SubmitButton>

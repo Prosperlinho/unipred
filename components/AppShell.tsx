@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { UIProvider } from "@/context/UIContext";
 import { getViewer } from "@/lib/auth";
-import { isSupabaseConfigured, isTestMode } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
@@ -16,11 +16,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <UIProvider>
       <div className="flex min-h-dvh flex-col pb-16 md:pb-0">
-        {isTestMode && (
-          <div className="bg-amber-400/10 px-4 py-1.5 text-center text-[11px] font-medium text-amber-200">
-            Test mode: payments use Paystack test cards. No real money moves.
-          </div>
-        )}
         <Header
           viewer={
             viewer

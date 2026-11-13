@@ -1,16 +1,16 @@
 "use client";
 
 import { ShieldCheck } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { proposeMarket } from "@/app/actions/market";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
+import { SchoolCombobox } from "@/components/SchoolCombobox";
 import { CATEGORIES, type FormState, type School } from "@/lib/types";
-
-const GROUPS: School["ownership"][] = ["Federal", "State", "Private"];
 
 export function ProposeForm({ schools, defaultSchool }: { schools: School[]; defaultSchool: string }) {
   const [state, action] = useActionState<FormState, FormData>(proposeMarket, {});
   const v = state.values ?? {};
+  const [school, setSchool] = useState(defaultSchool);
 
   return (
     <form
@@ -34,22 +34,18 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
         />
       </Field>
 
+      <Field label="University" htmlFor="school_id">
+        <SchoolCombobox
+          id="school_id"
+          name="school_id"
+          schools={schools}
+          value={school}
+          onChange={setSchool}
+          mySchoolId={defaultSchool}
+        />
+      </Field>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="University" htmlFor="school_id">
-          <select id="school_id" name="school_id" defaultValue={v.school_id ?? defaultSchool} className={inputCls}>
-            {GROUPS.map((g) => (
-              <optgroup key={g} label={`${g} universities`}>
-                {schools
-                  .filter((s) => s.ownership === g)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.short_name} · {s.name}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-        </Field>
         <Field label="Category" htmlFor="category">
           <select id="category" name="category" defaultValue={v.category ?? CATEGORIES[0]} className={inputCls}>
             {CATEGORIES.map((c) => (
