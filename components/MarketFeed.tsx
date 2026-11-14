@@ -16,6 +16,7 @@ interface Props {
   showSchool: boolean;
   serverNow: number;
   emptyHint: string;
+  feeBps: number;
 }
 
 function trendingScore(m: Market, now: number): number {
@@ -23,7 +24,7 @@ function trendingScore(m: Market, now: number): number {
   return (m.volume_kobo / 100 + m.traders * 200) / Math.pow(ageHours, 0.35);
 }
 
-export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, emptyHint }: Props) {
+export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, emptyHint, feeBps }: Props) {
   const now = useNow(serverNow);
   const [filter, setFilter] = useState<Filter>("All");
   const [sort, setSort] = useState<SortMode>("Trending");
@@ -125,7 +126,13 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((m) => (
-            <MarketCard key={m.id} market={m} now={now} schoolLabel={showSchool ? schoolLabels[m.school_id] : undefined} />
+            <MarketCard
+              key={m.id}
+              market={m}
+              now={now}
+              feeBps={feeBps}
+              schoolLabel={showSchool ? schoolLabels[m.school_id] : undefined}
+            />
           ))}
         </div>
       )}

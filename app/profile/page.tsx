@@ -1,11 +1,13 @@
-import { Briefcase, ChevronRight, GraduationCap, LogOut, Settings, Shield, Wallet } from "lucide-react";
+import { Briefcase, ChevronRight, Gift, GraduationCap, LogOut, Settings, Shield, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
 import { Container } from "@/components/Container";
+import { ShareButton } from "@/components/ShareButton";
 import { requireViewer } from "@/lib/auth";
 import { getSchools } from "@/lib/data";
 import { formatNaira, initials } from "@/lib/format";
+import { getOrigin } from "@/lib/origin";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Profile · UniPred" };
@@ -22,12 +24,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default async function ProfilePage() {
   const viewer = await requireViewer("/profile");
   const supabase = await createClient();
-  const [schools, trades, proposals, live] = await Promise.all([
+  const [schools, trades, proposals, invited, origin] = await Promise.all([
     getSchools(),
     supabase.from("trades").select("id", { count: "exact", head: true }).eq("user_id", viewer.id),
     supabase.from("markets").select("id", { count: "exact", head: true }).eq("created_by", viewer.id),
-    supabase.from("markets").select("id", { count: "exact", head: true }).eq("created_by", viewer.id).eq("status", "open"),
+    supabase.rpc("referral_count"),
+    getOrigin(),
   ]);
+  const inviteLink = `${origin}/?ref=${encodeURIComponent(viewer.profile.username)}`;
   const school = schools.find((s) => s.id === viewer.profile.school_id);
   const p = viewer.profile;
 
@@ -57,9 +61,29 @@ export default async function ProfilePage() {
       </section>
 
       <section className="mt-6 grid grid-cols-3 gap-3">
-        <Stat label="Trades" value={String(trades.count ?? 0)} />
-        <Stat label="Proposed" value={String(proposals.count ?? 0)} />
-        <Stat label="Live" value={String(live.count ?? 0)} />
+        <Stat label="Bets" value={String(trades.count ?? 0)} />
+        <Stat label="Markets" value={String(proposals.count ?? 0)} />
+        <Stat label="Invited" value={String(typeof invited.data === "number" ? invited.data : 0)} />
+      </section>
+
+      <section className="mt-6 space-y-3 rounded-2xl border border-brand/30 bg-linear-to-br from-brand-teal/15 to-card p-4">
+        <div className="flex items-center gap-2">
+          <Gift className="size-5 text-brand" />
+          <h2 className="font-semibold text-white">Invite your coursemates</h2>
+        </div>
+        <p className="text-sm text-muted">
+          Share your personal link. Everyone who signs up through it is counted as your invite.
+        </p>
+        <div className="flex items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2">
+          <span className="min-w-0 flex-1 truncate font-mono text-xs text-white">{inviteLink}</span>
+          <ShareButton
+            variant="button"
+            label="Share"
+            path="/"
+            text={`Join me on UniPred: predict what happens at ${school?.short_name ?? "our school"} and get paid in naira when you're right.`}
+            refUsername={p.username}
+          />
+        </div>
       </section>
 
       <nav className="mt-6 divide-y divide-line rounded-2xl border border-line bg-card">

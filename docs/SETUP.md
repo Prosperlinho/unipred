@@ -8,7 +8,9 @@ About 20 minutes. You need a Supabase account and a Paystack account. Both are f
 2. When it's ready, open **SQL Editor → New query** and run these files **in order**, pasting each one and clicking **Run**:
    1. `supabase/migrations/0001_init.sql` (tables, security rules, money functions)
    2. `supabase/migrations/0002_schools.sql` (the university list)
-   3. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
+   3. `supabase/migrations/0003_all_universities.sql` (all 330 NUC-approved universities)
+   4. `supabase/migrations/0004_templates_autoapprove_referrals.sql` (rule template, auto-approval, naira wording, referrals)
+   5. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
 3. Open **Authentication → URL Configuration**:
    - **Site URL**: `https://unipred.vercel.app`
    - **Redirect URLs**: add `https://unipred.vercel.app/**`, `https://unipred-*.vercel.app/**` (Vercel previews) and `http://localhost:3000/**`
@@ -65,6 +67,23 @@ Change fees and limits any time:
 update public.settings set trade_fee_bps = 200, min_trade_kobo = 10000,
   min_deposit_kobo = 10000, min_withdrawal_kobo = 100000 where id = 1;
 ```
+
+Auto-approval of student proposals (on by default):
+
+```sql
+-- auto_liquidity_kobo: UniPred money put in each auto-approved pool (500000 = ₦5,000)
+-- auto_daily_cap: max auto-approved markets per 24h across everyone; extra ones wait for admin
+-- max_proposals_per_day: per student
+update public.settings set auto_approve = true, auto_liquidity_kobo = 500000,
+  auto_daily_cap = 30, max_proposals_per_day = 3 where id = 1;
+
+-- Turn auto-approval off (everything waits in Admin):
+update public.settings set auto_approve = false where id = 1;
+```
+
+Liquidity in one line: each market's pool is UniPred's money that students bet against. Bigger pools mean steadier
+prices but more at risk; the most UniPred can lose on a market is about its pool size, and it earns the trading fee on
+every bet and cash-out.
 
 Add a university:
 

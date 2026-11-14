@@ -17,7 +17,13 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
+  // Needed so share previews (Open Graph images) use absolute links.
+  metadataBase: new URL(siteUrl),
   title: "UniPred · Campus Prediction Markets",
   description: "Trade on campus politics, academics, sports and lifestyle using Campus Points.",
 };

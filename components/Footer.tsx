@@ -6,7 +6,7 @@ export function Footer() {
           <span className="font-semibold text-white">UniPred</span> · 18+ only · Predict responsibly and only stake
           what you can afford to lose.
         </p>
-        <p>Markets are reviewed and resolved by UniPred admins.</p>
+        <p>Results are confirmed by UniPred admins from each market&apos;s official source.</p>
       </div>
     </footer>
   );

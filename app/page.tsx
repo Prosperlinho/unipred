@@ -4,7 +4,7 @@ import { MarketFeed } from "@/components/MarketFeed";
 import { SchoolPicker } from "@/components/SchoolPicker";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { getSchools } from "@/lib/data";
+import { getSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import type { Market } from "@/lib/types";
@@ -12,7 +12,7 @@ import type { Market } from "@/lib/types";
 export default async function HomePage(props: PageProps<"/">) {
   if (!isSupabaseConfigured) return null;
   const searchParams = await props.searchParams;
-  const [viewer, schools] = await Promise.all([getViewer(), getSchools()]);
+  const [viewer, schools, settings] = await Promise.all([getViewer(), getSchools(), getSettings()]);
 
   const requested = typeof searchParams.school === "string" ? searchParams.school : undefined;
   const validRequested = requested === "all" || schools.some((s) => s.id === requested) ? requested : undefined;
@@ -62,6 +62,7 @@ export default async function HomePage(props: PageProps<"/">) {
             schoolLabels={schoolLabels}
             showSchool={selected === "all"}
             serverNow={now}
+            feeBps={settings.trade_fee_bps}
             emptyHint={
               selectedSchool
                 ? `Nobody has opened a market at ${selectedSchool.short_name} yet. Propose the first one and our team will review it.`

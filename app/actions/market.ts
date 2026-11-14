@@ -31,13 +31,14 @@ export async function proposeMarket(_prev: FormState, fd: FormData): Promise<For
   if (question.length < 12 || question.length > 160) return fail("Question must be 12-160 characters.");
   if (!question.endsWith("?")) return fail("Phrase it as a Yes/No question ending with '?'.");
   if (!(CATEGORIES as readonly string[]).includes(category)) return fail("Choose a category.");
-  if (criteria.length < 15) return fail("Describe exactly what makes this resolve YES or NO.");
+  if (criteria.length < 10) return fail("Describe exactly what has to happen for YES.");
+  if (criteria.length > 300) return fail("Keep the YES condition under 300 characters.");
   if (source.length < 2) return fail("Add where the result will be confirmed.");
   if (!schoolId) return fail("Choose the university this market is about.");
   if (!Number.isFinite(closesAt)) return fail("Choose a closing date and time.");
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("propose_market", {
+  const { data, error } = await supabase.rpc("propose_market", {
     p_school: schoolId,
     p_question: question,
     p_category: category,
@@ -47,7 +48,9 @@ export async function proposeMarket(_prev: FormState, fd: FormData): Promise<For
   });
   if (error) return fail(friendlyError(error.message));
 
-  revalidatePath("/portfolio");
+  const result = data as { id: string; status: "open" | "pending" };
+  revalidatePath("/", "layout");
+  if (result.status === "open") redirect(`/markets/${result.id}?new=1`);
   redirect("/portfolio?proposed=1");
 }
 

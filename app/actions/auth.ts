@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { friendlyError } from "@/lib/data";
 import { getOrigin, safeNext } from "@/lib/origin";
@@ -49,12 +50,21 @@ export async function signUp(_prev: FormState, fd: FormData): Promise<FormState>
   if (!school) return fail("Choose your university from the list.");
 
   const origin = await getOrigin();
+  // Referral: set by proxy.ts when the visitor arrived through someone's ?ref= link.
+  const ref = (await cookies()).get("unipred_ref")?.value;
+  const validRef = ref && USERNAME_RE.test(ref) && ref.toLowerCase() !== username.toLowerCase() ? ref : undefined;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${origin}/auth/confirm?next=/`,
-      data: { username, full_name: fullName, school_id: schoolId, date_of_birth: dob },
+      data: {
+        username,
+        full_name: fullName,
+        school_id: schoolId,
+        date_of_birth: dob,
+        ...(validRef ? { ref: validRef } : {}),
+      },
     },
   });
   if (error) {

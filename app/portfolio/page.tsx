@@ -6,9 +6,9 @@ import { Container } from "@/components/Container";
 import { FormMessage } from "@/components/forms";
 import { getRequestTime } from "@/lib/time";
 import { requireViewer } from "@/lib/auth";
-import { SHARE_VALUE_KOBO, priceOf } from "@/lib/amm";
-import { getSchools } from "@/lib/data";
-import { formatNaira, formatPct, formatShares, formatSignedNaira, formatSignedPct, timeLeft } from "@/lib/format";
+import { SHARE_VALUE_KOBO, quoteSell } from "@/lib/amm";
+import { getSchools, getSettings } from "@/lib/data";
+import { formatNaira, formatSignedNaira, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
@@ -48,10 +48,11 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
   const viewer = await requireViewer("/portfolio");
   const sp = await props.searchParams;
   const supabase = await createClient();
-  const [{ data: posData }, { data: proposalData }, schools] = await Promise.all([
+  const [{ data: posData }, { data: proposalData }, schools, settings] = await Promise.all([
     supabase.from("positions").select("*, market:markets(*)").eq("user_id", viewer.id),
     supabase.from("markets").select("*").eq("created_by", viewer.id).order("created_at", { ascending: false }),
     getSchools(),
+    getSettings(),
   ]);
   const schoolLabel = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
   const rows = ((posData ?? []) as Row[]).filter((r) => r.market && r.shares > 0);
@@ -60,10 +61,16 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
 
   const valued = rows.map((r) => {
     const m = r.market;
-    const price =
-      m.status === "resolved" ? (m.resolution === r.outcome ? 1 : 0) : priceOf({ pool_yes: Number(m.pool_yes), pool_no: Number(m.pool_no) }, r.outcome);
-    const value = Math.floor(r.shares * price * SHARE_VALUE_KOBO);
-    return { ...r, price, value, pnl: value - r.cost_kobo };
+    const pays = Math.floor(r.shares * SHARE_VALUE_KOBO);
+    // "Worth now" = what a full cash-out would pay right now (after fee).
+    const value =
+      m.status === "resolved"
+        ? m.resolution === r.outcome
+          ? pays
+          : 0
+        : (quoteSell({ pool_yes: Number(m.pool_yes), pool_no: Number(m.pool_no) }, r.outcome, r.shares, settings.trade_fee_bps)
+            ?.netKobo ?? 0);
+    return { ...r, pays, value, pnl: value - r.cost_kobo };
   });
   const active = valued.filter((r) => r.market.status === "open");
   const settled = valued.filter((r) => r.market.status === "resolved" || r.market.status === "cancelled");
@@ -74,19 +81,19 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
   return (
     <Container>
       <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Your Portfolio</h1>
-      <p className="mb-4 text-sm text-muted">Open positions, settled results and your market proposals.</p>
+      <p className="mb-4 text-sm text-muted">Your open bets, results and the markets you created.</p>
       {sp.proposed === "1" && (
         <div className="mb-4">
-          <FormMessage message="Proposal submitted! You'll see it go live here once an admin approves it." />
+          <FormMessage message="Proposal received! It needs a quick admin review before it goes live. You'll see its status below." />
         </div>
       )}
 
       <div className="space-y-6">
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Summary label="Wallet" value={formatNaira(viewer.balanceKobo)} />
-          <Summary label="In positions" value={formatNaira(positionsValue)} />
+          <Summary label="Bets worth now" value={formatNaira(positionsValue)} />
           <Summary
-            label="Unrealized P&L"
+            label="Profit so far"
             value={formatSignedNaira(unrealized)}
             tone={unrealized > 0 ? "yes" : unrealized < 0 ? "no" : undefined}
           />
@@ -94,11 +101,11 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
         </section>
 
         <section className="space-y-3">
-          <Title count={active.length}>Open positions</Title>
+          <Title count={active.length}>Open bets</Title>
           {active.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-10 text-center">
               <Briefcase className="size-8 text-muted" />
-              <p className="font-medium text-white">No open positions</p>
+              <p className="font-medium text-white">No open bets</p>
               <p className="text-sm text-muted">Pick a side on a market at your school to get started.</p>
               <Link href="/" className="mt-2 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black hover:brightness-110">
                 Browse markets
@@ -126,35 +133,24 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                       </span>
                     </div>
                     <p className="mt-2 text-sm font-semibold leading-snug text-white">{r.market.question}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-muted">Side</span>
-                        <span className={`font-bold ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>{r.outcome}</span>
+                    <p className="mt-2 text-xs text-muted">
+                      You bet <span className="font-semibold text-white">{formatNaira(r.cost_kobo)}</span> on{" "}
+                      <span className={`font-bold ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>{r.outcome}</span>
+                    </p>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg bg-bg p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted">Worth now</p>
+                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.value)}</p>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted">Shares</span>
-                        <span className="tabular-nums text-white">{formatShares(r.shares)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted">Avg entry</span>
-                        <span className="tabular-nums text-white">{formatNaira(r.cost_kobo / r.shares)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted">Now</span>
-                        <span className="tabular-nums text-white">
-                          {formatNaira(r.price * SHARE_VALUE_KOBO)} <span className="text-muted">({formatPct(r.price)})</span>
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted">Value</span>
-                        <span className="tabular-nums text-white">{formatNaira(r.value)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted">P&amp;L</span>
-                        <span className={`font-semibold tabular-nums ${r.pnl >= 0 ? "text-yes" : "text-no"}`}>
+                      <div className="rounded-lg bg-bg p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted">Profit</p>
+                        <p className={`text-sm font-bold tabular-nums ${r.pnl >= 0 ? "text-yes" : "text-no"}`}>
                           {formatSignedNaira(r.pnl)}
-                          {r.cost_kobo > 0 && ` (${formatSignedPct(r.pnl / r.cost_kobo)})`}
-                        </span>
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-bg p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted">If {r.outcome} wins</p>
+                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.pays)}</p>
                       </div>
                     </div>
                   </Link>
@@ -180,7 +176,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                     <span className="min-w-0">
                       <span className="block truncate text-white">{r.market.question}</span>
                       <span className="text-xs text-muted">
-                        {formatShares(r.shares)} {r.outcome} ·{" "}
+                        {formatNaira(r.cost_kobo)} on {r.outcome} ·{" "}
                         {cancelled ? "cancelled, stake refunded" : `resolved ${r.market.resolution}`}
                       </span>
                     </span>
