@@ -170,14 +170,14 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                 return (
                   <Link
                     key={`${r.market_id}-${r.outcome}`}
-                    href={`/markets/${r.market_id}`}
+                    href={`/markets/${r.market_id}${cancelled ? "" : "#your-bets"}`}
                     className="flex items-center justify-between gap-3 p-3 text-sm hover:bg-card-2"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-white">{r.market.question}</span>
                       <span className="text-xs text-muted">
                         {formatNaira(r.cost_kobo)} on {r.outcome} ·{" "}
-                        {cancelled ? "cancelled, stake refunded" : `resolved ${r.market.resolution}`}
+                        {cancelled ? "cancelled, stake refunded" : `resolved ${r.market.resolution} · tap to share your card`}
                       </span>
                     </span>
                     <span

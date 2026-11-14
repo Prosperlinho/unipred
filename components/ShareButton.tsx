@@ -29,6 +29,14 @@ function WhatsAppIcon() {
   );
 }
 
+function TelegramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+      <path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.7.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.5 13.1 1.8 11.6c-1-.3-1-1 .2-1.5L20.5 3c.9-.3 1.6.2 1.4 1.3Z" />
+    </svg>
+  );
+}
+
 function XIcon() {
   return (
     <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
@@ -119,6 +127,20 @@ export function ShareButton({ path, text, refUsername, label = "Share", variant 
             className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-white hover:bg-card"
           >
             <XIcon />X (Twitter)
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              open_(
+                `https://t.me/share/url?url=${encodeURIComponent(buildUrl(path, refUsername))}&text=${encodeURIComponent(text)}`,
+              )
+            }
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-white hover:bg-card"
+          >
+            <span className="text-[#2AABEE]">
+              <TelegramIcon />
+            </span>
+            Telegram
           </button>
           <button type="button" onClick={copy} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-white hover:bg-card">
             {copied ? <Check className="size-4 text-yes" /> : <Copy className="size-4" />}

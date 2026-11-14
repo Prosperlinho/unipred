@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // Let phones/laptops on the local network load dev assets (e.g. http://192.168.0.199:3000).
   // Development only: has no effect on production builds or Vercel.
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
+  // The result-card route reads these fonts from disk; make sure Vercel ships them with it.
+  outputFileTracingIncludes: {
+    "/api/card/*": ["./assets/fonts/**/*"],
+  },
   turbopack: {
     rules: {
       "*.css": {

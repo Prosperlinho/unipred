@@ -7,6 +7,7 @@ import { CategoryBadge } from "@/components/CategoryBadge";
 import { Comments } from "@/components/Comments";
 import { Container } from "@/components/Container";
 import { ProbabilityBar } from "@/components/ProbabilityBar";
+import { ResultCardShare } from "@/components/ResultCardShare";
 import { ShareButton } from "@/components/ShareButton";
 import { Sparkline } from "@/components/Sparkline";
 import { TradeBox, type Holding } from "@/components/TradeBox";
@@ -206,6 +207,21 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     return [{ outcome: o, staked: h.cost_kobo, worth, pays, pnl: worth - h.cost_kobo }];
   });
 
+  // Shareable result card (won / lost / still backing) for the viewer's bet.
+  let card: { kind: "won" | "lost" | "backing"; caption: string } | null = null;
+  if (positionRows.length > 0 && (market.status === "open" || market.status === "resolved")) {
+    const main = positionRows.reduce((a, b) => (b.staked > a.staked ? b : a));
+    const totalStake = positionRows.reduce((s, r) => s + r.staked, 0);
+    if (market.status === "open") {
+      card = { kind: "backing", caption: `I'm backing ${main.outcome} on "${market.question}" Think I'm wrong? Bet against me on UniPred:` };
+    } else {
+      const won = positionRows.find((r) => r.outcome === market.resolution && r.worth > 0);
+      card = won
+        ? { kind: "won", caption: `I just won ${formatNaira(won.worth)} on UniPred calling "${market.question}" right 🎯` }
+        : { kind: "lost", caption: `Took an L of ${formatNaira(totalStake)} on "${market.question}" Next one is mine. Join me on UniPred:` };
+    }
+  }
+
   return (
     <Container>
       <Link
@@ -283,7 +299,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
 
         <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-2">
           {positionRows.length > 0 && (
-            <div className="space-y-1.5 rounded-xl border border-line p-3">
+            <div id="your-bets" className="scroll-mt-20 space-y-1.5 rounded-xl border border-line p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">Your bets</p>
               {positionRows.map((r) => (
                 <div key={r.outcome} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
@@ -309,6 +325,20 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                   </span>
                 </div>
               ))}
+              {viewer && card && (
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
+                  <span className="text-xs text-muted">
+                    {card.kind === "won" ? "Flex it." : card.kind === "lost" ? "Own it." : "Hype your call."} Download or share
+                    your card.
+                  </span>
+                  <ResultCardShare
+                    marketId={market.id}
+                    kind={card.kind}
+                    caption={card.caption}
+                    refUsername={viewer.profile.username}
+                  />
+                </div>
+              )}
             </div>
           )}
 
