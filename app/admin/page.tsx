@@ -64,7 +64,7 @@ export default async function AdminPage() {
 
       <div className="space-y-8">
         <Section title="Proposals to review" count={pending.length} empty="No proposals waiting.">
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {pending.map((m) => (
               <PendingMarketCard
                 key={m.id}
@@ -77,7 +77,7 @@ export default async function AdminPage() {
         </Section>
 
         <Section title="Withdrawals" count={withdrawals.length} empty="No withdrawals waiting.">
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {withdrawals.map((w) => (
               <WithdrawalRow key={w.id} w={w} username={nameOf.get(w.user_id) ?? "unknown"} />
             ))}
@@ -85,7 +85,7 @@ export default async function AdminPage() {
         </Section>
 
         <Section title="Flagged & suspended accounts" count={review.length} empty="No accounts need review.">
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {review.map((a) => (
               <AccountReviewRow key={a.id} a={a} />
             ))}
@@ -93,7 +93,7 @@ export default async function AdminPage() {
         </Section>
 
         <Section title="Live markets (resolve or cancel)" count={open.length} empty="No live markets.">
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {open.map((m) => (
               <OpenMarketRow key={m.id} market={m} school={schoolOf[m.school_id] ?? m.school_id} now={now} />
             ))}

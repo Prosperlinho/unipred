@@ -101,7 +101,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
               </Link>
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {active.map((r) => {
                 const closesAt = new Date(r.market.closes_at).getTime();
                 const closed = now >= closesAt;

@@ -232,7 +232,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         <ArrowLeft className="size-4" /> {school ? `${school.short_name} markets` : "All markets"}
       </Link>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:grid-rows-[auto_1fr] lg:gap-x-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:grid-rows-[auto_1fr] lg:gap-x-6">
         <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-1">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">

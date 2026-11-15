@@ -103,6 +103,8 @@
   }
 
   body {
+    /* Never let one wide element widen the page (phones would zoom the whole page out). */
+    overflow-x: clip;
     background: var(--color-bg);
     color: #e7ebf3;
     -webkit-font-smoothing: antialiased;

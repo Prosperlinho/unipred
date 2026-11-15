@@ -57,7 +57,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <section className="rounded-2xl border border-line bg-linear-to-br from-brand-teal/20 to-card p-5 lg:col-span-3">
           <p className="text-xs uppercase tracking-wide text-muted">Available balance</p>
           <p className="mt-1 text-4xl font-extrabold tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</p>
@@ -119,7 +119,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
             <ul className="divide-y divide-line text-sm">
               {(ledger as LedgerEntry[]).map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="min-w-0">
+                  <span className="min-w-0 flex-1">
                     <span className="block truncate text-white">{l.description}</span>
                     <span className="text-[11px] text-muted">{formatDate(l.created_at)}</span>
                   </span>

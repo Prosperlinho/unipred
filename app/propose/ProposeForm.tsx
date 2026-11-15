@@ -59,7 +59,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Category" htmlFor="category">
           <select id="category" name="category" defaultValue={v.category ?? CATEGORIES[0]} className={inputCls}>
             {CATEGORIES.map((c) => (
@@ -89,7 +89,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Confirmed by" htmlFor="source" hint="The official place the result will appear.">
           <input
             id="source"

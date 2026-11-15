@@ -13,7 +13,7 @@ export function ProfileForm({ profile, schools }: { profile: Profile; schools: S
   const [school, setSchool] = useState(profile.school_id);
   return (
     <form action={action} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Username" htmlFor="username">
           <input
             id="username"
@@ -125,7 +125,7 @@ export function PayoutForm({
           </span>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Bank" htmlFor="bank">
           <select
             id="bank"
