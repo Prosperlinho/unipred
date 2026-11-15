@@ -14,7 +14,7 @@ About 20 minutes. You need a Supabase account and a Paystack account. Both are f
    6. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
 3. Open **Authentication → URL Configuration**:
    - **Site URL**: `https://unipred.site`
-   - **Redirect URLs**: add `https://unipred.site/**`, `https://unipred.vercel.app/**`, `https://unipred-*.vercel.app/**` (Vercel previews) and `http://localhost:3000/**`
+   - **Redirect URLs**: add only `https://unipred.site/**` and `http://localhost:3000/**`. Don't add wildcard Vercel addresses like `https://unipred-*.vercel.app/**`: anyone can create a Vercel project with that prefix, and it would be allowed to receive login links
 4. Open **Authentication → Sign In / Providers → Email** and make sure **Confirm email** is on.
 5. Open **Project Settings → API Keys** (or **API**) and copy:
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
