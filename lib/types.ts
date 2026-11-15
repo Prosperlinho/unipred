@@ -24,6 +24,10 @@ export interface Pools {
 
 export interface Market extends Pools {
   id: string;
+  /** "pool" = pool betting (current); "amm" = old fixed-odds markets that finished before the switch. */
+  engine: "pool" | "amm";
+  stake_yes_kobo: number;
+  stake_no_kobo: number;
   school_id: string;
   question: string;
   category: Category;
@@ -106,7 +110,8 @@ export interface PayoutAccount {
 }
 
 export interface PlatformSettings {
-  trade_fee_bps: number;
+  /** UniPred's cut of the winnings (losing pot), in basis points: 1000 = 10%. */
+  pool_fee_bps: number;
   min_trade_kobo: number;
   min_deposit_kobo: number;
   min_withdrawal_kobo: number;

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ImageResponse } from "next/og";
-import { probYes } from "@/lib/amm";
+import { marketProbYes } from "@/lib/pool";
 import { env, isSupabaseConfigured } from "@/lib/env";
 
 // Preview card shown when a market link is pasted into WhatsApp, X, Telegram...
@@ -20,9 +20,19 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false } });
     const { data } = await supabase
       .from("markets")
-      .select("question, school_id, pool_yes, pool_no, status, resolution")
+      .select("question, school_id, pool_yes, pool_no, stake_yes_kobo, stake_no_kobo, engine, status, resolution")
       .eq("id", id)
-      .maybeSingle<{ question: string; school_id: string; pool_yes: number; pool_no: number; status: string; resolution: string | null }>();
+      .maybeSingle<{
+        question: string;
+        school_id: string;
+        pool_yes: number;
+        pool_no: number;
+        stake_yes_kobo: number;
+        stake_no_kobo: number;
+        engine: "pool" | "amm";
+        status: string;
+        resolution: string | null;
+      }>();
     if (data) {
       question = data.question;
       yes =
@@ -30,7 +40,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           ? data.resolution === "YES"
             ? 1
             : 0
-          : probYes({ pool_yes: Number(data.pool_yes), pool_no: Number(data.pool_no) });
+          : marketProbYes(data);
       const { data: s } = await supabase.from("schools").select("short_name").eq("id", data.school_id).maybeSingle<{ short_name: string }>();
       school = s?.short_name ?? "";
     }

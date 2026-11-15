@@ -1,4 +1,4 @@
-import { ArrowLeft, Ban, CheckCircle2, Clock, Hourglass, Info, Lock, TrendingUp, Users, Waves, XCircle } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, Clock, Hourglass, Info, Lock, TrendingUp, Users, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -10,13 +10,13 @@ import { ProbabilityBar } from "@/components/ProbabilityBar";
 import { ResultCardShare } from "@/components/ResultCardShare";
 import { ShareButton } from "@/components/ShareButton";
 import { Sparkline } from "@/components/Sparkline";
-import { TradeBox, type Holding } from "@/components/TradeBox";
+import { TradeBox } from "@/components/TradeBox";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { SHARE_VALUE_KOBO, probYes, quoteSell } from "@/lib/amm";
+import { marketProbYes, payoutIfWins, settledResult, type Settled } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
-import { compactNaira, formatDate, formatNaira, formatPct, formatSignedNaira, timeLeft } from "@/lib/format";
+import { compactNaira, formatDate, formatNaira, formatPct, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { CommentView, Market, Outcome, Position, PricePoint } from "@/lib/types";
 
@@ -33,8 +33,8 @@ export async function generateMetadata(props: PageProps<"/markets/[id]">): Promi
   const { id } = await props.params;
   const market = await loadMarket(id);
   if (!market) return { title: "Market · UniPred" };
-  const pct = formatPct(probYes({ pool_yes: Number(market.pool_yes), pool_no: Number(market.pool_no) }));
-  const description = `YES is at ${pct}. Make your call and get paid in naira if you're right.`;
+  const pct = formatPct(marketProbYes(market));
+  const description = `${pct} of the pot is on YES. Make your call and get paid in naira if you're right.`;
   return {
     title: `${market.question} · UniPred`,
     description,
@@ -100,11 +100,13 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     isMine: c.user_id === viewer?.id,
   }));
 
-  const holdings: Partial<Record<Outcome, Holding>> = {};
-  for (const pos of (myPositions ?? []) as Position[]) holdings[pos.outcome] = { shares: pos.shares, cost_kobo: pos.cost_kobo };
+  const holdings: Partial<Record<Outcome, { shares: number; cost_kobo: number }>> = {};
+  for (const pos of (myPositions ?? []) as Position[]) {
+    if (Number(pos.cost_kobo) > 0) holdings[pos.outcome] = { shares: Number(pos.shares), cost_kobo: Number(pos.cost_kobo) };
+  }
 
   const now = getRequestTime();
-  const p = probYes(market);
+  const p = marketProbYes(market);
   const displayP = market.status === "resolved" ? (market.resolution === "YES" ? 1 : 0) : p;
   const start = new Date(market.approved_at ?? market.created_at).getTime();
   const history: PricePoint[] = [
@@ -176,12 +178,12 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     sidePanel = (
       <TradeBox
         marketId={market.id}
-        pools={{ pool_yes: Number(market.pool_yes), pool_no: Number(market.pool_no) }}
+        stakeYesKobo={Number(market.stake_yes_kobo)}
+        stakeNoKobo={Number(market.stake_no_kobo)}
         closesAt={market.closes_at}
-        feeBps={settings.trade_fee_bps}
+        feeBps={settings.pool_fee_bps}
         minTradeKobo={settings.min_trade_kobo}
         balanceKobo={viewer ? viewer.balanceKobo : null}
-        holdings={holdings}
         initialSide={requestedSide}
         initialAmountNaira={requestedAmount}
         question={market.question}
@@ -191,34 +193,33 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     );
   }
 
-  const pools = { pool_yes: Number(market.pool_yes), pool_no: Number(market.pool_no) };
   const positionRows = (["YES", "NO"] as const).flatMap((o) => {
     const h = holdings[o];
-    if (!h || h.shares <= 0) return [];
-    const pays = Math.floor(h.shares * SHARE_VALUE_KOBO);
-    const worth =
-      market.status === "resolved"
-        ? market.resolution === o
-          ? pays
-          : 0
-        : market.status === "open"
-          ? (quoteSell(pools, o, h.shares, settings.trade_fee_bps)?.netKobo ?? 0)
-          : h.cost_kobo;
-    return [{ outcome: o, staked: h.cost_kobo, worth, pays, pnl: worth - h.cost_kobo }];
+    if (!h) return [];
+    const pos = { outcome: o, shares: h.shares, cost_kobo: h.cost_kobo };
+    return [
+      {
+        outcome: o,
+        staked: h.cost_kobo,
+        pays: payoutIfWins(market, pos, settings.pool_fee_bps),
+        settled: settledResult(market, pos, settings.pool_fee_bps) as Settled | null,
+      },
+    ];
   });
 
   // Shareable result card (won / lost / still backing) for the viewer's bet.
   let card: { kind: "won" | "lost" | "backing"; caption: string } | null = null;
   if (positionRows.length > 0 && (market.status === "open" || market.status === "resolved")) {
-    const main = positionRows.reduce((a, b) => (b.staked > a.staked ? b : a));
-    const totalStake = positionRows.reduce((s, r) => s + r.staked, 0);
+    const main = positionRows.reduce((x, y) => (y.staked > x.staked ? y : x));
+    const totalStake = positionRows.reduce((sum, r) => sum + r.staked, 0);
+    const won = positionRows.find((r) => r.settled?.kind === "won");
+    const allRefunded = positionRows.every((r) => r.settled?.kind === "refunded");
     if (market.status === "open") {
       card = { kind: "backing", caption: `I'm backing ${main.outcome} on "${market.question}" Think I'm wrong? Bet against me on UniPred:` };
-    } else {
-      const won = positionRows.find((r) => r.outcome === market.resolution && r.worth > 0);
-      card = won
-        ? { kind: "won", caption: `I just won ${formatNaira(won.worth)} on UniPred calling "${market.question}" right 🎯` }
-        : { kind: "lost", caption: `Took an L of ${formatNaira(totalStake)} on "${market.question}" Next one is mine. Join me on UniPred:` };
+    } else if (won?.settled) {
+      card = { kind: "won", caption: `I just won ${formatNaira(won.settled.amountKobo)} on UniPred calling "${market.question}" right 🎯` };
+    } else if (!allRefunded) {
+      card = { kind: "lost", caption: `Took an L of ${formatNaira(totalStake)} on "${market.question}" Next one is mine. Join me on UniPred:` };
     }
   }
 
@@ -280,14 +281,13 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
             </>
           )}
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-3 gap-2">
             <Stat
               icon={closed || market.status !== "open" ? Lock : Clock}
               label="Closes"
               value={market.status === "open" ? timeLeft(closesAt, now) : formatDate(market.closes_at)}
             />
             <Stat icon={TrendingUp} label="Volume" value={compactNaira(market.volume_kobo)} />
-            <Stat icon={Waves} label="Liquidity" value={compactNaira(market.liquidity_kobo)} />
             <Stat icon={Users} label="Traders" value={String(market.traders)} />
           </div>
 
@@ -310,18 +310,12 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                   <span className="text-xs tabular-nums text-muted">
                     {market.status === "open" && (
                       <>
-                        Worth <span className="font-semibold text-white">{formatNaira(r.worth)}</span>{" "}
-                        <span className={r.pnl >= 0 ? "text-yes" : "text-no"}>({formatSignedNaira(r.pnl)})</span> · Pays{" "}
-                        <span className="font-semibold text-white">{formatNaira(r.pays)}</span> if {r.outcome} wins
+                        Pays about <span className="font-semibold text-white">{formatNaira(r.pays)}</span> if {r.outcome} wins
                       </>
                     )}
-                    {market.status === "resolved" &&
-                      (r.worth > 0 ? (
-                        <span className="font-semibold text-yes">Won {formatNaira(r.worth)}</span>
-                      ) : (
-                        <span className="font-semibold text-no">Lost</span>
-                      ))}
-                    {market.status === "cancelled" && <span>Refunded</span>}
+                    {r.settled?.kind === "won" && <span className="font-semibold text-yes">Won {formatNaira(r.settled.amountKobo)}</span>}
+                    {r.settled?.kind === "lost" && <span className="font-semibold text-no">Lost</span>}
+                    {r.settled?.kind === "refunded" && <span>Refunded</span>}
                   </span>
                 </div>
               ))}
@@ -360,6 +354,14 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
               <ol className="list-decimal space-y-1 pl-4">
                 <li>Betting stops at the closing time. Anything that happens after it counts as NO.</li>
                 <li>Only the source named above decides the result. Screenshots and rumours don&apos;t count.</li>
+                <li>
+                  Pool betting: all bets go into one pot. Winners get their stake back plus a share of the losing side&apos;s
+                  money in proportion to their bet. UniPred keeps {settings.pool_fee_bps / 100}% of those winnings.
+                </li>
+                <li>
+                  If nobody bet on the losing side, winners get their stake back. If nobody backed the winning side,
+                  everyone is refunded.
+                </li>
                 <li>Winners are paid straight to their wallet as soon as an admin confirms the result.</li>
                 <li>
                   If the source hasn&apos;t confirmed an outcome within 7 days of closing, or the question turns out to be

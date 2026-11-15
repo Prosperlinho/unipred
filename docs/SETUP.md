@@ -10,7 +10,8 @@ About 20 minutes. You need a Supabase account and a Paystack account. Both are f
    2. `supabase/migrations/0002_schools.sql` (the university list)
    3. `supabase/migrations/0003_all_universities.sql` (all 330 NUC-approved universities)
    4. `supabase/migrations/0004_templates_autoapprove_referrals.sql` (rule template, auto-approval, naira wording, referrals)
-   5. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
+   5. `supabase/migrations/0005_pool_betting.sql` (pool betting: UniPred never risks its own money)
+   6. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
 3. Open **Authentication → URL Configuration**:
    - **Site URL**: `https://unipred.vercel.app`
    - **Redirect URLs**: add `https://unipred.vercel.app/**`, `https://unipred-*.vercel.app/**` (Vercel previews) and `http://localhost:3000/**`
@@ -54,36 +55,35 @@ Log out and back in. You'll see **Admin** in the header.
 | Action | What happens |
 | --- | --- |
 | Deposit | Paystack checkout → verified server-side and by webhook → wallet credited once |
-| Buy / sell | Runs inside the database (`buy_shares` / `sell_shares`) with row locks. A 2% fee is taken (`settings.trade_fee_bps`) |
-| Resolve | Admin picks YES/NO → every winning share pays ₦100 straight into the winner's wallet |
-| Cancel | Admin cancels → everyone's net stake is refunded |
+| Bet | Pool betting (`place_bet`): the stake leaves the wallet and goes into the market's YES or NO pot |
+| Resolve | Admin picks YES/NO → each winner gets their stake back + a share of the losing pot (in proportion to their stake), minus UniPred's fee on those winnings (`settings.pool_fee_bps`, default 10%) |
+| No other side | Nobody bet on the losing side → winners get their stake back. Nobody backed the winner → everyone is refunded |
+| Cancel | Admin cancels → everyone's stake is refunded |
 | Withdraw | User requests → amount is held → admin approves → Paystack transfer → webhook marks it paid (or refunds on failure) |
+
+UniPred never puts its own money into a market, so there is no liquidity to fund and no risk per market: it only
+ever pays winners out of the losing side's money, and keeps its fee from that.
 
 Every balance change is written to the `ledger` table with the balance after it, so you can audit any wallet.
 
-Change fees and limits any time:
+Change the fee and limits any time:
 
 ```sql
-update public.settings set trade_fee_bps = 200, min_trade_kobo = 10000,
+-- pool_fee_bps: UniPred's cut of the winnings (1000 = 10%)
+update public.settings set pool_fee_bps = 1000, min_trade_kobo = 10000,
   min_deposit_kobo = 10000, min_withdrawal_kobo = 100000 where id = 1;
 ```
 
 Auto-approval of student proposals (on by default):
 
 ```sql
--- auto_liquidity_kobo: UniPred money put in each auto-approved pool (500000 = ₦5,000)
 -- auto_daily_cap: max auto-approved markets per 24h across everyone; extra ones wait for admin
 -- max_proposals_per_day: per student
-update public.settings set auto_approve = true, auto_liquidity_kobo = 500000,
-  auto_daily_cap = 30, max_proposals_per_day = 3 where id = 1;
+update public.settings set auto_approve = true, auto_daily_cap = 30, max_proposals_per_day = 3 where id = 1;
 
 -- Turn auto-approval off (everything waits in Admin):
 update public.settings set auto_approve = false where id = 1;
 ```
-
-Liquidity in one line: each market's pool is UniPred's money that students bet against. Bigger pools mean steadier
-prices but more at risk; the most UniPred can lose on a market is about its pool size, and it earns the trading fee on
-every bet and cash-out.
 
 Add a university:
 
@@ -97,4 +97,4 @@ values ('ksu', 'Kogi State University', 'KSU', 'Kogi', 'State');
 - Get the gaming licence(s) your lawyer advises (state-level since the Nov 2024 Supreme Court ruling; FSGRN's URC for multiple states).
 - Get Paystack's written approval for betting on your account.
 - Add identity verification (BVN/NIN) before withdrawals.
-- Then swap `PAYSTACK_SECRET_KEY` to the `sk_live_...` key and set the **Live** webhook URL. The yellow "Test mode" banner disappears automatically.
+- Then swap `PAYSTACK_SECRET_KEY` to the `sk_live_...` key and set the **Live** webhook URL.

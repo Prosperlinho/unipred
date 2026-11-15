@@ -14,7 +14,7 @@ import {
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { inputCls } from "@/components/forms";
 import { useUI } from "@/context/UIContext";
-import { probYes } from "@/lib/amm";
+import { marketProbYes } from "@/lib/pool";
 import { compactNaira, formatDate, formatNaira, formatPct } from "@/lib/format";
 import type { ActionResult, Market, Withdrawal } from "@/lib/types";
 
@@ -32,8 +32,6 @@ function useRunner() {
 
 export function PendingMarketCard({ market, proposer, school }: { market: Market; proposer: string; school: string }) {
   const { pending, run } = useRunner();
-  const [prob, setProb] = useState("50");
-  const [liquidity, setLiquidity] = useState("20000");
   const [note, setNote] = useState("");
 
   return (
@@ -48,16 +46,6 @@ export function PendingMarketCard({ market, proposer, school }: { market: Market
       <p className="text-xs text-muted">
         Source: {market.source} · Closes {formatDate(market.closes_at)}
       </p>
-      <div className="grid grid-cols-2 gap-2">
-        <label className="space-y-1 text-xs text-muted">
-          Starting YES odds (%)
-          <input type="number" min={5} max={95} value={prob} onChange={(e) => setProb(e.target.value)} className={inputCls} />
-        </label>
-        <label className="space-y-1 text-xs text-muted">
-          House liquidity (₦)
-          <input type="number" min={1000} step={1000} value={liquidity} onChange={(e) => setLiquidity(e.target.value)} className={inputCls} />
-        </label>
-      </div>
       <input
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -68,7 +56,7 @@ export function PendingMarketCard({ market, proposer, school }: { market: Market
         <button
           type="button"
           disabled={pending}
-          onClick={() => run(() => approveMarket(market.id, Number(prob), Number(liquidity)), () => "Market is live.")}
+          onClick={() => run(() => approveMarket(market.id), () => "Market is live.")}
           className="flex items-center justify-center gap-1 rounded-xl bg-yes py-2 text-sm font-bold text-black disabled:opacity-50"
         >
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Approve
@@ -111,8 +99,7 @@ export function OpenMarketRow({ market, school, now }: { market: Market; school:
         {market.question}
       </Link>
       <p className="text-xs text-muted">
-        YES {formatPct(probYes({ pool_yes: Number(market.pool_yes), pool_no: Number(market.pool_no) }))} ·{" "}
-        {compactNaira(market.volume_kobo)} volume · {market.traders} traders
+        YES {formatPct(marketProbYes(market))} · {compactNaira(Number(market.stake_yes_kobo) + Number(market.stake_no_kobo))} in pot · {market.traders} traders
       </p>
       <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Cancellation reason (optional)" className={inputCls} />
       <div className="grid grid-cols-3 gap-2">

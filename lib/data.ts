@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { PlatformSettings, School } from "@/lib/types";
 
 const DEFAULT_SETTINGS: PlatformSettings = {
-  trade_fee_bps: 200,
+  pool_fee_bps: 1000,
   min_trade_kobo: 10_000,
   min_deposit_kobo: 10_000,
   min_withdrawal_kobo: 100_000,
@@ -23,7 +23,7 @@ export const getSettings = cache(async (): Promise<PlatformSettings> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("settings")
-    .select("trade_fee_bps, min_trade_kobo, min_deposit_kobo, min_withdrawal_kobo")
+    .select("pool_fee_bps, min_trade_kobo, min_deposit_kobo, min_withdrawal_kobo")
     .eq("id", 1)
     .maybeSingle<PlatformSettings>();
   return data ?? DEFAULT_SETTINGS;

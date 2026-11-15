@@ -18,17 +18,11 @@ function refreshAll() {
   revalidatePath("/", "layout");
 }
 
-export async function approveMarket(id: string, probPct: number, liquidityNaira: number): Promise<ActionResult> {
+export async function approveMarket(id: string): Promise<ActionResult> {
   const denied = await assertAdmin();
   if (denied) return { ok: false, error: denied };
-  if (!(probPct >= 5 && probPct <= 95)) return { ok: false, error: "Starting odds must be between 5% and 95%." };
-  if (!(liquidityNaira >= 1000)) return { ok: false, error: "Liquidity must be at least ₦1,000." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("approve_market", {
-    p_market: id,
-    p_initial_prob: probPct / 100,
-    p_liquidity_kobo: Math.round(liquidityNaira * 100),
-  });
+  const { error } = await supabase.rpc("approve_market", { p_market: id });
   if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
   return { ok: true, value: undefined };
@@ -51,8 +45,11 @@ export async function resolveMarket(id: string, outcome: Outcome): Promise<Actio
   const { data, error } = await supabase.rpc("resolve_market", { p_market: id, p_outcome: outcome });
   if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
-  const r = data as { winners: number; paid_kobo: number };
-  return { ok: true, value: `Resolved ${outcome}. Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s).` };
+  const r = data as { winners: number; paid_kobo: number; fee_kobo?: number };
+  return {
+    ok: true,
+    value: `Resolved ${outcome}. Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s). UniPred fee: ${formatNaira(r.fee_kobo ?? 0)}.`,
+  };
 }
 
 export async function cancelMarket(id: string, note: string): Promise<ActionResult<string>> {

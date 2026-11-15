@@ -1,7 +1,7 @@
 import { Ban, CheckCircle2, Clock, Lock, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
-import { probYes, quoteBuy } from "@/lib/amm";
+import { estimateBet, marketProbYes } from "@/lib/pool";
 import { compactNaira, formatPct, timeLeft } from "@/lib/format";
 import type { Market } from "@/lib/types";
 import { CategoryBadge } from "./CategoryBadge";
@@ -15,11 +15,12 @@ interface Props {
 }
 
 function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
-  const pools = { pool_yes: Number(market.pool_yes), pool_no: Number(market.pool_no) };
-  const p = probYes(pools);
-  // What a ₦1,000 bet would pay on each side, shown on the buttons.
-  const yesPays = quoteBuy(pools, "YES", 100_000, feeBps)?.payoutKobo ?? 0;
-  const noPays = quoteBuy(pools, "NO", 100_000, feeBps)?.payoutKobo ?? 0;
+  const p = marketProbYes(market);
+  // Estimated payout of a ₦1,000 bet on each side if betting closed now.
+  const yesPays = estimateBet(market, "YES", 100_000, feeBps)?.payoutKobo ?? 0;
+  const noPays = estimateBet(market, "NO", 100_000, feeBps)?.payoutKobo ?? 0;
+  const pot = Number(market.stake_yes_kobo) + Number(market.stake_no_kobo);
+  const hint = (pays: number, otherSide: number) => (otherSide > 0 ? `₦1k wins ~${compactNaira(pays)}` : "Be the first");
   const closesAt = new Date(market.closes_at).getTime();
   const closed = now >= closesAt;
   const urgent = !closed && closesAt - now < 24 * 3_600_000;
@@ -73,7 +74,7 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
       <div className="flex items-center gap-3 text-xs text-muted">
         <span className="inline-flex items-center gap-1">
           <TrendingUp className="size-3.5" />
-          {compactNaira(market.volume_kobo)} vol
+          {market.engine === "pool" ? `${compactNaira(pot)} in pot` : `${compactNaira(market.volume_kobo)} vol`}
         </span>
         <span className="inline-flex items-center gap-1">
           <Users className="size-3.5" />
@@ -88,14 +89,14 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
             className="group flex flex-col items-center rounded-xl bg-yes/15 py-2 text-center text-yes transition hover:bg-yes hover:text-black"
           >
             <span className="text-sm font-bold">YES {formatPct(p)}</span>
-            <span className="text-[11px] tabular-nums opacity-80">₦1k wins {compactNaira(yesPays)}</span>
+            <span className="text-[11px] tabular-nums opacity-80">{hint(yesPays, Number(market.stake_no_kobo))}</span>
           </Link>
           <Link
             href={`${href}?side=NO`}
             className="group flex flex-col items-center rounded-xl bg-no/15 py-2 text-center text-no transition hover:bg-no hover:text-black"
           >
             <span className="text-sm font-bold">NO {formatPct(1 - p)}</span>
-            <span className="text-[11px] tabular-nums opacity-80">₦1k wins {compactNaira(noPays)}</span>
+            <span className="text-[11px] tabular-nums opacity-80">{hint(noPays, Number(market.stake_yes_kobo))}</span>
           </Link>
         </div>
       ) : (

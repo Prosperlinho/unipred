@@ -62,7 +62,7 @@ export default async function HomePage(props: PageProps<"/">) {
             schoolLabels={schoolLabels}
             showSchool={selected === "all"}
             serverNow={now}
-            feeBps={settings.trade_fee_bps}
+            feeBps={settings.pool_fee_bps}
             emptyHint={
               selectedSchool
                 ? `Nobody has opened a market at ${selectedSchool.short_name} yet. Propose the first one and our team will review it.`

@@ -6,9 +6,9 @@ import { Container } from "@/components/Container";
 import { FormMessage } from "@/components/forms";
 import { getRequestTime } from "@/lib/time";
 import { requireViewer } from "@/lib/auth";
-import { SHARE_VALUE_KOBO, quoteSell } from "@/lib/amm";
+import { marketProbYes, payoutIfWins, settledResult } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
-import { formatNaira, formatSignedNaira, timeLeft } from "@/lib/format";
+import { formatNaira, formatPct, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
@@ -55,28 +55,21 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
     getSettings(),
   ]);
   const schoolLabel = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
-  const rows = ((posData ?? []) as Row[]).filter((r) => r.market && r.shares > 0);
+  const rows = ((posData ?? []) as Row[]).filter((r) => r.market && Number(r.cost_kobo) > 0);
   const proposals = (proposalData ?? []) as Market[];
   const now = getRequestTime();
 
   const valued = rows.map((r) => {
     const m = r.market;
-    const pays = Math.floor(r.shares * SHARE_VALUE_KOBO);
-    // "Worth now" = what a full cash-out would pay right now (after fee).
-    const value =
-      m.status === "resolved"
-        ? m.resolution === r.outcome
-          ? pays
-          : 0
-        : (quoteSell({ pool_yes: Number(m.pool_yes), pool_no: Number(m.pool_no) }, r.outcome, r.shares, settings.trade_fee_bps)
-            ?.netKobo ?? 0);
-    return { ...r, pays, value, pnl: value - r.cost_kobo };
+    const pos = { outcome: r.outcome, shares: Number(r.shares), cost_kobo: Number(r.cost_kobo) };
+    const sideShare = r.outcome === "YES" ? marketProbYes(m) : 1 - marketProbYes(m);
+    return { ...r, pays: payoutIfWins(m, pos, settings.pool_fee_bps), result: settledResult(m, pos, settings.pool_fee_bps), sideShare };
   });
   const active = valued.filter((r) => r.market.status === "open");
   const settled = valued.filter((r) => r.market.status === "resolved" || r.market.status === "cancelled");
 
-  const positionsValue = active.reduce((s, r) => s + r.value, 0);
-  const unrealized = active.reduce((s, r) => s + r.pnl, 0);
+  const stakedOpen = active.reduce((sum, r) => sum + Number(r.cost_kobo), 0);
+  const couldWin = active.reduce((sum, r) => sum + r.pays, 0);
 
   return (
     <Container>
@@ -91,13 +84,9 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
       <div className="space-y-6">
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Summary label="Wallet" value={formatNaira(viewer.balanceKobo)} />
-          <Summary label="Bets worth now" value={formatNaira(positionsValue)} />
-          <Summary
-            label="Profit so far"
-            value={formatSignedNaira(unrealized)}
-            tone={unrealized > 0 ? "yes" : unrealized < 0 ? "no" : undefined}
-          />
-          <Summary label="Total" value={formatNaira(viewer.balanceKobo + positionsValue)} />
+          <Summary label="In open bets" value={formatNaira(stakedOpen)} />
+          <Summary label="Could win (est.)" value={formatNaira(couldWin)} tone={couldWin > 0 ? "yes" : undefined} />
+          <Summary label="Wallet + bets" value={formatNaira(viewer.balanceKobo + stakedOpen)} />
         </section>
 
         <section className="space-y-3">
@@ -139,18 +128,16 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                     </p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-center">
                       <div className="rounded-lg bg-bg p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted">Worth now</p>
-                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.value)}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-muted">Staked</p>
+                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(Number(r.cost_kobo))}</p>
                       </div>
                       <div className="rounded-lg bg-bg p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted">Profit</p>
-                        <p className={`text-sm font-bold tabular-nums ${r.pnl >= 0 ? "text-yes" : "text-no"}`}>
-                          {formatSignedNaira(r.pnl)}
-                        </p>
+                        <p className="text-[10px] uppercase tracking-wide text-muted">{r.outcome} share</p>
+                        <p className="text-sm font-bold tabular-nums text-white">{formatPct(r.sideShare)}</p>
                       </div>
                       <div className="rounded-lg bg-bg p-2">
                         <p className="text-[10px] uppercase tracking-wide text-muted">If {r.outcome} wins</p>
-                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.pays)}</p>
+                        <p className={`text-sm font-bold tabular-nums ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>~{formatNaira(r.pays)}</p>
                       </div>
                     </div>
                   </Link>
@@ -165,7 +152,8 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
             <Title count={settled.length}>Settled</Title>
             <div className="divide-y divide-line rounded-2xl border border-line bg-card">
               {settled.map((r) => {
-                const won = r.market.status === "resolved" && r.market.resolution === r.outcome;
+                const won = r.result?.kind === "won";
+                const refunded = r.result?.kind === "refunded";
                 const cancelled = r.market.status === "cancelled";
                 return (
                   <Link
@@ -177,16 +165,24 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                       <span className="block truncate text-white">{r.market.question}</span>
                       <span className="text-xs text-muted">
                         {formatNaira(r.cost_kobo)} on {r.outcome} ·{" "}
-                        {cancelled ? "cancelled, stake refunded" : `resolved ${r.market.resolution} · tap to share your card`}
+                        {cancelled
+                          ? "cancelled, stake refunded"
+                          : refunded
+                            ? `resolved ${r.market.resolution} · nobody backed it, stake refunded`
+                            : `resolved ${r.market.resolution} · tap to share your card`}
                       </span>
                     </span>
                     <span
                       className={`inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums ${
-                        cancelled ? "text-muted" : won ? "text-yes" : "text-no"
+                        cancelled || refunded ? "text-muted" : won ? "text-yes" : "text-no"
                       }`}
                     >
-                      {cancelled ? null : won ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
-                      {cancelled ? "Refunded" : won ? `Won ${formatNaira(r.value)}` : `Lost ${formatNaira(r.cost_kobo)}`}
+                      {cancelled || refunded ? null : won ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
+                      {cancelled || refunded
+                        ? "Refunded"
+                        : won
+                          ? `Won ${formatNaira(r.result?.amountKobo ?? 0)}`
+                          : `Lost ${formatNaira(Number(r.cost_kobo))}`}
                     </span>
                   </Link>
                 );

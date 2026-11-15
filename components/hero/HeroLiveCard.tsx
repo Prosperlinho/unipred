@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { probYes } from "@/lib/amm";
+import { marketProbYes } from "@/lib/pool";
 import { compactNaira } from "@/lib/format";
 import type { Market } from "@/lib/types";
 import { ProbabilityBar } from "../ProbabilityBar";
@@ -23,11 +23,11 @@ export function HeroLiveCard({ market, schoolLabel }: { market: Market | null; s
             </span>
             Trending{schoolLabel ? ` at ${schoolLabel}` : " now"}
           </span>
-          <span className="tabular-nums text-white/60">{compactNaira(market.volume_kobo)} vol</span>
+          <span className="tabular-nums text-white/60">{compactNaira(market.volume_kobo)} in pot</span>
         </div>
         <p className="mt-3 font-serif text-lg leading-snug text-white">{market.question}</p>
         <div className="mt-4">
-          <ProbabilityBar probYes={probYes(market)} />
+          <ProbabilityBar probYes={marketProbYes(market)} />
         </div>
         <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-teal">
           Trade this market
