@@ -309,7 +309,7 @@ export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?:
           }}
         >
           <span>@{c.username}</span>
-          <span>{c.status} · unipred.vercel.app</span>
+          <span>{c.status} · unipred.site</span>
         </div>
       </div>
     ),

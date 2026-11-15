@@ -4,6 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED = ["/wallet", "/portfolio", "/profile", "/settings", "/admin", "/propose"];
 export const REF_COOKIE = "unipred_ref";
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
+/** The official address. Old links to the Vercel address are forwarded here. */
+const CANONICAL_HOST = "unipred.site";
+const OLD_HOSTS = new Set(["unipred.vercel.app", "www.unipred.site"]);
 
 /** Remembers who invited this visitor (?ref=username) for 30 days, for referral credit at sign-up. */
 function rememberReferrer(request: NextRequest, response: NextResponse): NextResponse {
@@ -16,6 +19,17 @@ function rememberReferrer(request: NextRequest, response: NextResponse): NextRes
 
 /** Refreshes the Supabase session cookie and guards signed-in-only pages. */
 export async function proxy(request: NextRequest) {
+  // Permanently forward old addresses (keeps the path, ?ref= invites and bet links intact).
+  // Paystack webhooks (/api/paystack) never reach this proxy, so payments are unaffected.
+  const host = request.headers.get("host")?.toLowerCase() ?? "";
+  if (OLD_HOSTS.has(host)) {
+    const target = request.nextUrl.clone();
+    target.protocol = "https:";
+    target.host = CANONICAL_HOST;
+    target.port = "";
+    return NextResponse.redirect(target, 308);
+  }
+
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

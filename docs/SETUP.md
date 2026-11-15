@@ -13,8 +13,8 @@ About 20 minutes. You need a Supabase account and a Paystack account. Both are f
    5. `supabase/migrations/0005_pool_betting.sql` (pool betting: UniPred never risks its own money)
    6. *(optional)* `supabase/optional_starter_markets.sql`: opens 6 sample markets. Change `v_school` at the top to your launch university first.
 3. Open **Authentication → URL Configuration**:
-   - **Site URL**: `https://unipred.vercel.app`
-   - **Redirect URLs**: add `https://unipred.vercel.app/**`, `https://unipred-*.vercel.app/**` (Vercel previews) and `http://localhost:3000/**`
+   - **Site URL**: `https://unipred.site`
+   - **Redirect URLs**: add `https://unipred.site/**`, `https://unipred.vercel.app/**`, `https://unipred-*.vercel.app/**` (Vercel previews) and `http://localhost:3000/**`
 4. Open **Authentication → Sign In / Providers → Email** and make sure **Confirm email** is on.
 5. Open **Project Settings → API Keys** (or **API**) and copy:
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
@@ -29,7 +29,7 @@ About 20 minutes. You need a Supabase account and a Paystack account. Both are f
 2. Make sure the toggle at the top says **Test Mode**.
 3. **Settings → API Keys & Webhooks**:
    - Copy the **Test Secret Key** (`sk_test_...`) → `PAYSTACK_SECRET_KEY`
-   - Set **Test Webhook URL** to `https://unipred.vercel.app/api/paystack/webhook`
+   - Set **Test Webhook URL** to `https://unipred.site/api/paystack/webhook`
 4. **Settings → Preferences → Transfers**: turn off "Confirm transfers with OTP" so admin payouts don't need an OTP each time.
 
 Test card for deposits: `4084 0840 8408 4081`, any future expiry, CVV `408`, PIN `0000`, OTP `123456`.
