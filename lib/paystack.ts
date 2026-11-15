@@ -47,7 +47,14 @@ export const paystack = {
   },
 
   async verifyTransaction(reference: string) {
-    const res = await request<{ status: string; amount: number; reference: string; channel: string }>(
+    const res = await request<{
+      status: string;
+      amount: number;
+      reference: string;
+      channel: string;
+      authorization?: { account_name?: string | null; sender_name?: string | null } | null;
+      customer?: { first_name?: string | null; last_name?: string | null } | null;
+    }>(
       `/transaction/verify/${encodeURIComponent(reference)}`,
     );
     return res.data;

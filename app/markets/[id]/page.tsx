@@ -349,26 +349,13 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
               <dt className="text-muted">Resolved by</dt>
               <dd className="text-white">UniPred admins, using the source above</dd>
             </dl>
-            <div className="rounded-xl border border-line p-3 text-xs leading-relaxed text-muted">
-              <p className="mb-1.5 font-semibold text-white">House rules (apply to every market)</p>
-              <ol className="list-decimal space-y-1 pl-4">
-                <li>Betting stops at the closing time. Anything that happens after it counts as NO.</li>
-                <li>Only the source named above decides the result. Screenshots and rumours don&apos;t count.</li>
-                <li>
-                  Pool betting: all bets go into one pot. Winners get their stake back plus a share of the losing side&apos;s
-                  money in proportion to their bet. UniPred keeps {settings.pool_fee_bps / 100}% of those winnings.
-                </li>
-                <li>
-                  If nobody bet on the losing side, winners get their stake back. If nobody backed the winning side,
-                  everyone is refunded.
-                </li>
-                <li>Winners are paid straight to their wallet as soon as an admin confirms the result.</li>
-                <li>
-                  If the source hasn&apos;t confirmed an outcome within 7 days of closing, or the question turns out to be
-                  unclear or unfair, the market is cancelled and every stake is refunded in full.
-                </li>
-              </ol>
-            </div>
+            <Link
+              href="/rules"
+              className="flex items-center justify-between rounded-xl border border-line p-3 text-xs text-muted transition hover:border-white/20 hover:text-white"
+            >
+              <span>Pool betting, payouts, refunds and account rules apply to every market.</span>
+              <span className="shrink-0 font-semibold text-brand">House Rules →</span>
+            </Link>
           </section>
 
           <section className="space-y-3">

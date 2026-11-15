@@ -36,7 +36,7 @@ const GOLD = "#e2b05c";
 
 // Chart panel geometry (inside the 1080px card with 56px padding).
 const CHART_W = 968;
-const CHART_H = 400;
+const CHART_H = 340;
 const PLOT_W = 790; // leaves a right-hand gutter for the % axis and the YES label
 const PLOT_PAD_Y = 24;
 
@@ -74,9 +74,11 @@ function CandleChart({ candles, yesShare, accent }: { candles: Candle[]; yesShar
               borderTop: g === 0.5 ? "2px dashed rgba(255,255,255,0.16)" : "1px solid rgba(255,255,255,0.07)",
             }}
           />
-          <div style={{ display: "flex", marginLeft: 10, marginTop: -2, fontSize: 20, fontWeight: 500, color: "#64748b" }}>
-            {`${Math.round(g * 100)}%`}
-          </div>
+          {Math.abs(y(g) - lastY) > 30 ? (
+            <div style={{ display: "flex", marginLeft: 10, marginTop: -2, fontSize: 20, fontWeight: 500, color: "#64748b" }}>
+              {`${Math.round(g * 100)}%`}
+            </div>
+          ) : null}
         </div>
       ))}
 
@@ -227,40 +229,60 @@ export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?:
           </div>
         </div>
 
-        {/* Result */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: 44 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 40, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: 3 }}>
-              {c.headline}
+        {/* Result: full-width amount, details on their own row so nothing overlaps */}
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 36 }}>
+          <div style={{ display: "flex", fontSize: 38, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: 3 }}>
+            {c.headline}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: c.amount.length > 10 ? 104 : c.amount.length > 7 ? 124 : 140,
+              fontWeight: 800,
+              lineHeight: 1,
+              marginTop: 8,
+              color: c.kind === "lost" ? "#f8fafc" : accent,
+            }}
+          >
+            {c.amount}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                fontSize: 24,
+                fontWeight: 500,
+                color: "#94a3b8",
+                padding: "8px 18px",
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.06)",
+              }}
+            >
+              <span>Staked</span>
+              <span style={{ color: "white", fontWeight: 800 }}>{c.stake}</span>
             </div>
             <div
               style={{
                 display: "flex",
-                fontSize: c.amount.length > 9 ? 112 : 136,
-                fontWeight: 800,
-                lineHeight: 1,
-                marginTop: 6,
-                color: c.kind === "lost" ? "#f8fafc" : accent,
+                gap: 10,
+                fontSize: 24,
+                fontWeight: 500,
+                color: "#94a3b8",
+                padding: "8px 18px",
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.06)",
               }}
             >
-              {c.amount}
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, marginBottom: 8 }}>
-            <div style={{ display: "flex", gap: 10, fontSize: 26, fontWeight: 500, color: "#94a3b8" }}>
-              <span>Staked</span>
-              <span style={{ color: "white", fontWeight: 800 }}>{c.stake}</span>
-            </div>
-            <div style={{ display: "flex", gap: 10, fontSize: 26, fontWeight: 500, color: "#94a3b8" }}>
               <span>Backed</span>
               <span style={{ color: c.side === "YES" ? GREEN : RED, fontWeight: 800 }}>{c.side}</span>
             </div>
           </div>
+          <div style={{ display: "flex", fontSize: 26, fontWeight: 500, color: "#cbd5e1", marginTop: 14 }}>{c.detail}</div>
         </div>
-        <div style={{ display: "flex", fontSize: 28, fontWeight: 500, color: "#cbd5e1", marginTop: 14 }}>{c.detail}</div>
 
         {/* Chart */}
-        <div style={{ display: "flex", marginTop: 30 }}>
+        <div style={{ display: "flex", marginTop: 26 }}>
           <CandleChart candles={c.candles} yesShare={c.yesShare} accent={accent} />
         </div>
 

@@ -45,10 +45,10 @@ export async function resolveMarket(id: string, outcome: Outcome): Promise<Actio
   const { data, error } = await supabase.rpc("resolve_market", { p_market: id, p_outcome: outcome });
   if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
-  const r = data as { winners: number; paid_kobo: number; fee_kobo?: number };
+  const r = data as { winners: number; paid_kobo: number; fee_kobo?: number; referral_kobo?: number };
   return {
     ok: true,
-    value: `Resolved ${outcome}. Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s). UniPred fee: ${formatNaira(r.fee_kobo ?? 0)}.`,
+    value: `Resolved ${outcome}. Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s). UniPred fee: ${formatNaira(r.fee_kobo ?? 0)}. Invite bonuses: ${formatNaira(r.referral_kobo ?? 0)}.`,
   };
 }
 
@@ -105,6 +105,24 @@ export async function rejectWithdrawal(id: string, note: string): Promise<Action
   });
   if (error) return { ok: false, error: friendlyError(error.message) };
   if (!data) return { ok: false, error: "This withdrawal is no longer pending." };
+  refreshAll();
+  return { ok: true, value: undefined };
+}
+
+/** Suspend or restore an account after review. Clearing also removes any flag. */
+export async function setAccountStatus(userId: string, suspend: boolean, reason: string): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update(
+      suspend
+        ? { is_banned: true, ban_reason: reason.trim() || "Suspended by admin" }
+        : { is_banned: false, ban_reason: null, flagged_reason: null, payout_name_strikes: 0 },
+    )
+    .eq("id", userId);
+  if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
   return { ok: true, value: undefined };
 }

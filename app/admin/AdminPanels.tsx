@@ -10,6 +10,7 @@ import {
   rejectMarket,
   rejectWithdrawal,
   resolveMarket,
+  setAccountStatus,
 } from "@/app/actions/admin";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { inputCls } from "@/components/forms";
@@ -167,6 +168,70 @@ export function WithdrawalRow({ w, username }: { w: Withdrawal; username: string
           </div>
         </>
       )}
+    </article>
+  );
+}
+
+export interface ReviewAccount {
+  id: string;
+  username: string;
+  full_name: string;
+  is_banned: boolean;
+  ban_reason: string | null;
+  flagged_reason: string | null;
+  balance_kobo: number;
+}
+
+export function AccountReviewRow({ a }: { a: ReviewAccount }) {
+  const { pending, run } = useRunner();
+  const [note, setNote] = useState("");
+  return (
+    <article className="space-y-2 rounded-2xl border border-line bg-card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-semibold text-white">
+          @{a.username} <span className="text-xs font-normal text-muted">· {a.full_name || "no name set"}</span>
+        </p>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${a.is_banned ? "bg-no/15 text-no" : "bg-amber-400/15 text-amber-300"}`}>
+          {a.is_banned ? "Suspended" : "Flagged"}
+        </span>
+      </div>
+      <p className="text-xs text-muted">Wallet: {formatNaira(a.balance_kobo)}</p>
+      {a.ban_reason && <p className="text-xs text-no">Suspended: {a.ban_reason}</p>}
+      {a.flagged_reason && <p className="text-xs text-amber-200">Flag: {a.flagged_reason}</p>}
+      {!a.is_banned && (
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason for suspension" className={inputCls} />
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        {a.is_banned ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => run(() => setAccountStatus(a.id, false, ""), () => `@${a.username} restored.`)}
+            className="col-span-2 rounded-xl border border-line py-2 text-sm font-semibold text-white hover:bg-card-2 disabled:opacity-50"
+          >
+            Lift suspension
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => run(() => setAccountStatus(a.id, true, note), () => `@${a.username} suspended.`)}
+              className="rounded-xl bg-no py-2 text-sm font-bold text-black disabled:opacity-50"
+            >
+              Suspend
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => run(() => setAccountStatus(a.id, false, ""), () => "Flag cleared.")}
+              className="rounded-xl border border-line py-2 text-sm font-semibold text-white hover:bg-card-2 disabled:opacity-50"
+            >
+              Clear flag
+            </button>
+          </>
+        )}
+      </div>
     </article>
   );
 }

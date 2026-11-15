@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   min_trade_kobo: 10_000,
   min_deposit_kobo: 10_000,
   min_withdrawal_kobo: 100_000,
+  referral_share_bps: 2000,
+  terms_version: 1,
 };
 
 export const getSchools = cache(async (): Promise<School[]> => {
@@ -23,7 +25,7 @@ export const getSettings = cache(async (): Promise<PlatformSettings> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("settings")
-    .select("pool_fee_bps, min_trade_kobo, min_deposit_kobo, min_withdrawal_kobo")
+    .select("pool_fee_bps, min_trade_kobo, min_deposit_kobo, min_withdrawal_kobo, referral_share_bps, terms_version")
     .eq("id", 1)
     .maybeSingle<PlatformSettings>();
   return data ?? DEFAULT_SETTINGS;

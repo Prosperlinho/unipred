@@ -1,5 +1,6 @@
 import { Container } from "@/components/Container";
 import { Hero } from "@/components/Hero";
+import { AutoRefresh } from "@/components/LiveRefresh";
 import { MarketFeed } from "@/components/MarketFeed";
 import { SchoolPicker } from "@/components/SchoolPicker";
 import { getRequestTime } from "@/lib/time";
@@ -46,6 +47,7 @@ export default async function HomePage(props: PageProps<"/">) {
       />
       <Container className="-mt-8 sm:-mt-10">
         <section id="markets" className="relative z-10 scroll-mt-20 space-y-4">
+          <AutoRefresh intervalMs={30_000} />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">

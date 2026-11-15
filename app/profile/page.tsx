@@ -5,7 +5,7 @@ import { signOut } from "@/app/actions/auth";
 import { Container } from "@/components/Container";
 import { ShareButton } from "@/components/ShareButton";
 import { requireViewer } from "@/lib/auth";
-import { getSchools } from "@/lib/data";
+import { getSchools, getSettings } from "@/lib/data";
 import { formatNaira, initials } from "@/lib/format";
 import { getOrigin } from "@/lib/origin";
 import { createClient } from "@/lib/supabase/server";
@@ -24,13 +24,16 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default async function ProfilePage() {
   const viewer = await requireViewer("/profile");
   const supabase = await createClient();
-  const [schools, trades, proposals, invited, origin] = await Promise.all([
+  const [schools, trades, proposals, invited, origin, settings, { data: bonusRows }] = await Promise.all([
     getSchools(),
     supabase.from("trades").select("id", { count: "exact", head: true }).eq("user_id", viewer.id),
     supabase.from("markets").select("id", { count: "exact", head: true }).eq("created_by", viewer.id),
     supabase.rpc("referral_count"),
     getOrigin(),
+    getSettings(),
+    supabase.from("ledger").select("amount_kobo").eq("user_id", viewer.id).eq("kind", "referral"),
   ]);
+  const earnedKobo = ((bonusRows ?? []) as Array<{ amount_kobo: number }>).reduce((sum, r) => sum + Number(r.amount_kobo), 0);
   const inviteLink = `${origin}/?ref=${encodeURIComponent(viewer.profile.username)}`;
   const school = schools.find((s) => s.id === viewer.profile.school_id);
   const p = viewer.profile;
@@ -72,8 +75,20 @@ export default async function ProfilePage() {
           <h2 className="font-semibold text-white">Invite your coursemates</h2>
         </div>
         <p className="text-sm text-muted">
-          Share your personal link. Everyone who signs up through it is counted as your invite.
+          Earn <span className="font-semibold text-white">{settings.referral_share_bps / 100}% of UniPred&apos;s fee</span> on
+          every bet your friends make, win or lose. It&apos;s paid into your wallet when each market resolves, and comes out
+          of UniPred&apos;s fee, never your friends&apos; winnings.
         </p>
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="rounded-xl bg-bg p-2.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted">Friends joined</p>
+            <p className="text-lg font-bold tabular-nums text-white">{typeof invited.data === "number" ? invited.data : 0}</p>
+          </div>
+          <div className="rounded-xl bg-bg p-2.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted">You&apos;ve earned</p>
+            <p className="text-lg font-bold tabular-nums text-yes">{formatNaira(earnedKobo)}</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2">
           <span className="min-w-0 flex-1 truncate font-mono text-xs text-white">{inviteLink}</span>
           <ShareButton

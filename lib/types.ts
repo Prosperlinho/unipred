@@ -55,6 +55,12 @@ export interface Profile {
   date_of_birth: string;
   is_admin: boolean;
   created_at: string;
+  terms_accepted_at: string | null;
+  terms_version: number;
+  onboarded_at: string | null;
+  is_banned: boolean;
+  ban_reason: string | null;
+  payout_name_strikes: number;
 }
 
 export interface Position {
@@ -115,6 +121,10 @@ export interface PlatformSettings {
   min_trade_kobo: number;
   min_deposit_kobo: number;
   min_withdrawal_kobo: number;
+  /** Share of UniPred's fee paid to the inviter of each bettor (2000 = 20%). */
+  referral_share_bps: number;
+  /** Bump to make everyone accept updated house rules again. */
+  terms_version: number;
 }
 
 export type ActionResult<T = undefined> = { ok: true; value: T } | { ok: false; error: string };

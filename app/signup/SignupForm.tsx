@@ -1,5 +1,6 @@
 "use client";
 
+import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { signUp } from "@/app/actions/auth";
@@ -44,23 +45,38 @@ export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: str
           className={inputCls}
         />
       </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Username" htmlFor="username" hint="Shown on comments.">
-          <input
-            id="username"
-            name="username"
-            autoComplete="username"
-            defaultValue={v.username}
-            pattern="[A-Za-z0-9_]{3,20}"
-            title="3-20 letters, numbers or underscores"
-            required
-            className={inputCls}
-          />
-        </Field>
-        <Field label="Full name (optional)" htmlFor="full_name">
-          <input id="full_name" name="full_name" autoComplete="name" maxLength={80} defaultValue={v.full_name} className={inputCls} />
-        </Field>
+      <Field label="Full name (exactly as on your bank account)" htmlFor="full_name">
+        <input
+          id="full_name"
+          name="full_name"
+          autoComplete="name"
+          maxLength={80}
+          required
+          defaultValue={v.full_name}
+          placeholder="e.g. Adebayo John Oluwaseun"
+          className={inputCls}
+        />
+      </Field>
+      <div className="flex gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-100">
+        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-300" />
+        <p>
+          <b>Your full name can&apos;t be changed later.</b> Withdrawals only go to a bank account in this exact name, and
+          you should fund your wallet from your own account. One person, one account: accounts that use someone
+          else&apos;s bank details or create duplicate accounts are suspended.
+        </p>
       </div>
+      <Field label="Username" htmlFor="username" hint="Shown on comments and your cards.">
+        <input
+          id="username"
+          name="username"
+          autoComplete="username"
+          defaultValue={v.username}
+          pattern="[A-Za-z0-9_]{3,20}"
+          title="3-20 letters, numbers or underscores"
+          required
+          className={inputCls}
+        />
+      </Field>
       <Field label="Your university" htmlFor="school_id" hint="Your feed opens on your school. You can browse others too.">
         <SchoolCombobox id="school_id" name="school_id" schools={schools} value={school} onChange={setSchool} />
       </Field>
@@ -78,7 +94,19 @@ export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: str
       <label className="flex items-start gap-2 text-xs text-muted">
         <input name="terms" type="checkbox" required className="mt-0.5 size-4 accent-[var(--color-brand)]" />
         <span>
-          I confirm I am 18 or older, I&apos;ll only stake money I can afford to lose, and I accept UniPred&apos;s terms.
+          I confirm I am 18 or older, I&apos;ll only stake money I can afford to lose, and I accept UniPred&apos;s{" "}
+          <Link href="/terms" target="_blank" className="text-brand underline">
+            Terms
+          </Link>
+          ,{" "}
+          <Link href="/rules" target="_blank" className="text-brand underline">
+            House Rules
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" target="_blank" className="text-brand underline">
+            Privacy Policy
+          </Link>
+          .
         </span>
       </label>
       <FormMessage error={state.error} />

@@ -1,17 +1,26 @@
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { UIProvider } from "@/context/UIContext";
+import { ShieldAlert } from "lucide-react";
 import { getViewer } from "@/lib/auth";
+import { getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
+import { HouseRules } from "./HouseRules";
+import { RulesGate } from "./RulesGate";
+import { WelcomeGuide } from "./WelcomeGuide";
 import { Toaster } from "./Toaster";
 
 export async function AppShell({ children }: { children: ReactNode }) {
   // Every page is personal (balance, session), so always render per request.
   await connection();
-  const viewer = await getViewer();
+  const [viewer, settings] = await Promise.all([getViewer(), getSettings()]);
+  const profile = viewer?.profile;
+  // Columns are undefined until migration 0006 runs; only gate when they exist.
+  const needsRules = !!profile && typeof profile.terms_version === "number" && profile.terms_version < settings.terms_version;
+  const showWelcome = !!profile && !needsRules && profile.onboarded_at === null;
 
   return (
     <UIProvider>
@@ -23,6 +32,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
               : null
           }
         />
+        {profile?.is_banned && (
+          <div className="flex items-start justify-center gap-2 bg-no/15 px-4 py-2 text-center text-xs font-medium text-no">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0" />
+            Your account is suspended pending review. Betting, proposals and withdrawals are disabled. Contact UniPred support.
+          </div>
+        )}
         <main className="w-full flex-1">
           {isSupabaseConfigured ? (
             children
@@ -40,6 +55,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <Footer />
       </div>
       <BottomNav loggedIn={!!viewer} />
+      {needsRules && (
+        <RulesGate>
+          <HouseRules feePct={settings.pool_fee_bps / 100} referralPct={settings.referral_share_bps / 100} compact />
+        </RulesGate>
+      )}
+      {showWelcome && profile && <WelcomeGuide username={profile.username} />}
       <Toaster />
     </UIProvider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowRight, Info, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowRight, Info, Loader2, Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { placeBet } from "@/app/actions/trade";
@@ -9,6 +9,7 @@ import { compactNaira, formatNaira, formatPct, formatSignedNaira } from "@/lib/f
 import { estimateBet } from "@/lib/pool";
 import { useNow } from "@/lib/useNow";
 import type { Outcome } from "@/lib/types";
+import { LiveBadge } from "./LiveRefresh";
 import { ShareButton } from "./ShareButton";
 
 interface Props {
@@ -38,6 +39,7 @@ export function TradeBox(props: Props) {
   const [amount, setAmount] = useState(props.initialAmountNaira ? String(props.initialAmountNaira) : "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState(false);
 
   const loggedIn = balanceKobo !== null;
   const balance = balanceKobo ?? 0;
@@ -57,6 +59,12 @@ export function TradeBox(props: Props) {
   const submit = () => {
     if (!est || blocker || pending) return;
     setError(null);
+    setConfirming(true);
+  };
+
+  const confirmBet = () => {
+    if (!est || blocker || pending) return;
+    setConfirming(false);
     startTransition(async () => {
       const res = await placeBet(marketId, side, stakeKobo);
       if (!res.ok) return setError(res.error);
@@ -88,9 +96,11 @@ export function TradeBox(props: Props) {
   return (
     <div className="space-y-4 rounded-2xl border border-line bg-card p-4">
       <div className="rounded-xl bg-bg px-3 py-2 text-xs">
-        <div className="flex justify-between text-muted">
-          <span>In the pot</span>
-          <span className="font-semibold tabular-nums text-white">{formatNaira(total)}</span>
+        <div className="flex items-center justify-between text-muted">
+          <span>
+            In the pot <span className="font-semibold tabular-nums text-white">{formatNaira(total)}</span>
+          </span>
+          <LiveBadge />
         </div>
         <div className="mt-1 flex justify-between tabular-nums">
           <span className="text-yes">YES {compactNaira(props.stakeYesKobo)}</span>
@@ -122,15 +132,9 @@ export function TradeBox(props: Props) {
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
-          <label htmlFor="trade-amount">How much do you want to bet?</label>
-          <span className="tabular-nums">
-            Wallet: {formatNaira(balance)}{" "}
-            <Link href="/wallet" className="font-semibold text-brand hover:underline">
-              Top up
-            </Link>
-          </span>
-        </div>
+        <label htmlFor="trade-amount" className="mb-1.5 block text-xs font-semibold text-white">
+          How much do you want to bet?
+        </label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted">₦</span>
           <input
@@ -164,6 +168,19 @@ export function TradeBox(props: Props) {
               ₦{q.toLocaleString()}
             </button>
           ))}
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-line bg-bg px-3 py-2">
+          <span className="flex min-w-0 items-center gap-2 text-xs text-muted">
+            <Wallet className="size-4 shrink-0 text-amber-300" />
+            <span className="shrink-0">Wallet</span>
+            <span className="truncate font-bold tabular-nums text-white">{formatNaira(balance)}</span>
+          </span>
+          <Link
+            href="/wallet"
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand/15 px-2.5 py-1 text-xs font-bold text-brand transition hover:bg-brand/25"
+          >
+            <Plus className="size-3.5" strokeWidth={3} /> Top up
+          </Link>
         </div>
       </div>
 
@@ -223,6 +240,62 @@ export function TradeBox(props: Props) {
         {pending && <Loader2 className="size-4 animate-spin" />}
         {pending ? "Placing bet..." : (blocker ?? (stakeKobo > 0 ? `Bet ${formatNaira(stakeKobo)} on ${side}` : "Enter an amount"))}
       </button>
+
+      {confirming && est && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 sm:items-center sm:p-4" role="alertdialog" aria-modal="true" aria-labelledby="confirm-bet-title">
+          <div className="w-full animate-sheet-up rounded-t-2xl border border-line bg-bg p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-md sm:animate-pop-in sm:rounded-2xl">
+            <p id="confirm-bet-title" className="flex items-center gap-2 font-bold text-white">
+              <AlertTriangle className="size-5 text-amber-300" /> Confirm your bet
+            </p>
+            <p className="mt-1 text-sm text-muted">{props.question}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+              <div className="rounded-xl bg-card p-3">
+                <p className="text-[10px] uppercase tracking-wide text-muted">You stake</p>
+                <p className="text-lg font-extrabold tabular-nums text-white">{formatNaira(stakeKobo)}</p>
+                <p className={`text-xs font-bold ${side === "YES" ? "text-yes" : "text-no"}`}>on {side}</p>
+              </div>
+              <div className="rounded-xl bg-card p-3">
+                <p className="text-[10px] uppercase tracking-wide text-muted">If {side} wins (est.)</p>
+                <p className={`text-lg font-extrabold tabular-nums ${side === "YES" ? "text-yes" : "text-no"}`}>
+                  {formatNaira(est.payoutKobo)}
+                </p>
+                <p className="text-xs text-muted">may change until closing</p>
+              </div>
+            </div>
+            <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
+              <li>• This bet is final. It can&apos;t be cancelled or cashed out.</li>
+              <li>• If {other} wins, you lose your {formatNaira(stakeKobo)}.</li>
+              <li>• The payout is an estimate and changes as others bet. UniPred keeps {feeBps / 100}% of winnings.</li>
+              <li>• Only stake what you can afford to lose. 18+ only.</li>
+            </ul>
+            <p className="mt-2 text-[11px] text-muted">
+              By confirming you agree to the{" "}
+              <Link href="/rules" target="_blank" className="text-brand underline">
+                House Rules
+              </Link>
+              .
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="rounded-xl border border-line py-3 text-sm font-semibold text-white hover:bg-card-2"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmBet}
+                className={`rounded-xl py-3 text-sm font-bold text-black transition hover:brightness-110 ${
+                  side === "YES" ? "bg-yes" : "bg-no"
+                }`}
+              >
+                Confirm {formatNaira(stakeKobo)} on {side}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-center">
         <ShareButton

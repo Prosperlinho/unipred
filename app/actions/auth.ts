@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { friendlyError } from "@/lib/data";
+import { isValidFullName } from "@/lib/identity";
 import { getOrigin, safeNext } from "@/lib/origin";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "@/lib/types";
@@ -36,7 +37,7 @@ export async function signUp(_prev: FormState, fd: FormData): Promise<FormState>
   if (!EMAIL_RE.test(email)) return fail("Enter a valid email address.");
   if (password.length < 8) return fail("Password must be at least 8 characters.");
   if (!USERNAME_RE.test(username)) return fail("Username must be 3-20 letters, numbers or underscores.");
-  if (fullName.length > 80) return fail("Full name is too long.");
+  if (!isValidFullName(fullName)) return fail("Enter your full name (first and last) exactly as on your bank account.");
   if (!schoolId) return fail("Choose your university.");
   if (!isAdult(dob)) return fail("You must be at least 18 years old to use UniPred.");
   if (fd.get("terms") !== "on") return fail("Please confirm you are 18+ and accept the terms.");

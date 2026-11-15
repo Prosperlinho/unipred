@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { checkDepositPayer, type PayerInfo } from "@/lib/depositCheck";
 import { isValidPaystackSignature } from "@/lib/paystack";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -10,7 +11,7 @@ interface PaystackEvent {
     channel?: string;
     status?: string;
     reason?: string;
-  };
+  } & PayerInfo;
 }
 
 /**
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
           p_amount_kobo: evt.data.amount,
           p_channel: evt.data.channel ?? "unknown",
         });
+        await checkDepositPayer(ref, evt.data).catch(() => undefined);
       }
       break;
     case "transfer.success":

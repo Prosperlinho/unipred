@@ -8,7 +8,8 @@ import { getSchools } from "@/lib/data";
 import { paystack, type Bank } from "@/lib/paystack";
 import { createClient } from "@/lib/supabase/server";
 import type { PayoutAccount } from "@/lib/types";
-import { PayoutForm, ProfileForm } from "./SettingsForms";
+import { isValidFullName } from "@/lib/identity";
+import { PayoutForm, ProfileForm, SetFullNameForm } from "./SettingsForms";
 
 export const metadata: Metadata = { title: "Settings · UniPred" };
 
@@ -54,8 +55,12 @@ export default async function SettingsPage() {
           <ProfileForm profile={viewer.profile} schools={schools} />
         </Section>
 
-        <Section id="payout" title="Payout bank account" subtitle="Where your withdrawals are sent.">
-          <PayoutForm banks={bankList.banks} current={account ?? null} banksError={bankList.error} />
+        <Section id="payout" title="Payout bank account" subtitle="Where your withdrawals are sent. It must be in your own name.">
+          {isValidFullName(viewer.profile.full_name ?? "") ? (
+            <PayoutForm banks={bankList.banks} current={account ?? null} banksError={bankList.error} />
+          ) : (
+            <SetFullNameForm />
+          )}
         </Section>
 
         <Section id="password" title="Password" subtitle="Change the password you use to log in.">

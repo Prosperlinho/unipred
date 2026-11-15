@@ -1,8 +1,8 @@
 "use client";
 
-import { BadgeCheck, Loader2 } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Loader2, Lock } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
-import { resolveBankAccount, savePayoutAccount, updateProfile } from "@/app/actions/settings";
+import { resolveBankAccount, savePayoutAccount, setFullName, updateProfile, type ResolvedAccount } from "@/app/actions/settings";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
 import { useUI } from "@/context/UIContext";
@@ -25,10 +25,19 @@ export function ProfileForm({ profile, schools }: { profile: Profile; schools: S
             className={inputCls}
           />
         </Field>
-        <Field label="Full name" htmlFor="full_name">
-          <input id="full_name" name="full_name" defaultValue={profile.full_name} maxLength={80} className={inputCls} />
+        <Field label="Full name (locked)" htmlFor="full_name_locked">
+          <div
+            id="full_name_locked"
+            className="flex items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-white/80"
+          >
+            <Lock className="size-4 shrink-0 text-muted" />
+            <span className="truncate">{profile.full_name || "Not set yet"}</span>
+          </div>
         </Field>
       </div>
+      <p className="text-[11px] text-muted">
+        Your full name can&apos;t be changed: it must match the bank account you withdraw to.
+      </p>
       <Field label="University" htmlFor="school_id">
         <SchoolCombobox
           id="school_id"
@@ -45,6 +54,27 @@ export function ProfileForm({ profile, schools }: { profile: Profile; schools: S
   );
 }
 
+/** One-time form for accounts created before full names were required. */
+export function SetFullNameForm() {
+  const [state, action] = useActionState<FormState, FormData>(setFullName, {});
+  return (
+    <form action={action} className="space-y-3">
+      <div className="flex gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-100">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-300" />
+        <p>
+          Add your full name exactly as it appears on your bank account. <b>You can only do this once</b>, and withdrawals
+          will only go to a bank account in this name.
+        </p>
+      </div>
+      <Field label="Full name" htmlFor="set_full_name">
+        <input id="set_full_name" name="full_name" required maxLength={80} placeholder="e.g. Adebayo John Oluwaseun" className={inputCls} />
+      </Field>
+      <FormMessage error={state.error} message={state.message} />
+      <SubmitButton pendingText="Saving...">Save full name</SubmitButton>
+    </form>
+  );
+}
+
 export function PayoutForm({
   banks,
   current,
@@ -57,7 +87,7 @@ export function PayoutForm({
   const { toast } = useUI();
   const [bankCode, setBankCode] = useState(current?.bank_code ?? "");
   const [accountNumber, setAccountNumber] = useState(current?.account_number ?? "");
-  const [resolvedName, setResolvedName] = useState<string | null>(null);
+  const [resolved, setResolved] = useState<ResolvedAccount | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const bankName = banks.find((b) => b.code === bankCode)?.name ?? "";
@@ -65,11 +95,11 @@ export function PayoutForm({
 
   const verify = () => {
     setError(null);
-    setResolvedName(null);
+    setResolved(null);
     startTransition(async () => {
       const res = await resolveBankAccount(bankCode, accountNumber);
       if (!res.ok) return setError(res.error);
-      setResolvedName(res.value);
+      setResolved(res.value);
     });
   };
 
@@ -78,7 +108,7 @@ export function PayoutForm({
     startTransition(async () => {
       const res = await savePayoutAccount(bankCode, bankName, accountNumber);
       if (!res.ok) return setError(res.error);
-      setResolvedName(null);
+      setResolved(null);
       toast(`Payout account saved: ${res.value}`);
     });
   };
@@ -102,7 +132,7 @@ export function PayoutForm({
             value={bankCode}
             onChange={(e) => {
               setBankCode(e.target.value);
-              setResolvedName(null);
+              setResolved(null);
             }}
             className={inputCls}
           >
@@ -124,7 +154,7 @@ export function PayoutForm({
             value={accountNumber}
             onChange={(e) => {
               setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
-              setResolvedName(null);
+              setResolved(null);
             }}
             placeholder="0123456789"
             className={`${inputCls} tabular-nums`}
@@ -132,24 +162,40 @@ export function PayoutForm({
         </Field>
       </div>
 
-      {resolvedName && (
-        <p className="rounded-xl bg-bg px-3 py-2 text-sm">
-          <span className="text-muted">Account name: </span>
-          <span className="font-semibold text-white">{resolvedName}</span>
-        </p>
-      )}
+      {resolved &&
+        (resolved.matches ? (
+          <p className="flex items-center gap-2 rounded-xl bg-yes/10 px-3 py-2 text-sm text-yes">
+            <BadgeCheck className="size-4 shrink-0" />
+            <span>
+              <span className="font-semibold">{resolved.accountName}</span> matches your name.
+            </span>
+          </p>
+        ) : (
+          <div className="flex gap-2 rounded-xl border border-no/40 bg-no/10 p-3 text-sm text-no">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <p>
+              <b>{resolved.accountName}</b> is not your name, so it can&apos;t be used. Only a bank account in your own name
+              is allowed. {resolved.strikesLeft > 0
+                ? `${resolved.strikesLeft} more attempt${resolved.strikesLeft === 1 ? "" : "s"} with someone else's account will suspend your UniPred account.`
+                : ""}
+            </p>
+          </div>
+        ))}
       {error && <FormMessage error={error} />}
 
       <button
         type="button"
-        disabled={!valid || pending}
-        onClick={resolvedName ? save : verify}
+        disabled={!valid || pending || (resolved !== null && !resolved.matches)}
+        onClick={resolved?.matches ? save : verify}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-muted"
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
-        {resolvedName ? "Yes, that's me. Save account" : "Verify account"}
+        {resolved?.matches ? "Save this account" : "Verify account"}
       </button>
-      <p className="text-[11px] text-muted">The account name must match yours. Withdrawals only go to this account.</p>
+      <p className="text-[11px] text-muted">
+        The account must be in your name. Each bank account can only be linked to one UniPred account. Withdrawals only go
+        to this account.
+      </p>
     </div>
   );
 }

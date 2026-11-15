@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { checkDepositPayer } from "@/lib/depositCheck";
 import { paystack } from "@/lib/paystack";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
       p_channel: tx.channel,
     });
     if (error) return back("failed");
+    await checkDepositPayer(reference, tx).catch(() => undefined);
     return back("success");
   } catch {
     return back("failed");

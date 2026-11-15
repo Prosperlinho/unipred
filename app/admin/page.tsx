@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getSchools } from "@/lib/data";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
-import { OpenMarketRow, PendingMarketCard, WithdrawalRow } from "./AdminPanels";
+import { AccountReviewRow, OpenMarketRow, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
 
 export const metadata: Metadata = { title: "Admin · UniPred" };
 
@@ -25,12 +25,22 @@ function Section({ title, count, children, empty }: { title: string; count: numb
 export default async function AdminPage() {
   await requireAdmin();
   const admin = createAdminClient();
-  const [schools, { data: pendingData }, { data: openData }, { data: wData }] = await Promise.all([
+  const [schools, { data: pendingData }, { data: openData }, { data: wData }, { data: reviewData }] = await Promise.all([
     getSchools(),
     admin.from("markets").select("*").eq("status", "pending").order("created_at", { ascending: true }),
     admin.from("markets").select("*").eq("status", "open").order("closes_at", { ascending: true }),
     admin.from("withdrawals").select("*").in("status", ["pending", "processing"]).order("created_at", { ascending: true }),
+    admin
+      .from("profiles")
+      .select("id, username, full_name, is_banned, ban_reason, flagged_reason, wallets(balance_kobo)")
+      .or("is_banned.eq.true,flagged_reason.not.is.null")
+      .order("created_at", { ascending: false })
+      .limit(100),
   ]);
+  const review: ReviewAccount[] = ((reviewData ?? []) as Array<Omit<ReviewAccount, "balance_kobo"> & { wallets: { balance_kobo: number } | { balance_kobo: number }[] | null }>).map((r) => ({
+    ...r,
+    balance_kobo: Array.isArray(r.wallets) ? (r.wallets[0]?.balance_kobo ?? 0) : (r.wallets?.balance_kobo ?? 0),
+  }));
   const pending = (pendingData ?? []) as Market[];
   const open = (openData ?? []) as Market[];
   const withdrawals = (wData ?? []) as Withdrawal[];
@@ -48,7 +58,8 @@ export default async function AdminPage() {
     <Container>
       <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Admin</h1>
       <p className="mb-6 text-sm text-muted">
-        {pending.length} proposals to review · {needsResult} closed markets need a result · {withdrawals.length} withdrawals
+        {pending.length} proposals to review · {needsResult} closed markets need a result · {withdrawals.length} withdrawals ·{" "}
+        {review.length} accounts to review
       </p>
 
       <div className="space-y-8">
@@ -69,6 +80,14 @@ export default async function AdminPage() {
           <div className="grid gap-3 lg:grid-cols-3">
             {withdrawals.map((w) => (
               <WithdrawalRow key={w.id} w={w} username={nameOf.get(w.user_id) ?? "unknown"} />
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Flagged & suspended accounts" count={review.length} empty="No accounts need review.">
+          <div className="grid gap-3 lg:grid-cols-3">
+            {review.map((a) => (
+              <AccountReviewRow key={a.id} a={a} />
             ))}
           </div>
         </Section>

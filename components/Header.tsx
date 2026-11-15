@@ -18,7 +18,7 @@ export function Header({ viewer }: Props) {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur supports-[backdrop-filter]:bg-bg/75">
+    <header className="sticky top-0 z-40 transform-gpu border-b border-line bg-bg md:bg-bg/85 md:backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 font-extrabold tracking-tight text-white">
           <span className="flex size-7 items-center justify-center rounded-lg bg-brand text-black">
