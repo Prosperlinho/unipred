@@ -5,7 +5,7 @@ import { Container } from "./Container";
 export const LEGAL_LAST_UPDATED = "15 November 2026";
 
 /** Support address shown in the legal pages. Set NEXT_PUBLIC_SUPPORT_EMAIL in Vercel. */
-export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "prosperlinho@gmail.com";
 
 export function SupportContact() {
   return SUPPORT_EMAIL ? (
