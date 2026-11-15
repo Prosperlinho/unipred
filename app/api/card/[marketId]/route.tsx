@@ -4,7 +4,8 @@ import type { NextRequest } from "next/server";
 import { getViewer } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { formatNaira, formatSignedNaira } from "@/lib/format";
-import { payoutIfWins, settledResult } from "@/lib/pool";
+import { buildCandles } from "@/lib/candles";
+import { marketProbYes, payoutIfWins, settledResult } from "@/lib/pool";
 import { renderResultCard, type ResultCardInput } from "@/lib/resultCard";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
@@ -31,9 +32,10 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
   if (!viewer) return new Response("Log in to create your card", { status: 401 });
 
   const supabase = await createClient();
-  const [{ data: market }, { data: posData }] = await Promise.all([
+  const [{ data: market }, { data: posData }, { data: historyData }] = await Promise.all([
     supabase.from("markets").select("*").eq("id", marketId).maybeSingle<Market>(),
     supabase.from("positions").select("*").eq("market_id", marketId).eq("user_id", viewer.id),
+    supabase.from("market_history").select("p, t").eq("market_id", marketId).order("t", { ascending: true }).limit(2000),
   ]);
   const positions = ((posData ?? []) as Position[]).filter((p) => Number(p.cost_kobo) > 0);
   if (!market || positions.length === 0 || (market.status !== "open" && market.status !== "resolved")) {
@@ -49,15 +51,29 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
   const totalStake = positions.reduce((s, p) => s + Number(p.cost_kobo), 0);
   const main = positions.reduce((a, b) => (Number(b.cost_kobo) > Number(a.cost_kobo) ? b : a));
 
+  // Candles from the real betting history: YES share of the pot after every bet.
+  const yesShare = marketProbYes(market);
+  const opened = new Date(market.approved_at ?? market.created_at).getTime();
+  const lastT = market.resolved_at ? new Date(market.resolved_at).getTime() : Date.now();
+  const candles = buildCandles([
+    { t: opened, p: Number(market.initial_prob) || 0.5 },
+    ...((historyData ?? []) as Array<{ p: number; t: string }>).map((h) => ({ t: new Date(h.t).getTime(), p: Number(h.p) })),
+    { t: lastT, p: yesShare },
+  ]);
+
   let card: ResultCardInput = {
     kind: "backing",
     headline: `I'm backing ${main.outcome}`,
-    amount: formatNaira(payoutIfWins(market, main, settings.pool_fee_bps)),
-    detail: `${formatNaira(Number(main.cost_kobo))} on ${main.outcome} · about this much if ${main.outcome} wins`,
+    amount: `~${formatNaira(payoutIfWins(market, main, settings.pool_fee_bps))}`,
+    detail: `What I'd get if ${main.outcome} wins and betting closed now`,
     question: market.question,
     school: school?.short_name ?? "",
     username: viewer.profile.username,
+    side: main.outcome,
+    stake: formatNaira(totalStake),
     status: "Still live",
+    yesShare,
+    candles,
   };
 
   if (market.status === "resolved") {
@@ -72,7 +88,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
           kind: "won",
           headline: "I won",
           amount: formatNaira(won.amountKobo),
-          detail: `Staked ${formatNaira(totalStake)} on ${market.resolution} · ${formatSignedNaira(won.amountKobo - totalStake)} profit`,
+          detail: `${formatSignedNaira(won.amountKobo - totalStake)} profit · called it right`,
           status: `Result: ${market.resolution}`,
         }
       : {
