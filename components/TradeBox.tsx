@@ -9,6 +9,7 @@ import { compactNaira, formatNaira, formatPct, formatSignedNaira } from "@/lib/f
 import { estimateBet } from "@/lib/pool";
 import { useNow } from "@/lib/useNow";
 import type { Outcome } from "@/lib/types";
+import { CashOutPanel } from "./CashOutPanel";
 import { LiveBadge } from "./LiveRefresh";
 import { ShareButton } from "./ShareButton";
 
@@ -25,6 +26,9 @@ interface Props {
   initialAmountNaira: number | null;
   refUsername: string | null;
   serverNow: number;
+  /** Kobo the user has in each pot (for cash-out). */
+  myStakes: Partial<Record<Outcome, number>>;
+  exitFeeBps: number;
 }
 
 const QUICK_NAIRA = [500, 1000, 2000, 5000] as const;
@@ -40,6 +44,9 @@ export function TradeBox(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
+  const [mode, setMode] = useState<"bet" | "cashout">("bet");
+  const hasStake = (props.myStakes.YES ?? 0) > 0 || (props.myStakes.NO ?? 0) > 0;
+  const tab = hasStake ? mode : "bet";
 
   const loggedIn = balanceKobo !== null;
   const balance = balanceKobo ?? 0;
@@ -107,6 +114,38 @@ export function TradeBox(props: Props) {
           <span className="text-no">NO {compactNaira(props.stakeNoKobo)}</span>
         </div>
       </div>
+
+      {hasStake && (
+        <div className="grid grid-cols-2 rounded-xl border border-line bg-bg p-1">
+          {(
+            [
+              ["bet", "Bet"],
+              ["cashout", "Cash out"],
+            ] as const
+          ).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              aria-pressed={tab === m}
+              className={`rounded-lg py-2 text-sm font-semibold transition ${tab === m ? "bg-card-2 text-white" : "text-muted hover:text-white"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "cashout" ? (
+        <CashOutPanel
+          marketId={marketId}
+          question={props.question}
+          stakes={props.myStakes}
+          exitFeeBps={props.exitFeeBps}
+          closed={closed}
+        />
+      ) : (
+      <>
 
       <div className="grid grid-cols-2 gap-2">
         {(["YES", "NO"] as const).map((s) => {
@@ -220,7 +259,7 @@ export function TradeBox(props: Props) {
       <p className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
         <Info className="mt-0.5 size-3.5 shrink-0" />
         Pool betting: the final payout depends on all bets placed before closing. UniPred keeps {feeBps / 100}% of the
-        winnings. Bets can&apos;t be cashed out early.
+        winnings. You can cash out before closing for your stake minus a {props.exitFeeBps / 100}% exit fee.
       </p>
 
       {error && (
@@ -263,7 +302,7 @@ export function TradeBox(props: Props) {
               </div>
             </div>
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
-              <li>• This bet is final. It can&apos;t be cancelled or cashed out.</li>
+              <li>• You can cash out before closing, but only for your stake minus a {props.exitFeeBps / 100}% exit fee.</li>
               <li>• If {other} wins, you lose your {formatNaira(stakeKobo)}.</li>
               <li>• The payout is an estimate and changes as others bet. UniPred keeps {feeBps / 100}% of winnings.</li>
               <li>• Only stake what you can afford to lose. 18+ only.</li>
@@ -306,6 +345,8 @@ export function TradeBox(props: Props) {
           refUsername={props.refUsername}
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

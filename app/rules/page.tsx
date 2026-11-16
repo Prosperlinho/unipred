@@ -17,7 +17,11 @@ export default async function RulesPage() {
         </p>
       }
     >
-      <HouseRules feePct={settings.pool_fee_bps / 100} referralPct={settings.referral_share_bps / 100} />
+      <HouseRules
+        feePct={settings.pool_fee_bps / 100}
+        exitFeePct={settings.exit_fee_bps / 100}
+        referralPct={settings.referral_share_bps / 100}
+      />
     </LegalPage>
   );
 }

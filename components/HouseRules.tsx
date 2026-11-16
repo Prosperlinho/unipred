@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 
 interface Props {
   feePct: number;
+  exitFeePct: number;
   referralPct: number;
   /** Compact version for the acceptance popup. */
   compact?: boolean;
 }
 
 /** The single source of UniPred's house rules: used on /rules and in the must-accept popup. */
-export function HouseRules({ feePct, referralPct, compact = false }: Props) {
+export function HouseRules({ feePct, exitFeePct, referralPct, compact = false }: Props) {
   const sections: Array<{ title: string; items: ReactNode[] }> = [
     {
       title: "How betting works",
@@ -28,7 +29,10 @@ export function HouseRules({ feePct, referralPct, compact = false }: Props) {
         <>
           The payout shown before you bet is an <b>estimate</b>. It changes as other people bet, until betting closes.
         </>,
-        <>Bets are final. They can&apos;t be cancelled or cashed out early.</>,
+        <>
+          You can <b>cash out</b> part or all of a bet any time before betting closes. You get back the amount you take
+          out minus a <b>{exitFeePct}% exit fee</b>, so cashing out early always returns less than you put in.
+        </>,
         <>
           If nobody bet on the losing side, winners get their stake back. If nobody backed the winning side, everyone is
           refunded.

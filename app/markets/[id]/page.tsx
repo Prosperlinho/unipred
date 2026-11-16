@@ -189,6 +189,8 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         question={market.question}
         refUsername={viewer?.profile.username ?? null}
         serverNow={now}
+        myStakes={{ YES: holdings.YES?.cost_kobo ?? 0, NO: holdings.NO?.cost_kobo ?? 0 }}
+        exitFeeBps={settings.exit_fee_bps}
       />
     );
   }

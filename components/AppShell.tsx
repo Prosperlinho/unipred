@@ -57,7 +57,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <BottomNav loggedIn={!!viewer} />
       {needsRules && (
         <RulesGate>
-          <HouseRules feePct={settings.pool_fee_bps / 100} referralPct={settings.referral_share_bps / 100} compact />
+          <HouseRules
+            feePct={settings.pool_fee_bps / 100}
+            exitFeePct={settings.exit_fee_bps / 100}
+            referralPct={settings.referral_share_bps / 100}
+            compact
+          />
         </RulesGate>
       )}
       {showWelcome && profile && <WelcomeGuide username={profile.username} />}

@@ -32,3 +32,25 @@ export async function placeBet(marketId: string, outcome: Outcome, amountKobo: n
   revalidatePath("/wallet");
   return { ok: true, value: data as BetResult };
 }
+
+interface CashOutResult {
+  returned_kobo: number;
+  fee_kobo: number;
+  balance_kobo: number;
+}
+
+/** Takes `percent` of the bet back out of the pot before closing, minus the exit fee. */
+export async function cashOutBet(marketId: string, outcome: Outcome, percent: number): Promise<ActionResult<CashOutResult>> {
+  if (!(await getViewer())) return { ok: false, error: "Please log in." };
+  if ((outcome !== "YES" && outcome !== "NO") || !Number.isInteger(percent) || percent < 1 || percent > 100) {
+    return { ok: false, error: "Invalid cash-out." };
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("cash_out_bet", { p_market: marketId, p_outcome: outcome, p_percent: percent });
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath(`/markets/${marketId}`);
+  revalidatePath("/");
+  revalidatePath("/portfolio");
+  revalidatePath("/wallet");
+  return { ok: true, value: data as CashOutResult };
+}

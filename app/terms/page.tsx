@@ -9,6 +9,7 @@ export default async function TermsPage() {
   const s = await getSettings();
   const fee = s.pool_fee_bps / 100;
   const ref = s.referral_share_bps / 100;
+  const exitFee = s.exit_fee_bps / 100;
 
   return (
     <LegalPage
@@ -80,7 +81,10 @@ export default async function TermsPage() {
 
       <Clause n={5} title="Bets, results and fees">
         <ul className="list-disc space-y-1 pl-5">
-          <li>A bet is final once confirmed. It can&apos;t be cancelled, changed or cashed out early.</li>
+          <li>
+            Once confirmed, a bet can&apos;t be changed. Before betting closes you may cash out part or all of it and receive
+            the amount taken out minus a {exitFee}% exit fee; after closing, bets can&apos;t be cashed out.
+          </li>
           <li>Payout figures shown before you bet are estimates; the final amount depends on all bets placed before closing.</li>
           <li>
             Results are decided by UniPred admins using the official source named on each market. Our decision is final,

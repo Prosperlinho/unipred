@@ -125,6 +125,8 @@ export interface PlatformSettings {
   referral_share_bps: number;
   /** Bump to make everyone accept updated house rules again. */
   terms_version: number;
+  /** Fee for cashing a bet out early (1500 = 15% of the amount taken out). */
+  exit_fee_bps: number;
 }
 
 export type ActionResult<T = undefined> = { ok: true; value: T } | { ok: false; error: string };
