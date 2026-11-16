@@ -86,3 +86,45 @@ export function settledResult(
   if (m.engine === "pool" && pots(m, m.resolution).win === 0) return { kind: "refunded", amountKobo: stake };
   return { kind: "lost", amountKobo: stake };
 }
+
+export interface BetSummary {
+  /** "won" / "lost" are judged on the overall result across both sides. */
+  kind: "won" | "lost" | "refunded" | "open";
+  totalStakeKobo: number;
+  /** Money returned (winnings + refunds). Estimated "if main side wins" while open. */
+  returnedKobo: number;
+  /** returned - staked. */
+  netKobo: number;
+  /** The side with the most money on it. */
+  main: Outcome;
+  /** "YES", "NO" or "YES + NO" when the user backed both sides. */
+  sidesLabel: string;
+  perSide: Array<{ outcome: Outcome; stakeKobo: number }>;
+}
+
+/** One verdict for everything a user staked on a market (handles bets on both sides). */
+export function summarizeBets(
+  m: PoolFields & Pick<Market, "status" | "resolution">,
+  positions: Array<{ outcome: Outcome; shares: number; cost_kobo: number }>,
+  feeBps: number,
+): BetSummary | null {
+  const live = positions.filter((p) => Number(p.cost_kobo) > 0);
+  if (live.length === 0) return null;
+  const perSide = live.map((p) => ({ outcome: p.outcome, stakeKobo: Number(p.cost_kobo) }));
+  const totalStakeKobo = perSide.reduce((s, p) => s + p.stakeKobo, 0);
+  const mainPos = live.reduce((a, b) => (Number(b.cost_kobo) > Number(a.cost_kobo) ? b : a));
+  const sides = [...new Set(live.map((p) => p.outcome))].sort((a, b) => (a === "YES" ? -1 : b === "YES" ? 1 : 0));
+  const base = { totalStakeKobo, main: mainPos.outcome, sidesLabel: sides.join(" + "), perSide };
+
+  if (m.status === "open" || (m.status !== "resolved" && m.status !== "cancelled")) {
+    const returnedKobo = payoutIfWins(m, mainPos, feeBps);
+    return { ...base, kind: "open", returnedKobo, netKobo: returnedKobo - totalStakeKobo };
+  }
+
+  const results = live.map((p) => settledResult(m, p, feeBps));
+  const returnedKobo = results.reduce((s, r) => s + (r && r.kind !== "lost" ? r.amountKobo : 0), 0);
+  const netKobo = returnedKobo - totalStakeKobo;
+  const allRefunded = results.every((r) => r?.kind === "refunded");
+  const kind = allRefunded ? "refunded" : netKobo > 0 ? "won" : "lost";
+  return { ...base, kind, returnedKobo, netKobo };
+}

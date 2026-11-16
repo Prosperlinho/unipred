@@ -275,7 +275,7 @@ export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?:
               }}
             >
               <span>Backed</span>
-              <span style={{ color: c.side === "YES" ? GREEN : RED, fontWeight: 800 }}>{c.side}</span>
+              <span style={{ color: c.side === "YES" ? GREEN : c.side === "NO" ? RED : "#f8fafc", fontWeight: 800 }}>{c.side}</span>
             </div>
           </div>
           <div style={{ display: "flex", fontSize: 26, fontWeight: 500, color: "#cbd5e1", marginTop: 14 }}>{c.detail}</div>

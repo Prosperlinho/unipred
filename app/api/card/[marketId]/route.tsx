@@ -4,8 +4,8 @@ import type { NextRequest } from "next/server";
 import { getViewer } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { formatNaira, formatSignedNaira } from "@/lib/format";
-import { buildCandles } from "@/lib/candles";
-import { marketProbYes, payoutIfWins, settledResult } from "@/lib/pool";
+import { buildTradeCandles } from "@/lib/candles";
+import { marketProbYes, summarizeBets } from "@/lib/pool";
 import { renderResultCard, type ResultCardInput } from "@/lib/resultCard";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
@@ -48,57 +48,65 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
     .eq("id", market.school_id)
     .maybeSingle<{ short_name: string }>();
 
-  const totalStake = positions.reduce((s, p) => s + Number(p.cost_kobo), 0);
-  const main = positions.reduce((a, b) => (Number(b.cost_kobo) > Number(a.cost_kobo) ? b : a));
+  const summary = summarizeBets(market, positions, settings.pool_fee_bps);
+  if (!summary) return new Response("No bet to show for this market", { status: 404 });
+  if (summary.kind === "refunded") {
+    return new Response("This bet was refunded in full, so there's no win or loss card for it.", { status: 404 });
+  }
+  const hedged = summary.perSide.length > 1;
+  const sideBreakdown = summary.perSide.map((p) => `${formatNaira(p.stakeKobo)} on ${p.outcome}`).join(" + ");
 
   // Candles from the real betting history: YES share of the pot after every bet.
   const yesShare = marketProbYes(market);
   const opened = new Date(market.approved_at ?? market.created_at).getTime();
   const lastT = market.resolved_at ? new Date(market.resolved_at).getTime() : Date.now();
-  const candles = buildCandles([
+  const candles = buildTradeCandles([
     { t: opened, p: Number(market.initial_prob) || 0.5 },
     ...((historyData ?? []) as Array<{ p: number; t: string }>).map((h) => ({ t: new Date(h.t).getTime(), p: Number(h.p) })),
     { t: lastT, p: yesShare },
   ]);
 
-  let card: ResultCardInput = {
-    kind: "backing",
-    headline: `I'm backing ${main.outcome}`,
-    amount: `~${formatNaira(payoutIfWins(market, main, settings.pool_fee_bps))}`,
-    detail: `What I'd get if ${main.outcome} wins and betting closed now`,
+  const common = {
     question: market.question,
     school: school?.short_name ?? "",
     username: viewer.profile.username,
-    side: main.outcome,
-    stake: formatNaira(totalStake),
-    status: "Still live",
+    side: summary.sidesLabel,
+    stake: formatNaira(summary.totalStakeKobo),
     yesShare,
     candles,
   };
 
-  if (market.status === "resolved") {
-    const results = positions.map((p) => settledResult(market, p, settings.pool_fee_bps));
-    const won = results.find((r) => r?.kind === "won");
-    if (!won && results.every((r) => r?.kind === "refunded")) {
-      return new Response("This bet was refunded, so there's no card for it", { status: 404 });
-    }
-    card = won
-      ? {
-          ...card,
-          kind: "won",
-          headline: "I won",
-          amount: formatNaira(won.amountKobo),
-          detail: `${formatSignedNaira(won.amountKobo - totalStake)} profit · called it right`,
-          status: `Result: ${market.resolution}`,
-        }
-      : {
-          ...card,
-          kind: "lost",
-          headline: "I took an L",
-          amount: formatNaira(totalStake),
-          detail: `Backed ${main.outcome}, it went ${market.resolution}. Next one is mine.`,
-          status: `Result: ${market.resolution}`,
-        };
+  let card: ResultCardInput;
+  if (summary.kind === "open") {
+    card = {
+      ...common,
+      kind: "backing",
+      headline: `I'm backing ${summary.main}`,
+      amount: `~${formatNaira(summary.returnedKobo)}`,
+      detail: hedged ? `Hedged: ${sideBreakdown}` : `What I'd get if ${summary.main} wins and betting closed now`,
+      status: "Still live",
+    };
+  } else if (summary.kind === "won") {
+    card = {
+      ...common,
+      kind: "won",
+      headline: "I won",
+      amount: formatNaira(summary.returnedKobo),
+      detail: `${formatSignedNaira(summary.netKobo)} profit · called it right`,
+      status: `Result: ${market.resolution}`,
+    };
+  } else {
+    card = {
+      ...common,
+      kind: "lost",
+      headline: "I took an L",
+      amount: formatNaira(-summary.netKobo),
+      detail:
+        summary.returnedKobo > 0
+          ? `Got back ${formatNaira(summary.returnedKobo)} when ${market.resolution} won`
+          : `Backed ${summary.main}, it went ${market.resolution}. Next one is mine.`,
+      status: `Result: ${market.resolution}`,
+    };
   }
 
   return renderResultCard(card, await fontsPromise, { "Cache-Control": "private, no-store" });

@@ -13,7 +13,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { TradeBox } from "@/components/TradeBox";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { marketProbYes, payoutIfWins, settledResult, type Settled } from "@/lib/pool";
+import { marketProbYes, payoutIfWins, settledResult, summarizeBets, type Settled } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { compactNaira, formatDate, formatNaira, formatPct, timeLeft } from "@/lib/format";
@@ -207,20 +207,29 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     ];
   });
 
-  // Shareable result card (won / lost / still backing) for the viewer's bet.
+  // One overall verdict across both sides, used for the share card and the "Overall" line.
+  const summary = summarizeBets(
+    market,
+    positionRows.map((r) => ({ outcome: r.outcome, shares: holdings[r.outcome]?.shares ?? 0, cost_kobo: r.staked })),
+    settings.pool_fee_bps,
+  );
+  const hedged = positionRows.length > 1;
   let card: { kind: "won" | "lost" | "backing"; caption: string } | null = null;
-  if (positionRows.length > 0 && (market.status === "open" || market.status === "resolved")) {
-    const main = positionRows.reduce((x, y) => (y.staked > x.staked ? y : x));
-    const totalStake = positionRows.reduce((sum, r) => sum + r.staked, 0);
-    const won = positionRows.find((r) => r.settled?.kind === "won");
-    const allRefunded = positionRows.every((r) => r.settled?.kind === "refunded");
-    if (market.status === "open") {
-      card = { kind: "backing", caption: `I'm backing ${main.outcome} on "${market.question}" Think I'm wrong? Bet against me on UniPred:` };
-    } else if (won?.settled) {
-      card = { kind: "won", caption: `I just won ${formatNaira(won.settled.amountKobo)} on UniPred calling "${market.question}" right 🎯` };
-    } else if (!allRefunded) {
-      card = { kind: "lost", caption: `Took an L of ${formatNaira(totalStake)} on "${market.question}" Next one is mine. Join me on UniPred:` };
-    }
+  if (summary?.kind === "open") {
+    card = {
+      kind: "backing",
+      caption: `I'm backing ${summary.main} on "${market.question}" Think I'm wrong? Bet against me on UniPred:`,
+    };
+  } else if (summary?.kind === "won") {
+    card = {
+      kind: "won",
+      caption: `I just won ${formatNaira(summary.returnedKobo)} on UniPred calling "${market.question}" right 🎯`,
+    };
+  } else if (summary?.kind === "lost") {
+    card = {
+      kind: "lost",
+      caption: `Took an L of ${formatNaira(-summary.netKobo)} on "${market.question}" Next one is mine. Join me on UniPred:`,
+    };
   }
 
   return (
@@ -319,6 +328,20 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                   </span>
                 </div>
               ))}
+              {hedged && summary && summary.kind !== "open" && (
+                <div className="flex items-center justify-between border-t border-line pt-2 text-sm">
+                  <span className="text-muted">Overall</span>
+                  <span
+                    className={`font-semibold tabular-nums ${
+                      summary.kind === "won" ? "text-yes" : summary.kind === "lost" ? "text-no" : "text-muted"
+                    }`}
+                  >
+                    {summary.kind === "refunded"
+                      ? "Refunded"
+                      : `${summary.kind === "won" ? "Up" : "Down"} ${formatNaira(Math.abs(summary.netKobo))} (got back ${formatNaira(summary.returnedKobo)})`}
+                  </span>
+                </div>
+              )}
               {viewer && card && (
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
                   <span className="text-xs text-muted">

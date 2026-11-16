@@ -25,6 +25,7 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [version, setVersion] = useState(0);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const src = `/api/card/${marketId}?v=${version}`;
   const fileName = `unipred-${kind}-${marketId.slice(0, 8)}.png`;
 
@@ -42,7 +43,7 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
 
   const getFile = async (): Promise<File> => {
     const res = await fetch(src, { cache: "no-store" });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) throw new Error((await res.text()) || `Card request failed (${res.status})`);
     const blob = await res.blob();
     return new File([blob], fileName, { type: "image/png" });
   };
@@ -60,8 +61,8 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
       a.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 2000);
       toast("Card saved to your device");
-    } catch {
-      toast("Couldn't create the card. Try again.", "error");
+    } catch (e) {
+      toast(e instanceof Error && e.message ? e.message : "Couldn't create the card. Try again.", "error");
     } finally {
       setBusy(false);
     }
@@ -78,7 +79,9 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
         toast("Your browser can't share images directly. Download the card, then attach it.", "info");
       }
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === "AbortError")) toast("Sharing failed. Try Download instead.", "error");
+      if (!(e instanceof DOMException && e.name === "AbortError")) {
+        toast(e instanceof Error && e.message ? e.message : "Sharing failed. Try Download instead.", "error");
+      }
     } finally {
       setBusy(false);
     }
@@ -102,6 +105,7 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
         type="button"
         onClick={() => {
           setVersion(Date.now());
+          setPreviewError(null);
           setOpen(true);
         }}
         className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
@@ -123,8 +127,22 @@ export function ResultCardShare({ marketId, kind, caption, refUsername }: Props)
                 </button>
               </div>
 
-              {/* eslint-disable-next-line @next/next/no-img-element -- generated per user, not a static asset */}
-              <img src={src} alt="Your UniPred result card" className="aspect-square w-full rounded-xl border border-line bg-card" />
+              {previewError ? (
+                <div className="flex aspect-square w-full items-center justify-center rounded-xl border border-no/40 bg-no/5 p-6 text-center text-sm text-no">
+                  {previewError}
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element -- generated per user, not a static asset
+                <img
+                  src={src}
+                  alt="Your UniPred result card"
+                  className="aspect-square w-full rounded-xl border border-line bg-card"
+                  onError={async () => {
+                    const res = await fetch(src, { cache: "no-store" }).catch(() => null);
+                    setPreviewError((res && !res.ok && (await res.text())) || "Couldn't load your card. Check your connection and try again.");
+                  }}
+                />
+              )}
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button

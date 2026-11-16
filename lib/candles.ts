@@ -7,6 +7,36 @@ export interface Candle {
 }
 
 /**
+ * Candles spaced by betting activity rather than time: each candle covers an equal
+ * share of the bets, so bursts of betting stay readable and quiet stretches don't
+ * flatten the chart. Each candle opens at the previous close.
+ */
+export function buildTradeCandles(points: Array<{ t: number; p: number }>, maxCount = 28): Candle[] {
+  const pts = points.filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)).sort((a, b) => a.t - b.t);
+  if (pts.length < 2) return buildCandles(pts, maxCount);
+  const moves = pts.slice(1);
+  const count = Math.min(maxCount, Math.max(6, moves.length));
+  const candles: Candle[] = [];
+  let prev = pts[0].p;
+  for (let i = 0; i < count; i++) {
+    const from = Math.floor((i * moves.length) / count);
+    const to = Math.floor(((i + 1) * moves.length) / count);
+    const o = prev;
+    let h = o;
+    let l = o;
+    let c = o;
+    for (const m of moves.slice(from, to)) {
+      c = m.p;
+      h = Math.max(h, c);
+      l = Math.min(l, c);
+    }
+    candles.push({ o, c, h, l });
+    prev = c;
+  }
+  return candles;
+}
+
+/**
  * Turns a market's price history (YES share after each bet) into evenly spaced candles.
  * Each period opens at the previous close, so the chart reads as one continuous line.
  */
