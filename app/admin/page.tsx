@@ -7,7 +7,7 @@ import { getSchools, getSettings } from "@/lib/data";
 import { formatDate, formatNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
-import { AccountReviewRow, OpenMarketRow, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
+import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 
 export const metadata: Metadata = { title: "Admin · UniPred" };
@@ -134,11 +134,7 @@ export default async function AdminPage() {
         </Section>
 
         <Section title="Live markets (resolve or cancel)" count={open.length} empty="No live markets.">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {open.map((m) => (
-              <OpenMarketRow key={m.id} market={m} school={schoolOf[m.school_id] ?? m.school_id} now={now} />
-            ))}
-          </div>
+          <OpenMarketsBySchool markets={open} schoolOf={schoolOf} now={now} />
         </Section>
       </div>
     </Container>

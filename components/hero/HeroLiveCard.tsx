@@ -12,7 +12,7 @@ export function HeroLiveCard({ market, schoolLabel }: { market: Market | null; s
     <div className="hidden w-80 shrink-0 xl:block">
       <Link
         href={`/markets/${market.id}`}
-        className="group block w-full animate-hero-rise rounded-2xl border border-white/10 bg-slate-950/60 p-5 backdrop-blur-md transition-colors hover:border-white/25"
+        className="group block w-full animate-hero-rise rounded-2xl border border-white/10 bg-bg/60 p-5 backdrop-blur-md transition-colors hover:border-white/25"
         style={{ animationDelay: "1.05s" }}
       >
         <div className="flex items-center justify-between text-xs">
@@ -29,7 +29,7 @@ export function HeroLiveCard({ market, schoolLabel }: { market: Market | null; s
         <div className="mt-4">
           <ProbabilityBar probYes={marketProbYes(market)} />
         </div>
-        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-teal">
+        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand">
           Trade this market
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
         </p>

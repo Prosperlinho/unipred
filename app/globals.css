@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0d14;
-  --color-card: #121722;
-  --color-card-2: #1b2130;
-  --color-line: #242b3b;
-  --color-muted: #8b95a9;
-  --color-brand: #5eead4;
-  --color-yes: #10b981;
-  --color-no: #f43f5e;
+  /* Brand palette from the logo: forest green background, lime and cream. */
+  --color-bg: #08170f;
+  --color-card: #0e2219;
+  --color-card-2: #153023;
+  --color-line: #1e3a2c;
+  --color-muted: #8ba596;
+  --color-brand: #c6f432;
+  --color-cream: #f3efe6;
+  --color-yes: #2fd47a;
+  --color-no: #ff5d5d;
   --color-brand-gold: #e2b05c;
-  --color-brand-teal: #3ba4ab;
+  --color-brand-teal: #8fb82a;
 
   --animate-sheet-up: sheet-up 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
   --animate-pop-in: pop-in 0.18s ease-out;
@@ -105,8 +107,12 @@
   body {
     /* Never let one wide element widen the page (phones would zoom the whole page out). */
     overflow-x: clip;
-    background: var(--color-bg);
-    color: #e7ebf3;
+    /* Logo-green backdrop with a soft lime glow at the top, like the brand tile. */
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -8%, rgb(198 244 50 / 0.09), transparent 70%) no-repeat,
+      radial-gradient(ellipse 50% 35% at 100% 0%, rgb(243 239 230 / 0.04), transparent 70%) no-repeat,
+      var(--color-bg);
+    color: var(--color-cream);
     -webkit-font-smoothing: antialiased;
   }
 

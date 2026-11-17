@@ -235,3 +235,57 @@ export function AccountReviewRow({ a }: { a: ReviewAccount }) {
     </article>
   );
 }
+
+/** Live markets with a school picker, so admins can resolve one university at a time. */
+export function OpenMarketsBySchool({ markets, schoolOf, now }: { markets: Market[]; schoolOf: Record<string, string>; now: number }) {
+  const counts = new Map<string, { total: number; closed: number }>();
+  for (const m of markets) {
+    const c = counts.get(m.school_id) ?? { total: 0, closed: 0 };
+    c.total += 1;
+    if (new Date(m.closes_at).getTime() <= now) c.closed += 1;
+    counts.set(m.school_id, c);
+  }
+  const schoolIds = [...counts.keys()].sort((a, b) => (schoolOf[a] ?? a).localeCompare(schoolOf[b] ?? b));
+  const [school, setSchool] = useState(schoolIds.length === 1 ? schoolIds[0] : "all");
+  const [onlyClosed, setOnlyClosed] = useState(false);
+  const shown = markets.filter(
+    (m) => (school === "all" || m.school_id === school) && (!onlyClosed || new Date(m.closes_at).getTime() <= now),
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={school}
+          onChange={(e) => setSchool(e.target.value)}
+          aria-label="Show markets for this university"
+          className={`${inputCls} w-auto min-w-56`}
+        >
+          <option value="all">All universities ({markets.length})</option>
+          {schoolIds.map((id) => {
+            const c = counts.get(id)!;
+            return (
+              <option key={id} value={id}>
+                {schoolOf[id] ?? id} ({c.total}
+                {c.closed ? `, ${c.closed} need a result` : ""})
+              </option>
+            );
+          })}
+        </select>
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <input type="checkbox" checked={onlyClosed} onChange={(e) => setOnlyClosed(e.target.checked)} className="size-4 accent-brand" />
+          Only closed (need a result)
+        </label>
+      </div>
+      {shown.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">No markets match.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {shown.map((m) => (
+            <OpenMarketRow key={m.id} market={m} school={schoolOf[m.school_id] ?? m.school_id} now={now} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

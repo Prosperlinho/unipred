@@ -84,7 +84,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
     candles,
   };
 
-  let card: ResultCardInput;
+  let card: Omit<ResultCardInput, "pnl">;
   if (summary.kind === "open") {
     card = {
       ...common,
@@ -119,5 +119,6 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
     };
   }
 
-  return renderResultCard(card, await fontsPromise, { "Cache-Control": "private, no-store" });
+  const pnl = summary.kind === "open" ? `~${formatSignedNaira(summary.netKobo)}` : formatSignedNaira(summary.netKobo);
+  return renderResultCard({ ...card, pnl }, await fontsPromise, { "Cache-Control": "private, no-store" });
 }

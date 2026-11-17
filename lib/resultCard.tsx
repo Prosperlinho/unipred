@@ -15,6 +15,8 @@ export interface ResultCardInput {
   stake: string;
   /** e.g. "Result: YES" or "Still live". */
   status: string;
+  /** Profit/loss line under the stake, e.g. "+₦2,073" or "-₦1,000". */
+  pnl: string;
   /** Final or current YES share, 0..1. */
   yesShare: number;
   candles: Candle[];
@@ -29,14 +31,18 @@ export interface CardFonts {
 
 export const RESULT_CARD_SIZE = { width: 1080, height: 1080 };
 
-const GREEN = "#10b981";
-const RED = "#f43f5e";
-const TEAL = "#5eead4";
-const GOLD = "#e2b05c";
+const GREEN = "#2fd47a";
+const RED = "#ff5d5d";
+const LIME = "#c6f432";
+const CREAM = "#f3efe6";
+const BG = "#08170f";
+const MUTED = "#8ba596";
+const LOGO_LEFT = "M120 110 A28 28 0 0 1 176 110 V240 A24 24 0 0 0 200 264 V320 A80 80 0 0 1 120 240 Z";
+const LOGO_RIGHT = "M224 174 A28 28 0 0 1 280 174 V240 A80 80 0 0 1 200 320 V264 A24 24 0 0 0 224 240 Z";
 
 // Chart panel geometry (inside the 1080px card with 56px padding).
 const CHART_W = 968;
-const CHART_H = 340;
+const CHART_H = 270;
 const PLOT_W = 790; // leaves a right-hand gutter for the % axis and the YES label
 const PLOT_PAD_Y = 24;
 
@@ -75,7 +81,7 @@ function CandleChart({ candles, yesShare, accent }: { candles: Candle[]; yesShar
             }}
           />
           {Math.abs(y(g) - lastY) > 30 ? (
-            <div style={{ display: "flex", marginLeft: 10, marginTop: -2, fontSize: 20, fontWeight: 500, color: "#64748b" }}>
+            <div style={{ display: "flex", marginLeft: 10, marginTop: -2, fontSize: 20, fontWeight: 500, color: MUTED }}>
               {`${Math.round(g * 100)}%`}
             </div>
           ) : null}
@@ -142,7 +148,7 @@ function CandleChart({ candles, yesShare, accent }: { candles: Candle[]; yesShar
           padding: "6px 14px",
           borderRadius: 999,
           background: accent,
-          color: "#0a0d14",
+          color: BG,
           fontSize: 22,
           fontWeight: 800,
         }}
@@ -154,9 +160,13 @@ function CandleChart({ candles, yesShare, accent }: { candles: Candle[]; yesShar
 }
 
 export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?: Record<string, string>) {
-  const accent = c.kind === "won" ? GREEN : c.kind === "lost" ? RED : TEAL;
-  const glow = c.kind === "won" ? "rgba(16,185,129,0.35)" : c.kind === "lost" ? "rgba(244,63,94,0.30)" : "rgba(94,234,212,0.26)";
-  const badge = c.kind === "won" ? "WINNER" : c.kind === "lost" ? "SETTLED" : "LIVE BET";
+  const accent = c.kind === "won" ? GREEN : c.kind === "lost" ? RED : LIME;
+  const glow = c.kind === "won" ? "rgba(47,212,122,0.22)" : c.kind === "lost" ? "rgba(255,93,93,0.20)" : "rgba(198,244,50,0.18)";
+  const tag = c.kind === "won" ? "Won" : c.kind === "lost" ? "Lost" : "Live";
+  const tagBg = c.kind === "won" ? "rgba(47,212,122,0.16)" : c.kind === "lost" ? "rgba(255,93,93,0.16)" : "rgba(198,244,50,0.14)";
+  const pnlColor = c.pnl.trim().startsWith("-") ? RED : GREEN;
+  const sideColor = c.side === "YES" ? GREEN : c.side === "NO" ? RED : CREAM;
+  const initials = c.username.slice(0, 2).toUpperCase();
 
   return new ImageResponse(
     (
@@ -167,137 +177,151 @@ export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?:
           display: "flex",
           flexDirection: "column",
           padding: 56,
-          color: "white",
+          color: CREAM,
           fontFamily: "Inter",
-          background: `radial-gradient(ellipse at 15% 0%, ${glow} 0%, transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(226,176,92,0.10) 0%, transparent 45%), #070a10`,
+          background: `radial-gradient(ellipse at 10% 0%, ${glow} 0%, transparent 55%), radial-gradient(ellipse at 100% 100%, rgba(198,244,50,0.07) 0%, transparent 50%), ${BG}`,
         }}
       >
-        {/* Header */}
+        {/* Brand row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div
-              style={{
-                display: "flex",
-                width: 52,
-                height: 52,
-                borderRadius: 14,
-                background: TEAL,
-                alignItems: "flex-end",
-                justifyContent: "center",
-                gap: 5,
-                padding: "12px 0",
-              }}
-            >
-              <div style={{ display: "flex", width: 8, height: 12, background: "#0a0d14", borderRadius: 2 }} />
-              <div style={{ display: "flex", width: 8, height: 20, background: "#0a0d14", borderRadius: 2 }} />
-              <div style={{ display: "flex", width: 8, height: 28, background: "#0a0d14", borderRadius: 2 }} />
-            </div>
-            <div style={{ display: "flex", fontSize: 42, fontWeight: 800 }}>
-              <span>Uni</span>
-              <span style={{ color: TEAL }}>Pred</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <svg width="56" height="56" viewBox="0 0 400 400">
+              <rect width="400" height="400" rx="96" fill="#0B1F16" />
+              <path d={LOGO_LEFT} fill={LIME} />
+              <path d={LOGO_RIGHT} fill={CREAM} />
+            </svg>
+            <div style={{ display: "flex", fontSize: 40, fontWeight: 800 }}>
+              <span style={{ color: LIME }}>Uni</span>
+              <span style={{ color: CREAM }}>Pred</span>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 12 }}>
-            {c.school ? (
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 26,
-                  fontWeight: 800,
-                  color: GOLD,
-                  background: "rgba(226,176,92,0.14)",
-                  padding: "10px 22px",
-                  borderRadius: 999,
-                }}
-              >
-                {c.school}
-              </div>
-            ) : null}
+          {c.school ? (
             <div
               style={{
                 display: "flex",
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: 800,
-                color: accent,
-                border: `2px solid ${accent}`,
-                padding: "8px 20px",
+                color: CREAM,
+                background: "rgba(243,239,230,0.08)",
+                border: "1px solid rgba(243,239,230,0.14)",
+                padding: "10px 22px",
                 borderRadius: 999,
               }}
             >
-              {badge}
+              {c.school}
             </div>
-          </div>
+          ) : null}
         </div>
 
-        {/* Result: full-width amount, details on their own row so nothing overlaps */}
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 36 }}>
-          <div style={{ display: "flex", fontSize: 38, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: 3 }}>
-            {c.headline}
-          </div>
+        {/* Post header: avatar, username, tinted tag */}
+        <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 40 }}>
           <div
             style={{
               display: "flex",
-              fontSize: c.amount.length > 10 ? 104 : c.amount.length > 7 ? 124 : 140,
+              width: 64,
+              height: 64,
+              borderRadius: 999,
+              background: LIME,
+              color: BG,
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 26,
+              fontWeight: 800,
+            }}
+          >
+            {initials}
+          </div>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 800, color: CREAM }}>@{c.username}</div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 26,
+              fontWeight: 800,
+              color: accent,
+              background: tagBg,
+              padding: "6px 16px",
+              borderRadius: 10,
+            }}
+          >
+            {tag}
+          </div>
+          <div style={{ display: "flex", fontSize: 26, fontWeight: 500, color: MUTED }}>{c.status}</div>
+        </div>
+
+        {/* Headline + big amount */}
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 26 }}>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 500, color: "rgba(243,239,230,0.85)" }}>{c.headline}</div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: c.amount.length > 10 ? 112 : c.amount.length > 7 ? 128 : 144,
               fontWeight: 800,
               lineHeight: 1,
-              marginTop: 8,
-              color: c.kind === "lost" ? "#f8fafc" : accent,
+              marginTop: 6,
+              color: c.kind === "lost" ? CREAM : accent,
             }}
           >
             {c.amount}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                fontSize: 24,
-                fontWeight: 500,
-                color: "#94a3b8",
-                padding: "8px 18px",
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.06)",
-              }}
-            >
-              <span>Staked</span>
-              <span style={{ color: "white", fontWeight: 800 }}>{c.stake}</span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                fontSize: 24,
-                fontWeight: 500,
-                color: "#94a3b8",
-                padding: "8px 18px",
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.06)",
-              }}
-            >
-              <span>Backed</span>
-              <span style={{ color: c.side === "YES" ? GREEN : c.side === "NO" ? RED : "#f8fafc", fontWeight: 800 }}>{c.side}</span>
-            </div>
-          </div>
-          <div style={{ display: "flex", fontSize: 26, fontWeight: 500, color: "#cbd5e1", marginTop: 14 }}>{c.detail}</div>
         </div>
 
-        {/* Chart */}
-        <div style={{ display: "flex", marginTop: 26 }}>
-          <CandleChart candles={c.candles} yesShare={c.yesShare} accent={accent} />
-        </div>
-
-        {/* Question + footer */}
+        {/* Position panel */}
         <div
           style={{
             display: "flex",
-            marginTop: 28,
-            fontSize: c.question.length > 80 ? 30 : 34,
-            fontWeight: 800,
-            lineHeight: 1.25,
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 28,
+            marginTop: 30,
+            padding: "26px 30px",
+            borderRadius: 28,
+            background: "rgba(255,255,255,0.045)",
+            border: "2px solid rgba(255,255,255,0.07)",
           }}
         >
-          {c.question}
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 24, fontWeight: 500, color: MUTED }}>
+              <span>Position</span>
+              <div style={{ display: "flex", width: 10, height: 10, borderRadius: 999, background: accent }} />
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: sideColor,
+                  background: "rgba(255,255,255,0.06)",
+                  padding: "2px 12px",
+                  borderRadius: 8,
+                }}
+              >
+                {c.side}
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                marginTop: 10,
+                fontSize: c.question.length > 80 ? 26 : 30,
+                fontWeight: 800,
+                lineHeight: 1.25,
+                color: CREAM,
+              }}
+            >
+              {c.question}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
+            <div style={{ display: "flex", fontSize: 40, fontWeight: 800, color: CREAM }}>{c.stake}</div>
+            <div style={{ display: "flex", fontSize: 30, fontWeight: 800, color: pnlColor, marginTop: 4 }}>{c.pnl}</div>
+          </div>
         </div>
+
+        {/* Chart */}
+        <div style={{ display: "flex", marginTop: 28 }}>
+          <CandleChart candles={c.candles} yesShare={c.yesShare} accent={accent} />
+        </div>
+
+        {/* Footer */}
         <div
           style={{
             display: "flex",
@@ -305,11 +329,11 @@ export function renderResultCard(c: ResultCardInput, fonts: CardFonts, headers?:
             marginTop: "auto",
             fontSize: 24,
             fontWeight: 500,
-            color: "#64748b",
+            color: MUTED,
           }}
         >
-          <span>@{c.username}</span>
-          <span>{c.status} · unipred.site</span>
+          <span>{c.detail}</span>
+          <span style={{ color: LIME, fontWeight: 800 }}>unipred.site</span>
         </div>
       </div>
     ),

@@ -5,7 +5,7 @@ import { MarketFeed } from "@/components/MarketFeed";
 import { SchoolPicker } from "@/components/SchoolPicker";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { getSchools, getSettings } from "@/lib/data";
+import { getActiveSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import type { Market } from "@/lib/types";
@@ -13,11 +13,13 @@ import type { Market } from "@/lib/types";
 export default async function HomePage(props: PageProps<"/">) {
   if (!isSupabaseConfigured) return null;
   const searchParams = await props.searchParams;
-  const [viewer, schools, settings] = await Promise.all([getViewer(), getSchools(), getSettings()]);
+  const [viewer, schools, settings] = await Promise.all([getViewer(), getActiveSchools(), getSettings()]);
 
   const requested = typeof searchParams.school === "string" ? searchParams.school : undefined;
   const validRequested = requested === "all" || schools.some((s) => s.id === requested) ? requested : undefined;
-  const selected = validRequested ?? viewer?.profile.school_id ?? "all";
+  const ownSchool = schools.some((s) => s.id === viewer?.profile.school_id) ? viewer?.profile.school_id : undefined;
+  // With a single open school, everyone lands on it.
+  const selected = validRequested ?? ownSchool ?? (schools.length === 1 ? schools[0].id : "all");
   const selectedSchool = schools.find((s) => s.id === selected);
 
   const supabase = await createClient();
@@ -27,7 +29,7 @@ export default async function HomePage(props: PageProps<"/">) {
     .in("status", ["open", "resolved", "cancelled"])
     .order("created_at", { ascending: false })
     .limit(120);
-  if (selected !== "all") query = query.eq("school_id", selected);
+  query = selected !== "all" ? query.eq("school_id", selected) : query.in("school_id", schools.map((s) => s.id));
   const { data } = await query;
   const markets = (data ?? []) as Market[];
 

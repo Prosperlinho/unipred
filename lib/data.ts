@@ -32,6 +32,12 @@ export const getSettings = cache(async (): Promise<PlatformSettings> => {
   return data ?? DEFAULT_SETTINGS;
 });
 
+/** Schools UniPred is currently open at: used for pickers and the market feed. */
+export const getActiveSchools = cache(async (): Promise<School[]> => {
+  const all = await getSchools();
+  return all.filter((s) => s.active !== false);
+});
+
 export function schoolMap(schools: School[]): Record<string, School> {
   return Object.fromEntries(schools.map((s) => [s.id, s]));
 }

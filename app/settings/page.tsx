@@ -4,7 +4,7 @@ import { signOut } from "@/app/actions/auth";
 import { Container } from "@/components/Container";
 import { PasswordForm } from "@/components/PasswordForm";
 import { requireViewer } from "@/lib/auth";
-import { getSchools } from "@/lib/data";
+import { getActiveSchools, getSchools } from "@/lib/data";
 import { paystack, type Bank } from "@/lib/paystack";
 import { createClient } from "@/lib/supabase/server";
 import type { PayoutAccount } from "@/lib/types";
@@ -35,8 +35,9 @@ export default async function SettingsPage() {
   const viewer = await requireViewer("/settings");
   const supabase = await createClient();
 
-  const [schools, { data: account }, bankList] = await Promise.all([
+  const [allSchools, activeSchools, { data: account }, bankList] = await Promise.all([
     getSchools(),
+    getActiveSchools(),
     supabase
       .from("payout_accounts")
       .select("bank_code, bank_name, account_number, account_name")
@@ -52,7 +53,13 @@ export default async function SettingsPage() {
 
       <div className="space-y-4">
         <Section id="profile" title="Profile" subtitle="Your username shows on comments. Your school sets your default feed.">
-          <ProfileForm profile={viewer.profile} schools={schools} />
+          <ProfileForm
+            profile={viewer.profile}
+            schools={[
+              ...activeSchools,
+              ...allSchools.filter((sc) => sc.id === viewer.profile.school_id && sc.active === false),
+            ]}
+          />
         </Section>
 
         <Section id="payout" title="Payout bank account" subtitle="Where your withdrawals are sent. It must be in your own name.">

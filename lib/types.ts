@@ -15,6 +15,8 @@ export interface School {
   short_name: string;
   state: string;
   ownership: "Federal" | "State" | "Private";
+  /** Whether UniPred is open at this school. Inactive schools are hidden but keep their members and history. */
+  active?: boolean;
 }
 
 export interface Pools {

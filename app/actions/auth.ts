@@ -47,7 +47,7 @@ export async function signUp(_prev: FormState, fd: FormData): Promise<FormState>
   const { data: taken } = await supabase.from("public_profiles").select("id").ilike("username", username.replace(/_/g, "\\_")).limit(1);
   if (taken && taken.length > 0) return fail("That username is already taken.");
 
-  const { data: school } = await supabase.from("schools").select("id").eq("id", schoolId).maybeSingle();
+  const { data: school } = await supabase.from("schools").select("id").eq("id", schoolId).eq("active", true).maybeSingle();
   if (!school) return fail("Choose your university from the list.");
 
   const origin = await getOrigin();

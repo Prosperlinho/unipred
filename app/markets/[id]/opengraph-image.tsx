@@ -59,15 +59,20 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 64,
-          background: "linear-gradient(135deg, #0a0d14 0%, #0f1e24 60%, #11302f 100%)",
+          background: "radial-gradient(ellipse at 10% 0%, rgba(198,244,50,0.16) 0%, transparent 55%), #08170f",
           color: "white",
           fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 40, fontWeight: 800 }}>
-            <span>Uni</span>
-            <span style={{ color: "#5eead4" }}>Pred</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 40, fontWeight: 800 }}>
+            <svg width="56" height="56" viewBox="0 0 400 400">
+              <rect width="400" height="400" rx="96" fill="#0B1F16" />
+              <path d="M120 110 A28 28 0 0 1 176 110 V240 A24 24 0 0 0 200 264 V320 A80 80 0 0 1 120 240 Z" fill="#c6f432" />
+              <path d="M224 174 A28 28 0 0 1 280 174 V240 A80 80 0 0 1 200 320 V264 A24 24 0 0 0 224 240 Z" fill="#f3efe6" />
+            </svg>
+            <span style={{ color: "#c6f432" }}>Uni</span>
+            <span style={{ color: "#f3efe6" }}>Pred</span>
           </div>
           {school ? (
             <div

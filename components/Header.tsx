@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus, TrendingUp, Wallet } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { formatNaira, initials } from "@/lib/format";
+import { LogoTile } from "./Logo";
 
 interface Props {
   viewer: { username: string; balanceKobo: number; isAdmin: boolean } | null;
@@ -21,11 +22,10 @@ export function Header({ viewer }: Props) {
     <header className="sticky top-0 z-40 transform-gpu border-b border-line bg-bg md:bg-bg/85 md:backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 font-extrabold tracking-tight text-white">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-brand text-black">
-            <TrendingUp className="size-4" strokeWidth={3} />
-          </span>
+          <LogoTile className="size-8 shrink-0 ring-1 ring-white/10 [border-radius:9px]" />
           <span className="hidden text-[17px] min-[380px]:inline">
-            Uni<span className="text-brand">Pred</span>
+            <span className="text-brand">Uni</span>
+            <span className="text-cream">Pred</span>
           </span>
         </Link>
 
