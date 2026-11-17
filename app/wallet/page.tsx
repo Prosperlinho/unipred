@@ -8,6 +8,8 @@ import { isTestMode } from "@/lib/env";
 import { formatDate, formatNaira, formatSignedNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { LedgerEntry, PayoutAccount, Withdrawal } from "@/lib/types";
+import type { P2PStatus } from "@/app/actions/wallet";
+import { SendMoneyForm } from "./SendMoneyForm";
 import { DepositForm, WithdrawForm } from "./WalletForms";
 
 export const metadata: Metadata = { title: "Wallet · UniPred" };
@@ -30,7 +32,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
   const viewer = await requireViewer("/wallet");
   const sp = await props.searchParams;
   const supabase = await createClient();
-  const [settings, { data: account }, { data: ledger }, { data: withdrawals }] = await Promise.all([
+  const [settings, { data: account }, { data: ledger }, { data: withdrawals }, { data: p2p }] = await Promise.all([
     getSettings(),
     supabase
       .from("payout_accounts")
@@ -44,6 +46,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
       .eq("user_id", viewer.id)
       .in("status", ["pending", "processing"])
       .order("created_at", { ascending: false }),
+    supabase.rpc("my_p2p_status"),
   ]);
   const notice = typeof sp.deposit === "string" ? DEPOSIT_NOTICE[sp.deposit] : undefined;
 
@@ -89,6 +92,11 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
         </section>
 
         <section className="space-y-3 rounded-2xl border border-line bg-card p-4">
+          <h2 className="font-semibold text-white">Send to a member</h2>
+          <SendMoneyForm status={(p2p as P2PStatus | null) ?? null} />
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-line bg-card p-4 lg:col-span-3">
           <h2 className="font-semibold text-white">Pending withdrawals</h2>
           {(withdrawals ?? []).length === 0 ? (
             <p className="text-sm text-muted">None right now.</p>

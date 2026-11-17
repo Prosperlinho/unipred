@@ -70,6 +70,11 @@ export function HouseRules({ feePct, exitFeePct, referralPct, compact = false }:
           investigate, as set out in our Terms.
         </>,
         <>
+          You can <b>send money to another member</b> by username, but only money you&apos;ve won on UniPred, up to a
+          daily limit. Both accounts must be at least a week old with a verified bank account in the owner&apos;s name.
+          Transfers are final.
+        </>,
+        <>
           Invite friends with your link and earn <b>{referralPct}% of UniPred&apos;s fee</b> on every bet they make,
           paid from the fee when the market resolves.
         </>,

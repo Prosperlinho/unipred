@@ -76,6 +76,12 @@ export default async function TermsPage() {
           </li>
           <li>Minimum amounts for bets, deposits and withdrawals are shown in the app and may change.</li>
           <li>Your wallet balance is not a bank deposit and earns no interest.</li>
+          <li>
+            You may send winnings to another member by username, within the daily limits shown in the app. Only money won
+            on UniPred can be sent, both accounts must meet the eligibility rules shown in the app, and transfers are
+            final. Transfers can&apos;t be used to pay for goods or services, to move deposits between people, or to get
+            around a suspension; transfers we find were used that way may be reversed and the accounts suspended.
+          </li>
         </ul>
       </Clause>
 

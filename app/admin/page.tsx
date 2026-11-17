@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { getRequestTime } from "@/lib/time";
 import { requireAdmin } from "@/lib/auth";
 import { getSchools } from "@/lib/data";
+import { formatDate, formatNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
 import { AccountReviewRow, OpenMarketRow, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
@@ -25,7 +26,7 @@ function Section({ title, count, children, empty }: { title: string; count: numb
 export default async function AdminPage() {
   await requireAdmin();
   const admin = createAdminClient();
-  const [schools, { data: pendingData }, { data: openData }, { data: wData }, { data: reviewData }] = await Promise.all([
+  const [schools, { data: pendingData }, { data: openData }, { data: wData }, { data: reviewData }, { data: transferData }] = await Promise.all([
     getSchools(),
     admin.from("markets").select("*").eq("status", "pending").order("created_at", { ascending: true }),
     admin.from("markets").select("*").eq("status", "open").order("closes_at", { ascending: true }),
@@ -36,7 +37,14 @@ export default async function AdminPage() {
       .or("is_banned.eq.true,flagged_reason.not.is.null")
       .order("created_at", { ascending: false })
       .limit(100),
+    admin.from("transfers").select("id, from_user, to_user, amount_kobo, note, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
+  const transfers = (transferData ?? []) as Array<{ id: string; from_user: string; to_user: string; amount_kobo: number; note: string | null; created_at: string }>;
+  const transferUserIds = [...new Set(transfers.flatMap((t) => [t.from_user, t.to_user]))];
+  const { data: transferUsers } = transferUserIds.length
+    ? await admin.from("profiles").select("id, username").in("id", transferUserIds)
+    : { data: [] as Array<{ id: string; username: string }> };
+  const transferName = new Map((transferUsers ?? []).map((u) => [u.id, u.username]));
   const review: ReviewAccount[] = ((reviewData ?? []) as Array<Omit<ReviewAccount, "balance_kobo"> & { wallets: { balance_kobo: number } | { balance_kobo: number }[] | null }>).map((r) => ({
     ...r,
     balance_kobo: Array.isArray(r.wallets) ? (r.wallets[0]?.balance_kobo ?? 0) : (r.wallets?.balance_kobo ?? 0),
@@ -90,6 +98,23 @@ export default async function AdminPage() {
               <AccountReviewRow key={a.id} a={a} />
             ))}
           </div>
+        </Section>
+
+        <Section title="Recent member transfers" count={transfers.length} empty="No member transfers yet.">
+          <ul className="divide-y divide-line rounded-2xl border border-line bg-card text-sm">
+            {transfers.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 p-3">
+                <span className="min-w-0 flex-1 truncate text-white">
+                  @{transferName.get(t.from_user) ?? "?"} → @{transferName.get(t.to_user) ?? "?"}
+                  {t.note ? <span className="text-muted"> · {t.note}</span> : null}
+                </span>
+                <span className="shrink-0 text-right tabular-nums">
+                  <span className="block font-semibold text-white">{formatNaira(t.amount_kobo)}</span>
+                  <span className="text-[11px] text-muted">{formatDate(t.created_at)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </Section>
 
         <Section title="Live markets (resolve or cancel)" count={open.length} empty="No live markets.">
