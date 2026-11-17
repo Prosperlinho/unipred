@@ -7,7 +7,7 @@ import { FormMessage, inputCls } from "@/components/forms";
 import { useUI } from "@/context/UIContext";
 import { formatNaira } from "@/lib/format";
 
-/** Send winnings to another member by username. */
+/** Send money to another member by username. */
 export function SendMoneyForm({ status }: { status: P2PStatus | null }) {
   const { toast } = useUI();
   const [username, setUsername] = useState("");
@@ -71,8 +71,7 @@ export function SendMoneyForm({ status }: { status: P2PStatus | null }) {
   return (
     <div className="space-y-3">
       <p className="rounded-xl bg-bg px-3 py-2 text-xs text-muted">
-        You can send <span className="font-bold text-white">{formatNaira(sendable)}</span> today, from money you&apos;ve
-        won on UniPred.
+        You can send <span className="font-bold text-white">{formatNaira(sendable)}</span> today.
       </p>
 
       <div>

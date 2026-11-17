@@ -80,7 +80,7 @@ export async function lookupMember(username: string): Promise<ActionResult<{ use
   return { ok: true, value: { username: data.username, school: school?.short_name ?? "" } };
 }
 
-/** Sends winnings to another member by username (limits enforced in the database). */
+/** Sends wallet money to another member by username (limits enforced in the database). */
 export async function sendMoney(username: string, amountKobo: number, note: string): Promise<ActionResult<string>> {
   if (!(await getViewer())) return { ok: false, error: "Please log in." };
   if (!Number.isInteger(amountKobo) || amountKobo <= 0) return { ok: false, error: "Enter an amount." };
