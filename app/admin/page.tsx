@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { getRequestTime } from "@/lib/time";
 import { requireAdmin } from "@/lib/auth";
-import { getSchools } from "@/lib/data";
+import { getSchools, getSettings } from "@/lib/data";
 import { formatDate, formatNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
 import { AccountReviewRow, OpenMarketRow, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
+import { PartnerPanel, type Partner } from "./PartnerPanel";
 
 export const metadata: Metadata = { title: "Admin · UniPred" };
 
@@ -39,6 +40,13 @@ export default async function AdminPage() {
       .limit(100),
     admin.from("transfers").select("id, from_user, to_user, amount_kobo, note, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
+  const [settings, { data: partnerData }] = await Promise.all([getSettings(), admin.rpc("partner_stats")]);
+  const partners: Partner[] = ((partnerData ?? []) as Array<{ username: string; rate_bps: number; joined: number; active: number }>).map((p) => ({
+    username: p.username,
+    ratePct: p.rate_bps / 100,
+    joined: p.joined,
+    active: p.active,
+  }));
   const transfers = (transferData ?? []) as Array<{ id: string; from_user: string; to_user: string; amount_kobo: number; note: string | null; created_at: string }>;
   const transferUserIds = [...new Set(transfers.flatMap((t) => [t.from_user, t.to_user]))];
   const { data: transferUsers } = transferUserIds.length
@@ -99,6 +107,14 @@ export default async function AdminPage() {
             ))}
           </div>
         </Section>
+
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+            Partner invite rates
+            <span className="rounded-full bg-card-2 px-2 py-0.5 text-[11px] text-white">{partners.length}</span>
+          </h2>
+          <PartnerPanel partners={partners} standardPct={settings.referral_share_bps / 100} />
+        </section>
 
         <Section title="Recent member transfers" count={transfers.length} empty="No member transfers yet.">
           <ul className="divide-y divide-line rounded-2xl border border-line bg-card text-sm">

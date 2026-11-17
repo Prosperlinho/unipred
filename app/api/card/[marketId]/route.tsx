@@ -25,8 +25,11 @@ const fontsPromise = Promise.all(
   ),
 ).then(([latin800, ext800, latin500, ext500]) => ({ latin800, ext800, latin500, ext500 }));
 
-export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marketId]">) {
+export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[marketId]">) {
   const { marketId } = await ctx.params;
+  // ?side=YES or ?side=NO makes a card for just that side when the user bet on both.
+  const sideParam = req.nextUrl.searchParams.get("side");
+  const onlySide = sideParam === "YES" || sideParam === "NO" ? sideParam : null;
   if (!UUID_RE.test(marketId)) return new Response("Not found", { status: 404 });
   const viewer = await getViewer();
   if (!viewer) return new Response("Log in to create your card", { status: 401 });
@@ -37,7 +40,9 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
     supabase.from("positions").select("*").eq("market_id", marketId).eq("user_id", viewer.id),
     supabase.from("market_history").select("p, t").eq("market_id", marketId).order("t", { ascending: true }).limit(2000),
   ]);
-  const positions = ((posData ?? []) as Position[]).filter((p) => Number(p.cost_kobo) > 0);
+  const positions = ((posData ?? []) as Position[]).filter(
+    (p) => Number(p.cost_kobo) > 0 && (!onlySide || p.outcome === onlySide),
+  );
   if (!market || positions.length === 0 || (market.status !== "open" && market.status !== "resolved")) {
     return new Response("No bet to show for this market", { status: 404 });
   }
@@ -51,7 +56,10 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
   const summary = summarizeBets(market, positions, settings.pool_fee_bps);
   if (!summary) return new Response("No bet to show for this market", { status: 404 });
   if (summary.kind === "refunded") {
-    return new Response("This bet was refunded in full, so there's no win or loss card for it.", { status: 404 });
+    return new Response(
+      `This ${onlySide ? `${onlySide} bet` : "bet"} was refunded in full, so there's no win or loss card for it.`,
+      { status: 404 },
+    );
   }
   const hedged = summary.perSide.length > 1;
   const sideBreakdown = summary.perSide.map((p) => `${formatNaira(p.stakeKobo)} on ${p.outcome}`).join(" + ");
@@ -92,7 +100,9 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/card/[marke
       kind: "won",
       headline: "I won",
       amount: formatNaira(summary.returnedKobo),
-      detail: `${formatSignedNaira(summary.netKobo)} profit · called it right`,
+      detail: onlySide
+        ? `${formatSignedNaira(summary.netKobo)} profit on my ${onlySide} bet`
+        : `${formatSignedNaira(summary.netKobo)} profit · called it right`,
       status: `Result: ${market.resolution}`,
     };
   } else {

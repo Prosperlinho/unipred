@@ -112,8 +112,10 @@ export default async function TermsPage() {
 
       <Clause n={7} title="Invite programme">
         <p>
-          Members may share an invite link. When someone who joined through your link bets, you earn {ref}% of
-          UniPred&apos;s fee on the share of the pot their bets made up, paid when the market resolves. Invite bonuses
+          Members may share an invite link. Once someone who joined through your link is active (at least 5 bets a day
+          on 3 days in a row, Lagos time), you earn {ref}% of UniPred&apos;s fee on the share of the pot their bets made
+          up, for every market that resolves after they became active. Markets that resolved before your friend became
+          active earn no bonus, and it isn&apos;t paid later. UniPred may agree a different rate with partners. Invite bonuses
           come only out of UniPred&apos;s fee. Inviting yourself or fake accounts is fraud: bonuses earned that way are
           reversed and the accounts involved may be suspended. We may change or end the programme with notice in the app.
         </p>

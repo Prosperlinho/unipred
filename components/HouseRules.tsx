@@ -75,8 +75,9 @@ export function HouseRules({ feePct, exitFeePct, referralPct, compact = false }:
           are final.
         </>,
         <>
-          Invite friends with your link and earn <b>{referralPct}% of UniPred&apos;s fee</b> on every bet they make,
-          paid from the fee when the market resolves.
+          Invite friends with your link and earn <b>{referralPct}% of UniPred&apos;s fee</b> on their bets, paid from the
+          fee when each market resolves. You start earning from a friend once they&apos;re <b>active</b>: at least 5 bets a
+          day for 3 days in a row.
         </>,
         <>
           No market may target a private individual, encourage harm, or be about something a bettor can secretly

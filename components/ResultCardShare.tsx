@@ -12,6 +12,8 @@ interface Props {
   /** Caption used when sharing, e.g. "I just won ₦3,073 on UniPred". */
   caption: string;
   refUsername: string;
+  /** Card for just this side, when the user bet on both YES and NO. */
+  side?: "YES" | "NO";
 }
 
 function marketUrl(marketId: string, ref: string) {
@@ -20,14 +22,14 @@ function marketUrl(marketId: string, ref: string) {
   return u.toString();
 }
 
-export function ResultCardShare({ marketId, kind, caption, refUsername }: Props) {
+export function ResultCardShare({ marketId, kind, caption, refUsername, side }: Props) {
   const { toast } = useUI();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [version, setVersion] = useState(0);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const src = `/api/card/${marketId}?v=${version}`;
-  const fileName = `unipred-${kind}-${marketId.slice(0, 8)}.png`;
+  const src = `/api/card/${marketId}?v=${version}${side ? `&side=${side}` : ""}`;
+  const fileName = `unipred-${kind}${side ? `-${side.toLowerCase()}` : ""}-${marketId.slice(0, 8)}.png`;
 
   useEffect(() => {
     if (!open) return;

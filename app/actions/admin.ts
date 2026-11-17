@@ -126,3 +126,27 @@ export async function setAccountStatus(userId: string, suspend: boolean, reason:
   refreshAll();
   return { ok: true, value: undefined };
 }
+
+/** Gives a partner a special invite rate (percent of UniPred's fee), or null to go back to the standard rate. */
+export async function setPartnerRate(username: string, ratePct: number | null): Promise<ActionResult<string>> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  if (ratePct !== null && !(ratePct >= 0 && ratePct <= 100)) return { ok: false, error: "Rate must be between 0% and 100%." };
+  const admin = createAdminClient();
+  const { data: user } = await admin
+    .from("profiles")
+    .select("id, username")
+    .ilike("username", username.trim().replace(/_/g, "\_"))
+    .maybeSingle<{ id: string; username: string }>();
+  if (!user) return { ok: false, error: "No member with that username." };
+  const { error } = await admin
+    .from("profiles")
+    .update({ referral_bps_override: ratePct === null ? null : Math.round(ratePct * 100) })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return {
+    ok: true,
+    value: ratePct === null ? `@${user.username} is back on the standard rate.` : `@${user.username} now earns ${ratePct}% of the fee.`,
+  };
+}

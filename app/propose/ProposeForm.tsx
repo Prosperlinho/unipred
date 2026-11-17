@@ -108,7 +108,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
             ))}
           </datalist>
         </Field>
-        <Field label="Trading closes" htmlFor="closes_at" hint="Between 1 hour and 120 days from now.">
+        <Field label="Trading closes" htmlFor="closes_at" hint="Between 5 minutes and 120 days from now.">
           <input
             id="closes_at"
             name="closes_at"

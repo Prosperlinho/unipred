@@ -216,23 +216,41 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     settings.pool_fee_bps,
   );
   const hedged = positionRows.length > 1;
-  let card: { kind: "won" | "lost" | "backing"; caption: string } | null = null;
-  if (summary?.kind === "open") {
-    card = {
-      kind: "backing",
-      caption: `I'm backing ${summary.main} on "${market.question}" Think I'm wrong? Bet against me on UniPred:`,
-    };
-  } else if (summary?.kind === "won") {
-    card = {
-      kind: "won",
-      caption: `I just won ${formatNaira(summary.returnedKobo)} on UniPred calling "${market.question}" right 🎯`,
-    };
-  } else if (summary?.kind === "lost") {
-    card = {
-      kind: "lost",
-      caption: `Took an L of ${formatNaira(-summary.netKobo)} on "${market.question}" Next one is mine. Join me on UniPred:`,
-    };
-  }
+  type Card = { kind: "won" | "lost" | "backing"; caption: string; side?: "YES" | "NO" };
+  const cardFrom = (sum: typeof summary, side?: "YES" | "NO"): Card | null => {
+    if (sum?.kind === "open") {
+      return {
+        kind: "backing",
+        side,
+        caption: `I'm backing ${sum.main} on "${market.question}" Think I'm wrong? Bet against me on UniPred:`,
+      };
+    }
+    if (sum?.kind === "won") {
+      return {
+        kind: "won",
+        side,
+        caption: `I just won ${formatNaira(sum.returnedKobo)} on UniPred calling ${side ? `${side} on ` : ""}"${market.question}" right 🎯`,
+      };
+    }
+    if (sum?.kind === "lost") {
+      return {
+        kind: "lost",
+        side,
+        caption: `Took an L of ${formatNaira(-sum.netKobo)} on ${side ? `my ${side} bet on ` : ""}"${market.question}" Next one is mine. Join me on UniPred:`,
+      };
+    }
+    return null;
+  };
+  // Bets on both sides get a separate card for each side; a single bet gets one card.
+  const cards: Card[] = hedged
+    ? positionRows.flatMap((r) => {
+        const c = cardFrom(
+          summarizeBets(market, [{ outcome: r.outcome, shares: holdings[r.outcome]?.shares ?? 0, cost_kobo: r.staked }], settings.pool_fee_bps),
+          r.outcome,
+        );
+        return c ? [c] : [];
+      })
+    : [cardFrom(summary)].filter((c): c is Card => c !== null);
 
   return (
     <Container>
@@ -344,20 +362,28 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                   </span>
                 </div>
               )}
-              {viewer && card && (
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
-                  <span className="text-xs text-muted">
-                    {card.kind === "won" ? "Flex it." : card.kind === "lost" ? "Own it." : "Hype your call."} Download or share
-                    your card.
-                  </span>
-                  <ResultCardShare
-                    marketId={market.id}
-                    kind={card.kind}
-                    caption={card.caption}
-                    refUsername={viewer.profile.username}
-                  />
-                </div>
-              )}
+              {viewer &&
+                cards.map((card) => (
+                  <div
+                    key={card.side ?? "all"}
+                    className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5"
+                  >
+                    <span className="text-xs text-muted">
+                      {card.side && (
+                        <span className={`mr-1 font-bold ${card.side === "YES" ? "text-yes" : "text-no"}`}>{card.side} bet:</span>
+                      )}
+                      {card.kind === "won" ? "Flex it." : card.kind === "lost" ? "Own it." : "Hype your call."} Download or share
+                      your card.
+                    </span>
+                    <ResultCardShare
+                      marketId={market.id}
+                      kind={card.kind}
+                      caption={card.caption}
+                      refUsername={viewer.profile.username}
+                      side={card.side}
+                    />
+                  </div>
+                ))}
             </div>
           )}
 
