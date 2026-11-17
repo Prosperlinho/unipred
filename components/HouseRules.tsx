@@ -71,7 +71,7 @@ export function HouseRules({ feePct, exitFeePct, referralPct, compact = false }:
         </>,
         <>
           You can <b>send money to another member</b> by username, up to a daily limit. You need at least 3 bets placed,
-          and both accounts must be at least a week old with a verified bank account in the owner&apos;s name. Transfers
+          and both accounts must be at least 3 days old with a verified bank account in the owner&apos;s name. Transfers
           are final.
         </>,
         <>
