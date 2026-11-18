@@ -125,6 +125,8 @@ export function summarizeBets(
   const returnedKobo = results.reduce((s, r) => s + (r && r.kind !== "lost" ? r.amountKobo : 0), 0);
   const netKobo = returnedKobo - totalStakeKobo;
   const allRefunded = results.every((r) => r?.kind === "refunded");
-  const kind = allRefunded ? "refunded" : netKobo > 0 ? "won" : "lost";
+  // A correct call is a win even with no profit (e.g. nobody took the other side, so the stake just came back).
+  const calledIt = results.some((r) => r?.kind === "won");
+  const kind = allRefunded ? "refunded" : netKobo > 0 || (netKobo === 0 && calledIt) ? "won" : "lost";
   return { ...base, kind, returnedKobo, netKobo };
 }

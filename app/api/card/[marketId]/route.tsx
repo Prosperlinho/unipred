@@ -98,11 +98,14 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
     card = {
       ...common,
       kind: "won",
-      headline: "I won",
+      headline: summary.netKobo === 0 ? "I called it" : "I won",
       amount: formatNaira(summary.returnedKobo),
-      detail: onlySide
-        ? `${formatSignedNaira(summary.netKobo)} profit on my ${onlySide} bet`
-        : `${formatSignedNaira(summary.netKobo)} profit · called it right`,
+      detail:
+        summary.netKobo === 0
+          ? "Called it right · stake back (nobody took the other side)"
+          : onlySide
+            ? `${formatSignedNaira(summary.netKobo)} profit on my ${onlySide} bet`
+            : `${formatSignedNaira(summary.netKobo)} profit · called it right`,
       status: `Result: ${market.resolution}`,
     };
   } else {

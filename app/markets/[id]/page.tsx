@@ -229,7 +229,10 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
       return {
         kind: "won",
         side,
-        caption: `I just won ${formatNaira(sum.returnedKobo)} on UniPred calling ${side ? `${side} on ` : ""}"${market.question}" right 🎯`,
+        caption:
+          sum.netKobo === 0
+            ? `I called ${side ? `${side} on ` : ""}"${market.question}" right on UniPred 🎯`
+            : `I just won ${formatNaira(sum.returnedKobo)} on UniPred calling ${side ? `${side} on ` : ""}"${market.question}" right 🎯`,
       };
     }
     if (sum?.kind === "lost") {
