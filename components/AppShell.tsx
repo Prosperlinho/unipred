@@ -11,6 +11,9 @@ import { Header } from "./Header";
 import { HouseRules } from "./HouseRules";
 import { RulesGate } from "./RulesGate";
 import { WelcomeGuide } from "./WelcomeGuide";
+import type { GuideInfo } from "./Guide";
+import { SUPPORT_EMAIL } from "./LegalPage";
+import { formatNaira } from "@/lib/format";
 import { Toaster } from "./Toaster";
 
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -20,12 +23,22 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const profile = viewer?.profile;
   // Columns are undefined until migration 0006 runs; only gate when they exist.
   const needsRules = !!profile && typeof profile.terms_version === "number" && profile.terms_version < settings.terms_version;
+  const guide: GuideInfo = {
+    feePct: settings.pool_fee_bps / 100,
+    exitFeePct: settings.exit_fee_bps / 100,
+    referralPct: settings.referral_share_bps / 100,
+    minBet: formatNaira(settings.min_trade_kobo),
+    minDeposit: formatNaira(settings.min_deposit_kobo),
+    minWithdrawal: formatNaira(settings.min_withdrawal_kobo),
+    supportEmail: SUPPORT_EMAIL,
+  };
   const showWelcome = !!profile && !needsRules && profile.onboarded_at === null;
 
   return (
     <UIProvider>
       <div className="flex min-h-dvh flex-col pb-16 md:pb-0">
         <Header
+          guide={guide}
           viewer={
             viewer
               ? { username: viewer.profile.username, balanceKobo: viewer.balanceKobo, isAdmin: viewer.profile.is_admin }
@@ -65,7 +78,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           />
         </RulesGate>
       )}
-      {showWelcome && profile && <WelcomeGuide username={profile.username} />}
+      {showWelcome && profile && <WelcomeGuide username={profile.username} info={guide} />}
       <Toaster />
     </UIProvider>
   );

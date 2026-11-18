@@ -2,7 +2,7 @@
 
 import { AlertTriangle, BadgeCheck, Loader2, Lock } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
-import { resolveBankAccount, savePayoutAccount, setFullName, updateProfile, type ResolvedAccount } from "@/app/actions/settings";
+import { resolveBankAccount, savePayoutAccount, setFullName, setLeaderboardHidden, updateProfile, type ResolvedAccount } from "@/app/actions/settings";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
 import { useUI } from "@/context/UIContext";
@@ -197,5 +197,37 @@ export function PayoutForm({
         to this account.
       </p>
     </div>
+  );
+}
+
+/** Opt in or out of the public leaderboard. */
+export function LeaderboardToggle({ hidden }: { hidden: boolean }) {
+  const { toast } = useUI();
+  const [isHidden, setIsHidden] = useState(hidden);
+  const [pending, startTransition] = useTransition();
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-line bg-bg p-3 text-sm">
+      <span>
+        <span className="block font-semibold text-white">Show me on the leaderboard</span>
+        <span className="text-xs text-muted">Other members see your username, university and profit when you rank.</span>
+      </span>
+      <input
+        type="checkbox"
+        className="size-5 shrink-0 accent-brand"
+        checked={!isHidden}
+        disabled={pending}
+        onChange={(e) => {
+          const nextHidden = !e.target.checked;
+          setIsHidden(nextHidden);
+          startTransition(async () => {
+            const res = await setLeaderboardHidden(nextHidden);
+            if (!res.ok) {
+              setIsHidden(!nextHidden);
+              toast(res.error, "error");
+            } else toast(nextHidden ? "You're hidden from the leaderboard." : "You'll show on the leaderboard.");
+          });
+        }}
+      />
+    </label>
   );
 }

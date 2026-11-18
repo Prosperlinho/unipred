@@ -4,16 +4,19 @@ import { Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { formatNaira, initials } from "@/lib/format";
+import { GuideButton, type GuideInfo } from "./Guide";
 import { LogoTile } from "./Logo";
 
 interface Props {
+  guide: GuideInfo;
   viewer: { username: string; balanceKobo: number; isAdmin: boolean } | null;
 }
 
-export function Header({ viewer }: Props) {
+export function Header({ viewer, guide }: Props) {
   const pathname = usePathname();
   const nav = [
     { href: "/", label: "Markets" },
+    { href: "/leaderboard", label: "Leaderboard" },
     ...(viewer ? [{ href: "/portfolio", label: "Portfolio" }, { href: "/wallet", label: "Wallet" }] : []),
     ...(viewer?.isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
@@ -44,6 +47,7 @@ export function Header({ viewer }: Props) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <GuideButton info={guide} />
           {viewer ? (
             <>
               <Link
@@ -56,10 +60,11 @@ export function Header({ viewer }: Props) {
               </Link>
               <Link
                 href="/propose"
-                className="hidden items-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-sm font-bold text-black transition hover:brightness-110 sm:flex"
+                className="flex items-center gap-1 rounded-xl bg-brand px-2 py-1.5 text-sm font-bold text-black transition hover:brightness-110 sm:px-3"
+                aria-label="Propose a market"
               >
                 <Plus className="size-4" strokeWidth={3} />
-                Propose
+                <span className="hidden sm:inline">Propose</span>
               </Link>
               <Link
                 href="/profile"

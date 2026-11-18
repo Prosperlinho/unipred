@@ -156,3 +156,15 @@ export async function savePayoutAccount(
     return { ok: false, error: e instanceof Error ? e.message : "Could not save that account." };
   }
 }
+
+/** Show or hide the signed-in member on the public leaderboard. */
+export async function setLeaderboardHidden(hidden: boolean): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, error: "Please log in." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ leaderboard_hidden: hidden }).eq("id", viewer.id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/leaderboard");
+  revalidatePath("/settings");
+  return { ok: true, value: undefined };
+}

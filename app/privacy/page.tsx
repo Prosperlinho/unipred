@@ -52,7 +52,8 @@ export default function PrivacyPage() {
 
       <Clause n={3} title="What other people can see">
         <p>
-          Other members see your username, your university and any comments you post. When you send money to a
+          Other members see your username, your university and any comments you post. If you rank on the leaderboard, they
+          also see your profit and how many markets you won in that period; you can turn this off in Settings. When you send money to a
           member, they see your username, the amount and your note. Your full name, email, date of
           birth, balance, bets and bank details are never shown to other members. Result cards you choose to download or
           share show your username, stake and result.

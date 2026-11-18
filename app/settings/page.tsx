@@ -9,7 +9,7 @@ import { paystack, type Bank } from "@/lib/paystack";
 import { createClient } from "@/lib/supabase/server";
 import type { PayoutAccount } from "@/lib/types";
 import { isValidFullName } from "@/lib/identity";
-import { PayoutForm, ProfileForm, SetFullNameForm } from "./SettingsForms";
+import { LeaderboardToggle, PayoutForm, ProfileForm, SetFullNameForm } from "./SettingsForms";
 
 export const metadata: Metadata = { title: "Settings · UniPred" };
 
@@ -68,6 +68,10 @@ export default async function SettingsPage() {
           ) : (
             <SetFullNameForm />
           )}
+        </Section>
+
+        <Section id="privacy" title="Leaderboard" subtitle="Choose whether your username and profit appear on the public leaderboard.">
+          <LeaderboardToggle hidden={!!viewer.profile.leaderboard_hidden} />
         </Section>
 
         <Section id="password" title="Password" subtitle="Change the password you use to log in.">

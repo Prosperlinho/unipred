@@ -60,6 +60,8 @@ export interface Profile {
   terms_accepted_at: string | null;
   terms_version: number;
   onboarded_at: string | null;
+  /** Leave me off the public leaderboard. */
+  leaderboard_hidden?: boolean;
   is_banned: boolean;
   ban_reason: string | null;
   payout_name_strikes: number;

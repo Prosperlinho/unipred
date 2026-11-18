@@ -48,5 +48,8 @@ export function friendlyError(message: string | undefined): string {
   if (message.includes("duplicate key") && message.includes("username")) return "That username is already taken.";
   if (message.includes("violates check constraint")) return "Some details are invalid. Please check and try again.";
   if (message.includes("JWT") || message.includes("not authenticated")) return "Your session expired. Please log in again.";
+  if (/email rate limit|over_email_send_rate_limit|rate limit exceeded/i.test(message)) {
+    return "We're getting a lot of sign-ups right now, so our confirmation emails are paused for a few minutes. Please try again shortly.";
+  }
   return message;
 }

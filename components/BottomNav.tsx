@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, LayoutGrid, LogIn, PlusCircle, UserRound, Wallet } from "lucide-react";
+import { Briefcase, LayoutGrid, LogIn, Trophy, UserRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,12 +10,13 @@ export function BottomNav({ loggedIn }: { loggedIn: boolean }) {
     ? [
         { href: "/", label: "Markets", Icon: LayoutGrid },
         { href: "/portfolio", label: "Portfolio", Icon: Briefcase },
-        { href: "/propose", label: "Propose", Icon: PlusCircle },
+        { href: "/leaderboard", label: "Leaders", Icon: Trophy },
         { href: "/wallet", label: "Wallet", Icon: Wallet },
         { href: "/profile", label: "Profile", Icon: UserRound },
       ]
     : [
         { href: "/", label: "Markets", Icon: LayoutGrid },
+        { href: "/leaderboard", label: "Leaders", Icon: Trophy },
         { href: "/login", label: "Log in", Icon: LogIn },
       ];
 
