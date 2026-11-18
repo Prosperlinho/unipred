@@ -24,7 +24,9 @@ export function PersonalBoard({ saved, loggedIn, ...feed }: FeedProps & { saved:
 export function PersonalDeck({ saved, ...deck }: DeckProps & { saved: string[] | null }) {
   const interests = useInterests(saved, deck.loggedIn);
   const liked = (c: Category) => !interests || interests.includes(c);
-  const markets = [...deck.markets].sort((a, b) => Number(liked(b.category)) - Number(liked(a.category)));
+  const markets = [...deck.markets].sort(
+    (a, b) => Number(!!b.featured_at) - Number(!!a.featured_at) || Number(liked(b.category)) - Number(liked(a.category)),
+  );
   return (
     <>
       <InterestPicker current={interests} loggedIn={deck.loggedIn} />

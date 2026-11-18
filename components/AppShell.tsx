@@ -16,11 +16,23 @@ import type { GuideInfo } from "./Guide";
 import { SUPPORT_EMAIL } from "./LegalPage";
 import { formatNaira } from "@/lib/format";
 import { Toaster } from "./Toaster";
+import { PwaSetup } from "./AppAlerts";
+import { createClient } from "@/lib/supabase/server";
 
 export async function AppShell({ children }: { children: ReactNode }) {
   // Every page is personal (balance, session), so always render per request.
   await connection();
   const [viewer, settings] = await Promise.all([getViewer(), getSettings()]);
+  let unread = 0;
+  if (viewer) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", viewer.id)
+      .is("read_at", null);
+    unread = count ?? 0;
+  }
   const profile = viewer?.profile;
   // Columns are undefined until migration 0006 runs; only gate when they exist.
   const needsRules = !!profile && typeof profile.terms_version === "number" && profile.terms_version < settings.terms_version;
@@ -47,6 +59,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
                   balanceKobo: viewer.balanceKobo,
                   isAdmin: viewer.profile.is_admin,
                   canPropose: !!viewer.profile.can_propose || viewer.profile.is_admin,
+                  unread,
                 }
               : null
           }
@@ -85,6 +98,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </RulesGate>
       )}
       {showWelcome ? <WelcomeGuide /> : <TourHost />}
+      <PwaSetup />
       <Toaster />
     </UIProvider>
   );

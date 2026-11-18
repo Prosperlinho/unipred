@@ -401,15 +401,22 @@ export function GuideSheet({
 }
 
 /** "?" button in the header that opens the guide any time. */
-export function GuideButton({ info }: { info: GuideInfo }) {
+export const OPEN_GUIDE_EVENT = "unipred:open-guide";
+
+export function GuideButton({ info, className = "flex" }: { info: GuideInfo; className?: string }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_GUIDE_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_GUIDE_EVENT, onOpen);
+  }, []);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
         data-tour="guide"
-        className="flex size-8 items-center justify-center rounded-full border border-line text-muted transition hover:border-brand/50 hover:text-brand"
+        className={`${className} size-8 shrink-0 items-center justify-center rounded-full border border-line text-muted transition hover:border-brand/50 hover:text-brand`}
         aria-label="Open the UniPred guide"
         title="Guide"
       >

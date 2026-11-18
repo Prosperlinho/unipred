@@ -59,6 +59,8 @@ export interface Market extends Pools {
   created_at: string;
   approved_at: string | null;
   resolved_at: string | null;
+  /** Set when this is the pinned "Market of the day". */
+  featured_at?: string | null;
 }
 
 export interface Profile {
@@ -78,6 +80,8 @@ export interface Profile {
   can_propose?: boolean;
   /** Market categories the member chose to see (null = not chosen yet). */
   interests?: string[] | null;
+  /** Send result / money-received emails. */
+  notify_email?: boolean;
   is_banned: boolean;
   ban_reason: string | null;
   payout_name_strikes: number;

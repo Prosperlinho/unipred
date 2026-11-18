@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchNotifications } from "@/lib/notify";
 import { getViewer } from "@/lib/auth";
 import { formatNaira } from "@/lib/format";
 import { friendlyError } from "@/lib/data";
@@ -45,6 +47,7 @@ export async function resolveMarket(id: string, outcome: Outcome): Promise<Actio
   const { data, error } = await supabase.rpc("resolve_market", { p_market: id, p_outcome: outcome });
   if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
+  after(() => dispatchNotifications().catch(() => undefined));
   const r = data as { winners: number; paid_kobo: number; fee_kobo?: number; referral_kobo?: number };
   return {
     ok: true,
@@ -59,6 +62,7 @@ export async function cancelMarket(id: string, note: string): Promise<ActionResu
   const { data, error } = await supabase.rpc("cancel_market", { p_market: id, p_note: note.trim() || "Cancelled" });
   if (error) return { ok: false, error: friendlyError(error.message) };
   refreshAll();
+  after(() => dispatchNotifications().catch(() => undefined));
   const r = data as { refunded_kobo: number };
   return { ok: true, value: `Market cancelled. Refunded ${formatNaira(r.refunded_kobo)}.` };
 }
@@ -166,4 +170,100 @@ export async function setProposerAccess(username: string, allow: boolean): Promi
   if (error) return { ok: false, error: friendlyError(error.message) };
   revalidatePath("/admin");
   return { ok: true, value: allow ? `@${user.username} can now propose markets.` : `@${user.username} can no longer propose markets.` };
+}
+
+export interface ScheduleInput {
+  schoolId: string;
+  category: string;
+  question: string;
+  criteria: string;
+  source: string;
+  cadence: "daily" | "weekly";
+  weekday: number; // 0 = Sunday, used when weekly
+  runHour: number; // Lagos time
+  closeAfterHours: number;
+}
+
+/** Next time (UTC) a schedule should run: the given Lagos hour, today or later (and on the weekday if weekly). */
+function nextRunAt(cadence: "daily" | "weekly", weekday: number, runHour: number): string {
+  const LAGOS_OFFSET_H = 1; // West Africa Time, no daylight saving
+  const now = Date.now();
+  const lagosNow = new Date(now + LAGOS_OFFSET_H * 3_600_000);
+  const at = new Date(Date.UTC(lagosNow.getUTCFullYear(), lagosNow.getUTCMonth(), lagosNow.getUTCDate(), runHour - LAGOS_OFFSET_H));
+  while (at.getTime() <= now || (cadence === "weekly" && new Date(at.getTime() + LAGOS_OFFSET_H * 3_600_000).getUTCDay() !== weekday)) {
+    at.setUTCDate(at.getUTCDate() + 1);
+  }
+  return at.toISOString();
+}
+
+/** Creates a market that goes live automatically every day or week. */
+export async function createSchedule(input: ScheduleInput): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const viewer = await getViewer();
+  const q = input.question.trim();
+  if (q.length < 12 || q.length > 160 || !q.endsWith("?")) return { ok: false, error: "Question must be 12-160 characters and end with '?'." };
+  if (input.criteria.trim().length < 10) return { ok: false, error: "Describe exactly what has to happen for YES." };
+  if (input.source.trim().length < 2) return { ok: false, error: "Add where the result will be confirmed." };
+  if (!(input.runHour >= 0 && input.runHour <= 23)) return { ok: false, error: "Pick an hour between 0 and 23." };
+  if (!(input.closeAfterHours >= 1 && input.closeAfterHours <= 2880)) return { ok: false, error: "Closing time must be 1 hour to 120 days after it goes live." };
+  const admin = createAdminClient();
+  const { error } = await admin.from("market_schedules").insert({
+    school_id: input.schoolId,
+    category: input.category,
+    question: q,
+    criteria: input.criteria.trim(),
+    source: input.source.trim(),
+    cadence: input.cadence,
+    weekday: input.cadence === "weekly" ? input.weekday : null,
+    run_hour: input.runHour,
+    close_after_hours: input.closeAfterHours,
+    next_run_at: nextRunAt(input.cadence, input.weekday, input.runHour),
+    created_by: viewer!.id,
+  });
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return { ok: true, value: undefined };
+}
+
+export async function setScheduleActive(id: string, active: boolean): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const admin = createAdminClient();
+  const { data: s } = await admin
+    .from("market_schedules")
+    .select("cadence, weekday, run_hour")
+    .eq("id", id)
+    .maybeSingle<{ cadence: "daily" | "weekly"; weekday: number | null; run_hour: number }>();
+  if (!s) return { ok: false, error: "Schedule not found." };
+  // Resuming starts from the next slot, so paused days aren't all created at once.
+  const patch = active ? { active, next_run_at: nextRunAt(s.cadence, s.weekday ?? 0, s.run_hour) } : { active };
+  const { error } = await admin.from("market_schedules").update(patch).eq("id", id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return { ok: true, value: undefined };
+}
+
+export async function deleteSchedule(id: string): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const admin = createAdminClient();
+  const { error } = await admin.from("market_schedules").delete().eq("id", id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return { ok: true, value: undefined };
+}
+
+/** Makes a market the "Market of the day" (pinned first), or clears it with null. */
+export async function featureMarket(id: string | null): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const admin = createAdminClient();
+  await admin.from("markets").update({ featured_at: null }).not("featured_at", "is", null);
+  if (id) {
+    const { error } = await admin.from("markets").update({ featured_at: new Date().toISOString() }).eq("id", id);
+    if (error) return { ok: false, error: friendlyError(error.message) };
+  }
+  refreshAll();
+  return { ok: true, value: undefined };
 }

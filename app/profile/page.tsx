@@ -1,9 +1,10 @@
-import { Briefcase, ChevronRight, Gift, GraduationCap, LogOut, Settings, Shield, Wallet } from "lucide-react";
+import { Bell, Briefcase, ChevronRight, Gift, GraduationCap, LogOut, Settings, Shield, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
 import { Container } from "@/components/Container";
 import { InviteProgress, type ReferralStats } from "@/components/InviteProgress";
+import { OpenGuideButton } from "@/components/OpenGuideButton";
 import { ShareButton } from "@/components/ShareButton";
 import { requireViewer } from "@/lib/auth";
 import { getSchools, getSettings } from "@/lib/data";
@@ -45,6 +46,7 @@ export default async function ProfilePage() {
   const links = [
     { href: "/wallet", label: "Wallet", detail: formatNaira(viewer.balanceKobo), Icon: Wallet },
     { href: "/portfolio", label: "Portfolio", detail: "Positions & proposals", Icon: Briefcase },
+    { href: "/notifications", label: "Notifications", detail: "Results, reminders, phone alerts", Icon: Bell },
     { href: "/settings", label: "Settings", detail: "Profile, payout bank, password", Icon: Settings },
     ...(p.is_admin ? [{ href: "/admin", label: "Admin", detail: "Review, resolve, pay out", Icon: Shield }] : []),
   ];
@@ -123,6 +125,7 @@ export default async function ProfilePage() {
             <ChevronRight className="size-4 text-muted" />
           </Link>
         ))}
+        <OpenGuideButton />
       </nav>
 
       <form action={signOut} className="mt-6">

@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED = ["/wallet", "/portfolio", "/profile", "/settings", "/admin", "/propose"];
+const PROTECTED = ["/wallet", "/portfolio", "/profile", "/settings", "/admin", "/propose", "/notifications"];
 export const REF_COOKIE = "unipred_ref";
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 /** The official address. Old links to the Vercel address are forwarded here. */
@@ -63,5 +63,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/paystack|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|api/paystack|api/notify|api/push|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

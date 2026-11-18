@@ -3,13 +3,15 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { getRequestTime } from "@/lib/time";
 import { requireAdmin } from "@/lib/auth";
-import { getSchools, getSettings } from "@/lib/data";
-import { formatDate, formatNaira } from "@/lib/format";
+import { getActiveSchools, getSchools, getSettings } from "@/lib/data";
+import { compactNaira, formatDate, formatNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
 import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { ProposerPanel } from "./ProposerPanel";
+import { SchedulePanel, type ScheduleRow } from "./SchedulePanel";
+import { DailyChart, TopCategories, type DailyStat } from "./StatsPanel";
 
 export const metadata: Metadata = { title: "Admin · UniPred" };
 
@@ -41,11 +43,30 @@ export default async function AdminPage() {
       .limit(100),
     admin.from("transfers").select("id, from_user, to_user, amount_kobo, note, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
-  const [settings, { data: partnerData }, { data: proposerData }] = await Promise.all([
+  const [settings, { data: partnerData }, { data: proposerData }, { data: statsData }, { data: scheduleData }, activeSchools] = await Promise.all([
     getSettings(),
     admin.rpc("partner_stats"),
     admin.from("profiles").select("username").eq("can_propose", true).order("username"),
+    admin.rpc("admin_stats"),
+    admin.from("market_schedules").select("*").order("created_at"),
+    getActiveSchools(),
   ]);
+  const stats = statsData as {
+    users_total: number;
+    users_7d: number;
+    bettors_7d: number;
+    live_markets: number;
+    awaiting_result: number;
+    volume_7d: number;
+    deposits_7d: number;
+    withdrawals_7d: number;
+    fees_total: number;
+    fees_7d: number;
+    invite_bonuses_total: number;
+    wallets_total: number;
+    daily: DailyStat[];
+    top_categories: Array<{ category: string; markets: number; volume: number }>;
+  } | null;
   const proposers = ((proposerData ?? []) as Array<{ username: string }>).map((p) => p.username);
   const partners: Partner[] = ((partnerData ?? []) as Array<{ username: string; rate_bps: number; joined: number; active: number }>).map((p) => ({
     username: p.username,
@@ -84,6 +105,31 @@ export default async function AdminPage() {
         {review.length} accounts to review
       </p>
 
+      {stats && (
+        <section className="mb-8 space-y-3" aria-label="Platform numbers">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { label: "Members", value: stats.users_total.toLocaleString("en-NG"), sub: `+${stats.users_7d} this week` },
+              { label: "Bettors (7d)", value: stats.bettors_7d.toLocaleString("en-NG"), sub: `${stats.live_markets} live markets` },
+              { label: "Money bet (7d)", value: compactNaira(stats.volume_7d), sub: `${stats.awaiting_result} awaiting result` },
+              { label: "UniPred fees", value: compactNaira(stats.fees_total), sub: `${compactNaira(stats.fees_7d)} this week` },
+              { label: "Deposits (7d)", value: compactNaira(stats.deposits_7d), sub: `${compactNaira(stats.withdrawals_7d)} withdrawn` },
+              { label: "In wallets", value: compactNaira(stats.wallets_total), sub: `${compactNaira(stats.invite_bonuses_total)} invite bonuses paid` },
+            ].map((t) => (
+              <div key={t.label} className="rounded-2xl border border-line bg-card p-3">
+                <p className="text-[11px] font-medium text-muted">{t.label}</p>
+                <p className="mt-0.5 text-xl font-extrabold tabular-nums text-white">{t.value}</p>
+                <p className="text-[11px] text-muted">{t.sub}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
+            <DailyChart daily={stats.daily ?? []} />
+            <TopCategories rows={stats.top_categories ?? []} />
+          </div>
+        </section>
+      )}
+
       <div className="space-y-8">
         <Section title="Proposals to review" count={pending.length} empty="No proposals waiting.">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -113,6 +159,20 @@ export default async function AdminPage() {
             ))}
           </div>
         </Section>
+
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+            Repeating markets
+            <span className="rounded-full bg-card-2 px-2 py-0.5 text-[11px] text-white">{(scheduleData ?? []).length}</span>
+          </h2>
+          <SchedulePanel
+            schools={activeSchools.map((sc) => ({ id: sc.id, short_name: sc.short_name }))}
+            schedules={((scheduleData ?? []) as Array<Omit<ScheduleRow, "school"> & { school_id: string }>).map((sc) => ({
+              ...sc,
+              school: schoolOf[sc.school_id] ?? sc.school_id,
+            }))}
+          />
+        </section>
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">

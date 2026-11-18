@@ -7,6 +7,7 @@ import {
   approveMarket,
   approveWithdrawal,
   cancelMarket,
+  featureMarket,
   rejectMarket,
   rejectWithdrawal,
   resolveMarket,
@@ -99,9 +100,23 @@ export function OpenMarketRow({ market, school, now }: { market: Market; school:
       <Link href={`/markets/${market.id}`} className="block font-semibold text-white hover:underline">
         {market.question}
       </Link>
-      <p className="text-xs text-muted">
-        YES {formatPct(marketProbYes(market))} · {compactNaira(Number(market.stake_yes_kobo) + Number(market.stake_no_kobo))} in pot · {market.traders} traders
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted">
+          YES {formatPct(marketProbYes(market))} · {compactNaira(Number(market.stake_yes_kobo) + Number(market.stake_no_kobo))} in pot · {market.traders} traders
+        </p>
+        {!closed && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => run(() => featureMarket(market.featured_at ? null : market.id), () => (market.featured_at ? "Unpinned." : "Pinned as Market of the day 🔥"))}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition disabled:opacity-50 ${
+              market.featured_at ? "bg-amber-400 text-black" : "border border-amber-400/40 text-amber-300 hover:bg-amber-400/10"
+            }`}
+          >
+            {market.featured_at ? "🔥 Market of the day" : "Make market of the day"}
+          </button>
+        )}
+      </div>
       <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Cancellation reason (optional)" className={inputCls} />
       <div className="grid grid-cols-3 gap-2">
         {(["YES", "NO", "CANCEL"] as const).map((c) => (

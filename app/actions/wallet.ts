@@ -2,6 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchNotifications } from "@/lib/notify";
 import { getViewer } from "@/lib/auth";
 import { friendlyError, getSettings } from "@/lib/data";
 import { getOrigin } from "@/lib/origin";
@@ -92,5 +94,6 @@ export async function sendMoney(username: string, amountKobo: number, note: stri
   });
   if (error) return { ok: false, error: friendlyError(error.message) };
   revalidatePath("/wallet");
+  after(() => dispatchNotifications().catch(() => undefined));
   return { ok: true, value: (data as { to: string }).to };
 }

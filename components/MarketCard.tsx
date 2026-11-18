@@ -52,10 +52,17 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
   const shownP = market.status === "resolved" ? (market.resolution === "YES" ? 1 : 0) : p;
 
   return (
-    <article className="group/card flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 transition hover:border-brand/30 hover:shadow-[0_0_0_1px_rgb(198_244_50/0.08),0_12px_40px_-12px_rgb(198_244_50/0.18)]">
+    <article
+      className={`group/card flex flex-col gap-3 rounded-2xl border bg-card p-4 transition hover:border-brand/30 hover:shadow-[0_0_0_1px_rgb(198_244_50/0.08),0_12px_40px_-12px_rgb(198_244_50/0.18)] ${
+        market.featured_at ? "border-amber-400/50" : "border-line"
+      }`}
+    >
       {/* Who / what / when, like a feed post header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
+          {market.featured_at && (
+            <span className="shrink-0 rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-black">🔥 Today</span>
+          )}
           {schoolLabel && (
             <span className="truncate text-[13px] font-bold text-cream">{schoolLabel}</span>
           )}

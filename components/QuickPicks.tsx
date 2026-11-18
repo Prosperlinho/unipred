@@ -225,7 +225,11 @@ export function QuickPicks({
 
                   <div className="relative flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-[13px] font-bold text-cream">{schoolLabels[m.school_id] ?? ""}</span>
+                      {m.featured_at ? (
+                        <span className="shrink-0 rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-black">🔥 Market of the day</span>
+                      ) : (
+                        <span className="truncate text-[13px] font-bold text-cream">{schoolLabels[m.school_id] ?? ""}</span>
+                      )}
                       <CategoryBadge category={m.category} />
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-brand/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand">

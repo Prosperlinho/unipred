@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Wallet } from "lucide-react";
+import { Bell, Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { formatNaira, initials } from "@/lib/format";
@@ -9,7 +9,7 @@ import { LogoTile } from "./Logo";
 
 interface Props {
   guide: GuideInfo;
-  viewer: { username: string; balanceKobo: number; isAdmin: boolean; canPropose: boolean } | null;
+  viewer: { username: string; balanceKobo: number; isAdmin: boolean; canPropose: boolean; unread: number } | null;
 }
 
 export function Header({ viewer, guide }: Props) {
@@ -48,7 +48,21 @@ export function Header({ viewer, guide }: Props) {
         </nav>
 
         <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <GuideButton info={guide} />
+          <GuideButton info={guide} className={viewer ? "hidden sm:flex" : "flex"} />
+          {viewer && (
+            <Link
+              href="/notifications"
+              className="relative flex size-8 shrink-0 items-center justify-center rounded-full border border-line text-muted transition hover:border-brand/50 hover:text-brand"
+              aria-label={viewer.unread ? `Notifications, ${viewer.unread} new` : "Notifications"}
+            >
+              <Bell className="size-[17px]" />
+              {viewer.unread > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-extrabold text-black">
+                  {viewer.unread > 9 ? "9+" : viewer.unread}
+                </span>
+              )}
+            </Link>
+          )}
           {viewer ? (
             <>
               <Link

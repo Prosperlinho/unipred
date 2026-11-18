@@ -1,11 +1,11 @@
 "use client";
 
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Wand2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { proposeMarket } from "@/app/actions/market";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
-import { CATEGORIES, type FormState, type School } from "@/lib/types";
+import { CATEGORIES, type Category, type FormState, type School } from "@/lib/types";
 
 const SOURCE_SUGGESTIONS = [
   "the university's official website",
@@ -18,6 +18,52 @@ const SOURCE_SUGGESTIONS = [
   "at least two national newspapers",
 ];
 
+/** Quick-create starting points. Words in [brackets] are blanks to fill in. */
+const TEMPLATES: Array<{ label: string; question: string; criteria: string; source: string; category: Category }> = [
+  {
+    label: "⚽ Match result",
+    question: "Will [Team A] beat [Team B] on [day]?",
+    criteria: "[Team A] wins the match against [Team B] in normal time",
+    source: "the Sports Council's official result sheet",
+    category: "Football",
+  },
+  {
+    label: "🗳️ Election",
+    question: "Will [candidate] win the SUG presidential election?",
+    criteria: "[candidate] is officially declared winner of the SUG presidential election",
+    source: "the SUG Electoral Committee's official notice",
+    category: "Campus Politics",
+  },
+  {
+    label: "📄 Results release",
+    question: "Will [department] results be released by [date]?",
+    criteria: "[department] results for this semester appear on the result portal by [date]",
+    source: "the official student result portal",
+    category: "Exams & Results",
+  },
+  {
+    label: "🎉 Event happens",
+    question: "Will [event] hold on [date]?",
+    criteria: "[event] takes place as scheduled on [date]",
+    source: "the organisers' official social media page",
+    category: "Events & Lifestyle",
+  },
+  {
+    label: "🎤 Artist shows up",
+    question: "Will [artist] perform at [event]?",
+    criteria: "[artist] performs on stage at [event]",
+    source: "the organisers' official social media page",
+    category: "Entertainment & Music",
+  },
+  {
+    label: "📢 Official announcement",
+    question: "Will the school announce [decision] by [date]?",
+    criteria: "the school officially announces [decision] on or before [date]",
+    source: "the Registrar's official announcement",
+    category: "Academics",
+  },
+];
+
 export function ProposeForm({ schools, defaultSchool }: { schools: School[]; defaultSchool: string }) {
   const [state, action] = useActionState<FormState, FormData>(proposeMarket, {});
   const v = state.values ?? {};
@@ -25,6 +71,23 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
   const [condition, setCondition] = useState(v.criteria ?? "");
   const [source, setSource] = useState(v.source ?? "");
   const [closesAt, setClosesAt] = useState(v.closes_at ?? "");
+  const [question, setQuestion] = useState(v.question ?? "");
+  const [category, setCategory] = useState<string>(v.category ?? CATEGORIES[0]);
+  const applyTemplate = (t: (typeof TEMPLATES)[number]) => {
+    setQuestion(t.question);
+    setCondition(t.criteria);
+    setSource(t.source);
+    setCategory(t.category);
+    // Jump to the first blank so it can be typed over straight away.
+    window.setTimeout(() => {
+      const el = document.getElementById("question") as HTMLInputElement | null;
+      const i = t.question.indexOf("[");
+      if (el && i >= 0) {
+        el.focus();
+        el.setSelectionRange(i, t.question.indexOf("]", i) + 1);
+      }
+    }, 0);
+  };
 
   return (
     <form
@@ -36,13 +99,32 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
       className="space-y-4"
     >
       <input type="hidden" name="tz_offset" defaultValue="0" />
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+          <Wand2 className="size-3.5 text-brand" /> Quick start
+        </p>
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => applyTemplate(t)}
+              className="shrink-0 rounded-full border border-line bg-card px-3 py-1.5 text-sm font-medium text-white transition hover:border-brand/50"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted">Pick one, then replace the [blanks].</p>
+      </div>
       <Field label="Market question" htmlFor="question" hint="A clear Yes/No question ending with '?'.">
         <input
           id="question"
           name="question"
           maxLength={160}
           required
-          defaultValue={v.question}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
           placeholder="Will the library open 24/7 during exam week?"
           className={inputCls}
         />
@@ -61,7 +143,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Category" htmlFor="category">
-          <select id="category" name="category" defaultValue={v.category ?? CATEGORIES[0]} className={inputCls}>
+          <select id="category" name="category" value={category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}

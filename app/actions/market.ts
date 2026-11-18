@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchNotifications } from "@/lib/notify";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { friendlyError } from "@/lib/data";
@@ -36,6 +38,7 @@ export async function proposeMarket(_prev: FormState, fd: FormData): Promise<For
   if (source.length < 2) return fail("Add where the result will be confirmed.");
   if (!schoolId) return fail("Choose the university this market is about.");
   if (!Number.isFinite(closesAt)) return fail("Choose a closing date and time.");
+  if (/\[[^\]]*\]/.test(question + criteria + source)) return fail("Fill in the [blanks] from the template first.");
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("propose_market", {
@@ -50,6 +53,7 @@ export async function proposeMarket(_prev: FormState, fd: FormData): Promise<For
 
   const result = data as { id: string; status: "open" | "pending" };
   revalidatePath("/", "layout");
+  if (result.status === "open") after(() => dispatchNotifications().catch(() => undefined));
   if (result.status === "open") redirect(`/markets/${result.id}?new=1`);
   redirect("/portfolio?proposed=1");
 }

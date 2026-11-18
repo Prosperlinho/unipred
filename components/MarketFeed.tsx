@@ -52,6 +52,8 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
     return [...list].sort((a, b) => {
       const liveDiff = Number(isLive(b)) - Number(isLive(a));
       if (liveDiff !== 0) return liveDiff;
+      const featuredDiff = Number(!!b.featured_at) - Number(!!a.featured_at);
+      if (featuredDiff !== 0) return featuredDiff;
       if (sort === "Closing Soon") return new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime();
       if (sort === "Newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       return trendingScore(b, now) - trendingScore(a, now);
