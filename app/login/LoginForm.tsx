@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signIn } from "@/app/actions/auth";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
+import { PasswordInput } from "@/components/PasswordInput";
 import type { FormState } from "@/lib/types";
 
 export function LoginForm({ next, notice }: { next: string; notice?: string }) {
@@ -24,7 +25,7 @@ export function LoginForm({ next, notice }: { next: string; notice?: string }) {
           </Link>
         }
       >
-        <input id="password" name="password" type="password" autoComplete="current-password" required className={inputCls} />
+        <PasswordInput id="password" name="password" autoComplete="current-password" required />
       </Field>
       <FormMessage error={state.error} />
       <SubmitButton pendingText="Logging in...">Log in</SubmitButton>

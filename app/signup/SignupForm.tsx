@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { signUp } from "@/app/actions/auth";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
+import { PasswordInput } from "@/components/PasswordInput";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
 import type { FormState, School } from "@/lib/types";
 
@@ -35,15 +36,7 @@ export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: str
         <input id="email" name="email" type="email" autoComplete="email" defaultValue={v.email} required className={inputCls} />
       </Field>
       <Field label="Password" htmlFor="password" hint="At least 8 characters.">
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-          className={inputCls}
-        />
+        <PasswordInput id="password" name="password" autoComplete="new-password" minLength={8} required />
       </Field>
       <Field label="Full name (exactly as on your bank account)" htmlFor="full_name">
         <input
