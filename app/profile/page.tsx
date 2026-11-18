@@ -1,4 +1,4 @@
-import { Bell, Briefcase, ChevronRight, Gift, GraduationCap, LogOut, Settings, Shield, Wallet } from "lucide-react";
+import { Bell, Briefcase, ChevronRight, Gift, GraduationCap, LogOut, Settings, Shield, Wallet, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
@@ -46,6 +46,7 @@ export default async function ProfilePage() {
   const links = [
     { href: "/wallet", label: "Wallet", detail: formatNaira(viewer.balanceKobo), Icon: Wallet },
     { href: "/portfolio", label: "Portfolio", detail: "Positions & proposals", Icon: Briefcase },
+    { href: "/rooms", label: "Community rooms", detail: "Your crew's own questions", Icon: Users },
     { href: "/notifications", label: "Notifications", detail: "Results, reminders, phone alerts", Icon: Bell },
     { href: "/settings", label: "Settings", detail: "Profile, payout bank, password", Icon: Settings },
     ...(p.is_admin ? [{ href: "/admin", label: "Admin", detail: "Review, resolve, pay out", Icon: Shield }] : []),

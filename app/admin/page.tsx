@@ -11,6 +11,7 @@ import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { ProposerPanel } from "./ProposerPanel";
 import { PrizePoolPanel, type PoolWeek } from "./PrizePoolPanel";
+import { RoomsPanel, type AdminRoom } from "./RoomsPanel";
 import { SchedulePanel, type ScheduleRow } from "./SchedulePanel";
 import { DailyChart, TopCategories, type DailyStat } from "./StatsPanel";
 
@@ -34,7 +35,7 @@ export default async function AdminPage() {
   const [schools, { data: pendingData }, { data: openData }, { data: wData }, { data: reviewData }, { data: transferData }] = await Promise.all([
     getSchools(),
     admin.from("markets").select("*").eq("status", "pending").order("created_at", { ascending: true }),
-    admin.from("markets").select("*").eq("status", "open").order("closes_at", { ascending: true }),
+    admin.from("markets").select("*").eq("status", "open").is("room_id", null).order("closes_at", { ascending: true }),
     admin.from("withdrawals").select("*").in("status", ["pending", "processing"]).order("created_at", { ascending: true }),
     admin
       .from("profiles")
@@ -96,6 +97,28 @@ export default async function AdminPage() {
   const nameOf = new Map((users ?? []).map((u) => [u.id, u.username]));
   const schoolOf = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
   const now = getRequestTime();
+
+  // ---- Community rooms (newest first) ----
+  const { data: roomData } = await admin
+    .from("rooms")
+    .select("id, name, is_public, suspended, owner_id, profiles!rooms_owner_id_fkey(username), room_members(count)")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const adminRooms: AdminRoom[] = ((roomData ?? []) as unknown as Array<{
+    id: string;
+    name: string;
+    is_public: boolean;
+    suspended: boolean;
+    profiles: { username: string } | null;
+    room_members: Array<{ count: number }>;
+  }>).map((r) => ({
+    id: r.id,
+    name: r.name,
+    host: r.profiles?.username ?? "member",
+    isPublic: r.is_public,
+    suspended: r.suspended,
+    members: r.room_members?.[0]?.count ?? 0,
+  }));
 
   // ---- Weekly prize pool: last week (to pay), this week (running), next week (to plan) ----
   const weekDates = await Promise.all(
@@ -207,6 +230,10 @@ export default async function AdminPage() {
               <AccountReviewRow key={a.id} a={a} />
             ))}
           </div>
+        </Section>
+
+        <Section title="Community rooms" count={adminRooms.length} empty="No rooms yet.">
+          <RoomsPanel rooms={adminRooms} />
         </Section>
 
         <section className="space-y-3">

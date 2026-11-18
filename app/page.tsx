@@ -29,6 +29,7 @@ export default async function HomePage() {
     .from("markets")
     .select("*")
     .eq("status", "open")
+    .is("room_id", null)
     .gt("closes_at", new Date(now).toISOString())
     .in("school_id", schools.map((s) => s.id))
     .limit(60);

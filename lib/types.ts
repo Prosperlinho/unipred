@@ -61,6 +61,8 @@ export interface Market extends Pools {
   resolved_at: string | null;
   /** Set when this is the pinned "Market of the day". */
   featured_at?: string | null;
+  /** Set when this question belongs to a community room. */
+  room_id?: string | null;
 }
 
 export interface Profile {
@@ -163,4 +165,15 @@ export interface FormState {
   message?: string;
   /** Submitted values echoed back on error so the form can refill them. */
   values?: Record<string, string>;
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  description: string | null;
+  owner_id: string;
+  is_public: boolean;
+  invite_code: string;
+  suspended: boolean;
+  created_at: string;
 }

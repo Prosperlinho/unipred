@@ -118,6 +118,12 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
   const closesAt = new Date(market.closes_at).getTime();
   const closed = now >= closesAt;
   const school = schools.find((s) => s.id === market.school_id);
+  const { data: room } = market.room_id
+    ? await supabase.from("rooms").select("id, name, owner_id").eq("id", market.room_id).maybeSingle<{ id: string; name: string; owner_id: string }>()
+    : { data: null };
+  const { data: roomHost } = room
+    ? await supabase.from("public_profiles").select("username").eq("id", room.owner_id).maybeSingle<{ username: string }>()
+    : { data: null };
   const requestedSide = searchParams.side === "NO" ? "NO" : "YES";
   // Pre-filled bet links: /markets/<id>?side=YES&amount=1000
   const rawAmount = Number(typeof searchParams.amount === "string" ? searchParams.amount : NaN);
@@ -287,6 +293,18 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                 />
               )}
             </div>
+            {room && (
+              <Link
+                href={`/rooms/${room.id}`}
+                className="flex items-center justify-between gap-2 rounded-xl border border-amber-400/25 bg-amber-400/5 px-3 py-2 text-xs text-amber-100"
+              >
+                <span>
+                  Room question in <b className="text-white">{room.name}</b>. The result is decided by the host, @
+                  {roomHost?.username ?? "host"}, not UniPred.
+                </span>
+                <span className="shrink-0 font-semibold text-amber-300">Open room →</span>
+              </Link>
+            )}
             {searchParams.new === "1" && market.status === "open" && (
               <div className="rounded-xl bg-yes/10 px-3 py-2 text-sm text-yes">
                 Your market is live! Share it so your coursemates can bet on it.

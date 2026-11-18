@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/Container";
 import { AutoRefresh } from "@/components/LiveRefresh";
 import { PersonalBoard } from "@/components/PersonalFeeds";
@@ -27,6 +28,7 @@ export default async function MarketsPage(props: PageProps<"/markets">) {
     .from("markets")
     .select("*")
     .eq("status", "open")
+    .is("room_id", null)
     .gt("closes_at", new Date(now).toISOString())
     .order("created_at", { ascending: false })
     .limit(150);
@@ -41,9 +43,14 @@ export default async function MarketsPage(props: PageProps<"/markets">) {
       <section className="space-y-4">
         <AutoRefresh intervalMs={30_000} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-            {selectedSchool ? `Live at ${selectedSchool.short_name}` : "Live markets"}
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              {selectedSchool ? `Live at ${selectedSchool.short_name}` : "Live markets"}
+            </h1>
+            <Link href="/rooms" className="shrink-0 rounded-full border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-bold text-brand">
+              Community rooms →
+            </Link>
+          </div>
           {schools.length > 1 && <SchoolPicker schools={schools} selected={selected} mySchoolId={viewer?.profile.school_id ?? null} />}
         </div>
         <PersonalBoard

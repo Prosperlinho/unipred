@@ -19,6 +19,7 @@ import {
   Send,
   ShieldCheck,
   Trophy,
+  Users,
   Wallet,
   X,
   type LucideIcon,
@@ -193,6 +194,21 @@ function topics(g: GuideInfo): Topic[] {
         </p>
       ),
       link: { href: "/propose", label: "Propose a market" },
+    },
+    {
+      id: "rooms",
+      title: "Community rooms",
+      Icon: Users,
+      tone: "text-brand",
+      keywords: "room rooms community group friends private invite host",
+      body: (
+        <p>
+          Anyone can start a room for their friends, hostel or department. Public rooms are open to all; private ones need
+          the invite link. The host drops YES/NO questions and decides the results, so only stake in rooms whose host you
+          trust. Room questions don&apos;t count for the leaderboard or the prize pool.
+        </p>
+      ),
+      link: { href: "/rooms", label: "Open rooms" },
     },
     {
       id: "leaderboard",

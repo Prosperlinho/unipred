@@ -16,6 +16,7 @@ export function Header({ viewer, guide }: Props) {
   const pathname = usePathname();
   const nav = [
     { href: "/markets", label: "Markets" },
+    { href: "/rooms", label: "Rooms" },
     { href: "/leaderboard", label: "Leaderboard" },
     ...(viewer ? [{ href: "/portfolio", label: "Portfolio" }, { href: "/wallet", label: "Wallet" }] : []),
     ...(viewer?.isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
