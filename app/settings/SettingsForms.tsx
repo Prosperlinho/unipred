@@ -6,7 +6,6 @@ import { resolveBankAccount, savePayoutAccount, setFullName, setLeaderboardHidde
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
 import { useUI } from "@/context/UIContext";
-import { setNotifyEmail } from "@/app/actions/notifications";
 import type { FormState, PayoutAccount, Profile, School } from "@/lib/types";
 
 export function ProfileForm({ profile, schools }: { profile: Profile; schools: School[] }) {
@@ -225,35 +224,6 @@ export function LeaderboardToggle({ hidden }: { hidden: boolean }) {
               setIsHidden(!nextHidden);
               toast(res.error, "error");
             } else toast(nextHidden ? "You're hidden from the leaderboard." : "You'll show on the leaderboard.");
-          });
-        }}
-      />
-    </label>
-  );
-}
-
-/** Turn result emails on or off. */
-export function EmailToggle({ on }: { on: boolean }) {
-  const { toast } = useUI();
-  const [checked, setChecked] = useState(on);
-  const [pending, startTransition] = useTransition();
-  return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-line bg-bg p-3 text-sm">
-      <span className="font-semibold text-white">Email me about my results</span>
-      <input
-        type="checkbox"
-        className="size-5 shrink-0 accent-brand"
-        checked={checked}
-        disabled={pending}
-        onChange={(e) => {
-          const next = e.target.checked;
-          setChecked(next);
-          startTransition(async () => {
-            const res = await setNotifyEmail(next);
-            if (!res.ok) {
-              setChecked(!next);
-              toast(res.error, "error");
-            }
           });
         }}
       />

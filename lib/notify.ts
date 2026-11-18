@@ -2,8 +2,8 @@ import "server-only";
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/** Kinds worth an email as well as a phone notification. */
-const EMAIL_KINDS = new Set(["won", "refund", "transfer_in"]);
+/** Notification emails are switched off: members get in-app and phone notifications only. */
+const EMAIL_KINDS = new Set<string>();
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://unipred.site";
 const FROM = process.env.NOTIFY_FROM_EMAIL || "UniPred <noreply@unipred.site>";
 

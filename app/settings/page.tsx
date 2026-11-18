@@ -9,7 +9,7 @@ import { paystack, type Bank } from "@/lib/paystack";
 import { createClient } from "@/lib/supabase/server";
 import type { PayoutAccount } from "@/lib/types";
 import { isValidFullName } from "@/lib/identity";
-import { EmailToggle, LeaderboardToggle, PayoutForm, ProfileForm, SetFullNameForm } from "./SettingsForms";
+import { LeaderboardToggle, PayoutForm, ProfileForm, SetFullNameForm } from "./SettingsForms";
 
 export const metadata: Metadata = { title: "Settings · UniPred" };
 
@@ -68,10 +68,6 @@ export default async function SettingsPage() {
           ) : (
             <SetFullNameForm />
           )}
-        </Section>
-
-        <Section id="notifications" title="Emails" subtitle="Wins, refunds and money you receive.">
-          <EmailToggle on={viewer.profile.notify_email !== false} />
         </Section>
 
         <Section id="privacy" title="Leaderboard" subtitle="Show or hide yourself.">
