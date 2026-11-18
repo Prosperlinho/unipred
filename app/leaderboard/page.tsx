@@ -69,14 +69,13 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
         </p>
       ) : viewer ? (
         <p className="mb-4 rounded-xl bg-card px-3 py-2 text-xs text-muted">
-          You&apos;re not on this board yet. Win more than you stake on markets that resolve in this period to climb in.
+          You&apos;re not on this board yet.
         </p>
       ) : null}
 
       {board.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line py-12 text-center text-sm text-muted">
-          No one is in profit {period === "week" ? "this week" : period === "last_week" ? "last week" : "yet"}. Markets count
-          once they&apos;re resolved.
+          No one in profit {period === "week" ? "this week" : period === "last_week" ? "last week" : "yet"}.
         </div>
       ) : (
         <>
@@ -132,8 +131,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       )}
 
       <p className="mt-4 text-[11px] leading-relaxed text-muted">
-        Profit = what you got back (winnings, cash-outs and refunds) minus what you staked, on markets resolved in the period.
-        Only members in profit are listed. Don&apos;t want to appear here? Turn it off in{" "}
+        Profit on resolved markets. Hide yourself in{" "}
         <Link href="/settings" className="text-brand underline">
           Settings
         </Link>

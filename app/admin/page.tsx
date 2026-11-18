@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market, Withdrawal } from "@/lib/types";
 import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
+import { ProposerPanel } from "./ProposerPanel";
 
 export const metadata: Metadata = { title: "Admin · UniPred" };
 
@@ -40,7 +41,12 @@ export default async function AdminPage() {
       .limit(100),
     admin.from("transfers").select("id, from_user, to_user, amount_kobo, note, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
-  const [settings, { data: partnerData }] = await Promise.all([getSettings(), admin.rpc("partner_stats")]);
+  const [settings, { data: partnerData }, { data: proposerData }] = await Promise.all([
+    getSettings(),
+    admin.rpc("partner_stats"),
+    admin.from("profiles").select("username").eq("can_propose", true).order("username"),
+  ]);
+  const proposers = ((proposerData ?? []) as Array<{ username: string }>).map((p) => p.username);
   const partners: Partner[] = ((partnerData ?? []) as Array<{ username: string; rate_bps: number; joined: number; active: number }>).map((p) => ({
     username: p.username,
     ratePct: p.rate_bps / 100,
@@ -107,6 +113,14 @@ export default async function AdminPage() {
             ))}
           </div>
         </Section>
+
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+            Who can propose markets
+            <span className="rounded-full bg-card-2 px-2 py-0.5 text-[11px] text-white">{proposers.length}</span>
+          </h2>
+          <ProposerPanel proposers={proposers} />
+        </section>
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">

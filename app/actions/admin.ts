@@ -136,7 +136,7 @@ export async function setPartnerRate(username: string, ratePct: number | null): 
   const { data: user } = await admin
     .from("profiles")
     .select("id, username")
-    .ilike("username", username.trim().replace(/_/g, "\_"))
+    .ilike("username", username.trim().replace(/^@/, "").replace(/_/g, "\\_"))
     .maybeSingle<{ id: string; username: string }>();
   if (!user) return { ok: false, error: "No member with that username." };
   const { error } = await admin
@@ -149,4 +149,21 @@ export async function setPartnerRate(username: string, ratePct: number | null): 
     ok: true,
     value: ratePct === null ? `@${user.username} is back on the standard rate.` : `@${user.username} now earns ${ratePct}% of the fee.`,
   };
+}
+
+/** Lets a member propose markets, or takes that away. */
+export async function setProposerAccess(username: string, allow: boolean): Promise<ActionResult<string>> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const admin = createAdminClient();
+  const { data: user } = await admin
+    .from("profiles")
+    .select("id, username")
+    .ilike("username", username.trim().replace(/^@/, "").replace(/_/g, "\\_"))
+    .maybeSingle<{ id: string; username: string }>();
+  if (!user) return { ok: false, error: "No member with that username." };
+  const { error } = await admin.from("profiles").update({ can_propose: allow }).eq("id", user.id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return { ok: true, value: allow ? `@${user.username} can now propose markets.` : `@${user.username} can no longer propose markets.` };
 }

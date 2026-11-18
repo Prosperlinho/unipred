@@ -1,4 +1,16 @@
-export const CATEGORIES = ["Campus Politics", "Academics", "Sports", "Events & Lifestyle"] as const;
+export const CATEGORIES = [
+  "Campus Politics",
+  "Academics",
+  "Sports",
+  "Events & Lifestyle",
+  "Entertainment & Music",
+  "Football",
+  "Hostel Life",
+  "Tech & Crypto",
+  "Fashion & Style",
+  "Politics & News",
+  "Exams & Results",
+] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export type Outcome = "YES" | "NO";
@@ -62,6 +74,10 @@ export interface Profile {
   onboarded_at: string | null;
   /** Leave me off the public leaderboard. */
   leaderboard_hidden?: boolean;
+  /** Admin has allowed this member to propose markets. */
+  can_propose?: boolean;
+  /** Market categories the member chose to see (null = not chosen yet). */
+  interests?: string[] | null;
   is_banned: boolean;
   ban_reason: string | null;
   payout_name_strikes: number;
@@ -131,6 +147,8 @@ export interface PlatformSettings {
   terms_version: number;
   /** Fee for cashing a bet out early (1500 = 15% of the amount taken out). */
   exit_fee_bps: number;
+  /** Welcome bonus credited to new sign-ups (test mode). */
+  signup_bonus_kobo: number;
 }
 
 export type ActionResult<T = undefined> = { ok: true; value: T } | { ok: false; error: string };

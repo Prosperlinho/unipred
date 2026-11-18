@@ -139,8 +139,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
       </div>
 
       <p className="text-xs text-muted">
-        Clear proposals usually go live instantly at 50/50 odds. UniPred admins confirm the result from the source above,
-        and winners are paid automatically. Up to 3 proposals per day.
+        Goes live instantly. Up to 3 a day.
       </p>
 
       <FormMessage error={state.error} />

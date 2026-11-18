@@ -1,14 +1,14 @@
 "use client";
 
-import { Plus, Search, SearchX, X } from "lucide-react";
+import { Plus, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useNow } from "@/lib/useNow";
 import { CATEGORIES, SORT_MODES, type Category, type Market, type SortMode } from "@/lib/types";
+import { openInterestPicker } from "./Interests";
 import { MarketCard } from "./MarketCard";
 
-type Filter = "All" | Category;
-const FILTERS: Filter[] = ["All", ...CATEGORIES];
+type Filter = "For you" | "All" | Category;
 
 interface Props {
   markets: Market[];
@@ -17,6 +17,9 @@ interface Props {
   serverNow: number;
   emptyHint: string;
   feeBps: number;
+  /** Categories the person picked; null/undefined = everything. */
+  interests?: Category[] | null;
+  canPropose?: boolean;
 }
 
 function trendingScore(m: Market, now: number): number {
@@ -24,9 +27,12 @@ function trendingScore(m: Market, now: number): number {
   return (m.volume_kobo / 100 + m.traders * 200) / Math.pow(ageHours, 0.35);
 }
 
-export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, emptyHint, feeBps }: Props) {
+export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, emptyHint, feeBps, interests, canPropose }: Props) {
   const now = useNow(serverNow);
-  const [filter, setFilter] = useState<Filter>("All");
+  const personal = !!interests && interests.length > 0 && interests.length < CATEGORIES.length;
+  const filters: Filter[] = personal ? ["For you", "All", ...CATEGORIES] : ["All", ...CATEGORIES];
+  const [chosen, setFilter] = useState<Filter | null>(null);
+  const filter: Filter = chosen ?? (personal ? "For you" : "All");
   const [sort, setSort] = useState<SortMode>("Trending");
   const [query, setQuery] = useState("");
 
@@ -34,7 +40,10 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
     const q = query.trim().toLowerCase();
     const list = markets.filter(
       (m) =>
-        (filter === "All" || m.category === filter) &&
+        // Only live markets: ended ones stay in Portfolio and on their own page.
+        m.status === "open" &&
+        new Date(m.closes_at).getTime() > now &&
+        (filter === "All" || (filter === "For you" ? !!interests?.includes(m.category) : m.category === filter)) &&
         (!q ||
           m.question.toLowerCase().includes(q) ||
           (schoolLabels[m.school_id] ?? "").toLowerCase().includes(q)),
@@ -47,7 +56,7 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
       if (sort === "Newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       return trendingScore(b, now) - trendingScore(a, now);
     });
-  }, [markets, filter, sort, query, now, schoolLabels]);
+  }, [markets, filter, sort, query, now, schoolLabels, interests]);
 
   return (
     <div className="space-y-4">
@@ -74,7 +83,15 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
       </div>
 
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-        {FILTERS.map((f) => (
+        <button
+          type="button"
+          onClick={openInterestPicker}
+          className="flex shrink-0 items-center gap-1 rounded-full border border-brand/40 bg-brand/10 px-3 py-1.5 text-sm font-medium text-brand"
+          aria-label="Choose your interests"
+        >
+          <SlidersHorizontal className="size-3.5" /> Interests
+        </button>
+        {filters.map((f) => (
           <button
             key={f}
             type="button"
@@ -116,12 +133,14 @@ export function MarketFeed({ markets, schoolLabels, showSchool, serverNow, empty
           <SearchX className="size-8 text-muted" />
           <p className="font-medium text-white">No markets here yet</p>
           <p className="max-w-sm text-sm text-muted">{emptyHint}</p>
+          {canPropose && (
           <Link
             href="/propose"
             className="mt-2 inline-flex items-center gap-1 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black transition hover:brightness-110"
           >
             <Plus className="size-4" strokeWidth={3} /> Propose a market
           </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

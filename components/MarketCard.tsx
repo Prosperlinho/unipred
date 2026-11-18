@@ -103,7 +103,7 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
       </div>
 
       {live ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2" data-tour="bet">
           <Link
             href={`${href}?side=YES`}
             className="flex flex-col items-center rounded-xl bg-yes/12 py-2 text-center text-yes ring-1 ring-inset ring-yes/20 transition hover:bg-yes hover:text-black"

@@ -168,3 +168,17 @@ export async function setLeaderboardHidden(hidden: boolean): Promise<ActionResul
   revalidatePath("/settings");
   return { ok: true, value: undefined };
 }
+
+/** Saves the market categories the member wants to see. */
+export async function setInterests(interests: string[]): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, error: "Please log in." };
+  const { CATEGORIES } = await import("@/lib/types");
+  const clean = [...new Set(interests)].filter((c) => (CATEGORIES as readonly string[]).includes(c));
+  if (clean.length === 0) return { ok: false, error: "Pick at least one." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ interests: clean }).eq("id", viewer.id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/", "layout");
+  return { ok: true, value: undefined };
+}

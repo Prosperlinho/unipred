@@ -233,11 +233,11 @@ export function TradeBox(props: Props) {
             <p className="text-xs text-muted">
               {otherPot > 0 ? (
                 <>
-                  That&apos;s <span className="font-semibold text-white">{formatSignedNaira(est.profitKobo)}</span> on{" "}
-                  {formatNaira(stakeKobo)}. If {other} wins, you lose your stake.
+                  <span className="font-semibold text-white">{formatSignedNaira(est.profitKobo)}</span> profit. Lose your stake if{" "}
+                  {other} wins.
                 </>
               ) : (
-                <>Nobody has bet {other} yet, so right now you&apos;d just get your stake back. Share it so others take the other side.</>
+                <>No one is on {other} yet, so you&apos;d only get your stake back.</>
               )}
             </p>
             <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-xs text-muted">
@@ -251,15 +251,14 @@ export function TradeBox(props: Props) {
           </>
         ) : (
           <p className="text-sm text-muted">
-            Winners split the {other} pot in proportion to their bets. Enter an amount to see your estimated payout.
+            Enter an amount to see your payout.
           </p>
         )}
       </div>
 
       <p className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
         <Info className="mt-0.5 size-3.5 shrink-0" />
-        Pool betting: the final payout depends on all bets placed before closing. UniPred keeps {feeBps / 100}% of the
-        winnings. You can cash out before closing for your stake minus a {props.exitFeeBps / 100}% exit fee.
+        Estimate only · {feeBps / 100}% fee on winnings · {props.exitFeeBps / 100}% fee to cash out early.
       </p>
 
       {error && (
@@ -302,10 +301,9 @@ export function TradeBox(props: Props) {
               </div>
             </div>
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
-              <li>• You can cash out before closing, but only for your stake minus a {props.exitFeeBps / 100}% exit fee.</li>
-              <li>• If {other} wins, you lose your {formatNaira(stakeKobo)}.</li>
-              <li>• The payout is an estimate and changes as others bet. UniPred keeps {feeBps / 100}% of winnings.</li>
-              <li>• Only stake what you can afford to lose. 18+ only.</li>
+              <li>• You lose {formatNaira(stakeKobo)} if {other} wins.</li>
+              <li>• Payout is an estimate. Cashing out early costs {props.exitFeeBps / 100}%.</li>
+              <li>• 18+. Only stake what you can afford to lose.</li>
             </ul>
             <p className="mt-2 text-[11px] text-muted">
               By confirming you agree to the{" "}

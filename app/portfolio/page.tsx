@@ -73,8 +73,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
 
   return (
     <Container>
-      <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Your Portfolio</h1>
-      <p className="mb-4 text-sm text-muted">Your open bets, results and the markets you created.</p>
+      <h1 className="mb-4 text-xl font-extrabold tracking-tight text-white sm:text-2xl">Your Portfolio</h1>
       {sp.proposed === "1" && (
         <div className="mb-4">
           <FormMessage message="Proposal received! It needs a quick admin review before it goes live. You'll see its status below." />
@@ -197,7 +196,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-10 text-center">
               <PlusCircle className="size-8 text-muted" />
               <p className="font-medium text-white">No proposals yet</p>
-              <p className="max-w-xs text-sm text-muted">Spot something everyone&apos;s debating? Propose it as a market.</p>
+              
               <Link href="/propose" className="mt-2 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black hover:brightness-110">
                 Propose a market
               </Link>

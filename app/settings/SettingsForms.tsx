@@ -36,7 +36,7 @@ export function ProfileForm({ profile, schools }: { profile: Profile; schools: S
         </Field>
       </div>
       <p className="text-[11px] text-muted">
-        Your full name can&apos;t be changed: it must match the bank account you withdraw to.
+        Can&apos;t be changed. Must match your bank account.
       </p>
       <Field label="University" htmlFor="school_id">
         <SchoolCombobox
@@ -193,8 +193,7 @@ export function PayoutForm({
         {resolved?.matches ? "Save this account" : "Verify account"}
       </button>
       <p className="text-[11px] text-muted">
-        The account must be in your name. Each bank account can only be linked to one UniPred account. Withdrawals only go
-        to this account.
+        Must be in your name, and can only be linked to one UniPred account.
       </p>
     </div>
   );

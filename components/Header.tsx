@@ -9,13 +9,13 @@ import { LogoTile } from "./Logo";
 
 interface Props {
   guide: GuideInfo;
-  viewer: { username: string; balanceKobo: number; isAdmin: boolean } | null;
+  viewer: { username: string; balanceKobo: number; isAdmin: boolean; canPropose: boolean } | null;
 }
 
 export function Header({ viewer, guide }: Props) {
   const pathname = usePathname();
   const nav = [
-    { href: "/", label: "Markets" },
+    { href: "/markets", label: "Markets" },
     { href: "/leaderboard", label: "Leaderboard" },
     ...(viewer ? [{ href: "/portfolio", label: "Portfolio" }, { href: "/wallet", label: "Wallet" }] : []),
     ...(viewer?.isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
@@ -23,7 +23,7 @@ export function Header({ viewer, guide }: Props) {
 
   return (
     <header className="sticky top-0 z-40 transform-gpu border-b border-line bg-bg md:bg-bg/85 md:backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-4">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 font-extrabold tracking-tight text-white">
           <LogoTile className="size-8 shrink-0 ring-1 ring-white/10 [border-radius:9px]" />
           <span className="hidden text-[17px] min-[380px]:inline">
@@ -37,6 +37,7 @@ export function Header({ viewer, guide }: Props) {
             <Link
               key={n.href}
               href={n.href}
+              data-tour={n.href === "/" ? undefined : n.href.slice(1)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 pathname === n.href ? "bg-card text-white" : "text-muted hover:text-white"
               }`}
@@ -46,28 +47,33 @@ export function Header({ viewer, guide }: Props) {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
           <GuideButton info={guide} />
           {viewer ? (
             <>
               <Link
                 href="/wallet"
-                className="flex items-center gap-1.5 rounded-xl border border-line bg-card px-2.5 py-1.5 text-sm"
+                data-tour="wallet"
+                className="flex min-w-0 items-center gap-1.5 rounded-xl border border-line bg-card px-2 py-1.5 text-sm sm:px-2.5"
                 aria-label="Wallet balance"
               >
-                <Wallet className="size-4 text-amber-300" />
+                <Wallet className="hidden size-4 shrink-0 text-amber-300 min-[375px]:block" />
                 <span className="font-bold tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</span>
               </Link>
+              {viewer.canPropose && (
               <Link
                 href="/propose"
+                data-tour="propose"
                 className="flex items-center gap-1 rounded-xl bg-brand px-2 py-1.5 text-sm font-bold text-black transition hover:brightness-110 sm:px-3"
                 aria-label="Propose a market"
               >
                 <Plus className="size-4" strokeWidth={3} />
                 <span className="hidden sm:inline">Propose</span>
               </Link>
+              )}
               <Link
                 href="/profile"
+                data-tour="profile"
                 className="flex size-8 items-center justify-center rounded-full bg-card-2 text-[11px] font-bold text-white ring-1 ring-line transition hover:ring-brand"
                 aria-label="Your profile"
               >

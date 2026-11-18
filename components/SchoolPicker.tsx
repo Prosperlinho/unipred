@@ -26,7 +26,7 @@ export function SchoolPicker({ schools, selected, mySchoolId }: Props) {
         align="right"
         placeholder="All universities"
         onChange={(v) =>
-          startTransition(() => router.push(`/?school=${encodeURIComponent(v)}#markets`, { scroll: false }))
+          startTransition(() => router.push(`/markets?school=${encodeURIComponent(v)}`, { scroll: false }))
         }
       />
     </div>

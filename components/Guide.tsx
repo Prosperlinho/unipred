@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   LayoutGrid,
   Loader2,
+  Play,
   PlusCircle,
   Search,
   Send,
@@ -25,6 +26,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { startTour } from "./Tour";
 
 /** Numbers the guide quotes, straight from the live settings. */
 export interface GuideInfo {
@@ -100,7 +102,7 @@ function topics(g: GuideInfo): Topic[] {
           </p>
         </>
       ),
-      link: { href: "/#markets", label: "Browse markets" },
+      link: { href: "/markets", label: "Browse markets" },
     },
     {
       id: "cashout",
@@ -184,7 +186,8 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "propose create new market question add",
       body: (
         <p>
-          Tap <b>+</b> (Propose) at the top. Ask a YES/NO question, say exactly what must happen for YES, name the official
+          Proposing is by invitation: UniPred approves who can create markets. If you have access, tap <b>+</b> (Propose)
+          at the top. Ask a YES/NO question, say exactly what must happen for YES, name the official
           source that will confirm it, and choose a closing time. Clear proposals go live straight away. Markets about
           private individuals, or things a bettor can secretly control, aren&apos;t allowed.
         </p>
@@ -359,6 +362,23 @@ export function GuideSheet({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              startTour();
+            }}
+            className="mb-3 flex w-full items-center gap-3 rounded-xl border border-brand/40 bg-brand/10 p-3 text-left transition hover:bg-brand/15"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-black">
+              <Play className="size-4 fill-black" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-bold text-white">Take the tour</span>
+              <span className="text-xs text-muted">We&apos;ll point out each part of the app.</span>
+            </span>
+            <ArrowRight className="size-4 text-brand" />
+          </button>
           <GuideDirectory info={info} onNavigate={onClose} />
         </div>
         {closeLabel && (
@@ -388,6 +408,7 @@ export function GuideButton({ info }: { info: GuideInfo }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-tour="guide"
         className="flex size-8 items-center justify-center rounded-full border border-line text-muted transition hover:border-brand/50 hover:text-brand"
         aria-label="Open the UniPred guide"
         title="Guide"

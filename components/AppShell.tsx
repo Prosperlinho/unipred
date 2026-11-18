@@ -11,6 +11,7 @@ import { Header } from "./Header";
 import { HouseRules } from "./HouseRules";
 import { RulesGate } from "./RulesGate";
 import { WelcomeGuide } from "./WelcomeGuide";
+import { TourHost } from "./Tour";
 import type { GuideInfo } from "./Guide";
 import { SUPPORT_EMAIL } from "./LegalPage";
 import { formatNaira } from "@/lib/format";
@@ -41,7 +42,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
           guide={guide}
           viewer={
             viewer
-              ? { username: viewer.profile.username, balanceKobo: viewer.balanceKobo, isAdmin: viewer.profile.is_admin }
+              ? {
+                  username: viewer.profile.username,
+                  balanceKobo: viewer.balanceKobo,
+                  isAdmin: viewer.profile.is_admin,
+                  canPropose: !!viewer.profile.can_propose || viewer.profile.is_admin,
+                }
               : null
           }
         />
@@ -78,7 +84,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           />
         </RulesGate>
       )}
-      {showWelcome && profile && <WelcomeGuide username={profile.username} info={guide} />}
+      {showWelcome ? <WelcomeGuide /> : <TourHost />}
       <Toaster />
     </UIProvider>
   );

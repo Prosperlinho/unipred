@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, LayoutGrid, LogIn, Trophy, UserRound, Wallet } from "lucide-react";
+import { Briefcase, Flame, LayoutGrid, LogIn, Trophy, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,14 +8,15 @@ export function BottomNav({ loggedIn }: { loggedIn: boolean }) {
   const pathname = usePathname();
   const items = loggedIn
     ? [
-        { href: "/", label: "Markets", Icon: LayoutGrid },
+        { href: "/", label: "Home", Icon: Flame },
+        { href: "/markets", label: "Markets", Icon: LayoutGrid },
         { href: "/portfolio", label: "Portfolio", Icon: Briefcase },
         { href: "/leaderboard", label: "Leaders", Icon: Trophy },
         { href: "/wallet", label: "Wallet", Icon: Wallet },
-        { href: "/profile", label: "Profile", Icon: UserRound },
       ]
     : [
-        { href: "/", label: "Markets", Icon: LayoutGrid },
+        { href: "/", label: "Home", Icon: Flame },
+        { href: "/markets", label: "Markets", Icon: LayoutGrid },
         { href: "/leaderboard", label: "Leaders", Icon: Trophy },
         { href: "/login", label: "Log in", Icon: LogIn },
       ];
@@ -32,6 +33,7 @@ export function BottomNav({ loggedIn }: { loggedIn: boolean }) {
             <Link
               key={href}
               href={href}
+              data-tour={href === "/" || href === "/login" ? undefined : href.slice(1)}
               className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
                 active ? "text-white" : "text-muted"
               }`}

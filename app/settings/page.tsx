@@ -17,7 +17,7 @@ function Section({ id, title, subtitle, children }: { id: string; title: string;
   return (
     <section id={id} className="scroll-mt-20 rounded-2xl border border-line bg-card p-5">
       <h2 className="font-semibold text-white">{title}</h2>
-      <p className="mb-4 text-xs text-muted">{subtitle}</p>
+      {subtitle ? <p className="mb-4 text-xs text-muted">{subtitle}</p> : <div className="mb-3" />}
       {children}
     </section>
   );
@@ -52,7 +52,7 @@ export default async function SettingsPage() {
       <p className="mb-6 text-sm text-muted">Signed in as {viewer.email}</p>
 
       <div className="space-y-4">
-        <Section id="profile" title="Profile" subtitle="Your username shows on comments. Your school sets your default feed.">
+        <Section id="profile" title="Profile" subtitle="Username and university.">
           <ProfileForm
             profile={viewer.profile}
             schools={[
@@ -62,7 +62,7 @@ export default async function SettingsPage() {
           />
         </Section>
 
-        <Section id="payout" title="Payout bank account" subtitle="Where your withdrawals are sent. It must be in your own name.">
+        <Section id="payout" title="Payout bank account" subtitle="Must be in your own name.">
           {isValidFullName(viewer.profile.full_name ?? "") ? (
             <PayoutForm banks={bankList.banks} current={account ?? null} banksError={bankList.error} />
           ) : (
@@ -70,11 +70,11 @@ export default async function SettingsPage() {
           )}
         </Section>
 
-        <Section id="privacy" title="Leaderboard" subtitle="Choose whether your username and profit appear on the public leaderboard.">
+        <Section id="privacy" title="Leaderboard" subtitle="Show or hide yourself.">
           <LeaderboardToggle hidden={!!viewer.profile.leaderboard_hidden} />
         </Section>
 
-        <Section id="password" title="Password" subtitle="Change the password you use to log in.">
+        <Section id="password" title="Password" subtitle="">
           <PasswordForm />
         </Section>
 

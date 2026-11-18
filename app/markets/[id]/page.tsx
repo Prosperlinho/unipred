@@ -171,7 +171,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         <p className="flex items-center gap-2 font-semibold text-white">
           <Lock className="size-4" /> Trading closed
         </p>
-        <p className="mt-1 text-muted">Waiting for an admin to confirm the result. Winners are paid automatically.</p>
+        <p className="mt-1 text-muted">Awaiting the result. Winners are paid automatically.</p>
       </div>
     );
   } else {
@@ -255,7 +255,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
   return (
     <Container>
       <Link
-        href={school ? `/?school=${school.id}#markets` : "/"}
+        href={school ? `/markets?school=${school.id}` : "/markets"}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-white"
       >
         <ArrowLeft className="size-4" /> {school ? `${school.short_name} markets` : "All markets"}
@@ -404,7 +404,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
               href="/rules"
               className="flex items-center justify-between rounded-xl border border-line p-3 text-xs text-muted transition hover:border-white/20 hover:text-white"
             >
-              <span>Pool betting, payouts, refunds and account rules apply to every market.</span>
+              <span>Rules for every market</span>
               <span className="shrink-0 font-semibold text-brand">House Rules →</span>
             </Link>
           </section>

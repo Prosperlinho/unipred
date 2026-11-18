@@ -52,8 +52,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
 
   return (
     <Container>
-      <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Wallet</h1>
-      <p className="mb-4 text-sm text-muted">Fund your wallet to trade. Winnings land here automatically.</p>
+      <h1 className="mb-4 text-xl font-extrabold tracking-tight text-white sm:text-2xl">Wallet</h1>
       {notice && (
         <div className="mb-4">
           <FormMessage {...notice} />

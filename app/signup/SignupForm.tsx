@@ -60,9 +60,8 @@ export function SignupForm({ schools, maxDob }: { schools: School[]; maxDob: str
       <div className="flex gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-100">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-300" />
         <p>
-          <b>Your full name can&apos;t be changed later.</b> Withdrawals only go to a bank account in this exact name, and
-          you should fund your wallet from your own account. One person, one account: accounts that use someone
-          else&apos;s bank details or create duplicate accounts are suspended.
+          <b>Use your real name.</b> It can&apos;t be changed, and withdrawals only go to a bank account in this name. One
+          account per person.
         </p>
       </div>
       <Field label="Username" htmlFor="username" hint="Shown on comments and your cards.">

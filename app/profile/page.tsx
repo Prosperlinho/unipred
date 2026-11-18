@@ -82,10 +82,8 @@ export default async function ProfilePage() {
           )}
         </div>
         <p className="text-sm text-muted">
-          Earn <span className="font-semibold text-white">{ratePct}% of UniPred&apos;s fee</span> on your friends&apos; bets,
-          win or lose, once they&apos;re <span className="font-semibold text-white">active</span>: at least{" "}
-          {stats?.min_daily_bets ?? 5} bets a day for {stats?.streak_days ?? 3} days in a row. It&apos;s paid into your
-          wallet when each market resolves, and comes out of UniPred&apos;s fee, never your friends&apos; winnings.
+          Earn <span className="font-semibold text-white">{ratePct}% of our fee</span> on friends&apos; bets once they&apos;re
+          active ({stats?.min_daily_bets ?? 5} bets a day, {stats?.streak_days ?? 3} days in a row).
         </p>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-bg p-2.5">
