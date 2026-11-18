@@ -1,16 +1,17 @@
-import { CreditCard, Receipt } from "lucide-react";
+import { Clock, CreditCard, TrendingDown, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { FormMessage } from "@/components/forms";
 import { requireViewer } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { isTestMode } from "@/lib/env";
-import { formatDate, formatNaira, formatSignedNaira } from "@/lib/format";
+import { formatNaira, formatSignedNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { getRequestTime } from "@/lib/time";
 import type { LedgerEntry, PayoutAccount, Withdrawal } from "@/lib/types";
 import type { P2PStatus } from "@/app/actions/wallet";
-import { SendMoneyForm } from "./SendMoneyForm";
-import { DepositForm, WithdrawForm } from "./WalletForms";
+import { Activity } from "./Activity";
+import { WalletActions } from "./WalletActions";
 
 export const metadata: Metadata = { title: "Wallet · UniPred" };
 
@@ -20,13 +21,8 @@ const DEPOSIT_NOTICE: Record<string, { error?: string; message?: string }> = {
   failed: { error: "We couldn't confirm that payment. If you were debited, it will be credited automatically once Paystack confirms." },
 };
 
-const W_STATUS: Record<Withdrawal["status"], string> = {
-  pending: "text-amber-300",
-  processing: "text-sky-300",
-  paid: "text-yes",
-  rejected: "text-no",
-  failed: "text-no",
-};
+/** Ledger kinds that count as trading results (for the 24h change). */
+const RESULT_KINDS = new Set(["trade_buy", "trade_sell", "payout", "refund", "referral"]);
 
 export default async function WalletPage(props: PageProps<"/wallet">) {
   const viewer = await requireViewer("/wallet");
@@ -39,7 +35,7 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
       .select("bank_code, bank_name, account_number, account_name")
       .eq("user_id", viewer.id)
       .maybeSingle<PayoutAccount>(),
-    supabase.from("ledger").select("*").eq("user_id", viewer.id).order("created_at", { ascending: false }).limit(50),
+    supabase.from("ledger").select("*").eq("user_id", viewer.id).order("created_at", { ascending: false }).limit(150),
     supabase
       .from("withdrawals")
       .select("*")
@@ -49,98 +45,87 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
     supabase.rpc("my_p2p_status"),
   ]);
   const notice = typeof sp.deposit === "string" ? DEPOSIT_NOTICE[sp.deposit] : undefined;
+  const initial = sp.action === "deposit" || sp.action === "withdraw" || sp.action === "send" ? sp.action : null;
+
+  const entries = (ledger ?? []) as LedgerEntry[];
+  const pending = (withdrawals ?? []) as Withdrawal[];
+  const held = pending.reduce((s, w) => s + w.amount_kobo, 0);
+  const since = getRequestTime() - 86_400_000;
+  const change24h = entries
+    .filter((l) => RESULT_KINDS.has(l.kind) && new Date(l.created_at).getTime() >= since)
+    .reduce((s, l) => s + l.amount_kobo, 0);
 
   return (
-    <Container>
-      <h1 className="mb-4 text-xl font-extrabold tracking-tight text-white sm:text-2xl">Wallet</h1>
+    <Container narrow>
       {notice && (
         <div className="mb-4">
           <FormMessage {...notice} />
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <section className="rounded-2xl border border-line bg-linear-to-br from-brand-teal/20 to-card p-5 lg:col-span-3">
-          <p className="text-xs uppercase tracking-wide text-muted">Available balance</p>
-          <p className="mt-1 text-4xl font-extrabold tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</p>
-          {(withdrawals ?? []).length > 0 && (
-            <p className="mt-1 text-xs text-muted">
-              {formatNaira((withdrawals as Withdrawal[]).reduce((s, w) => s + w.amount_kobo, 0))} held for pending withdrawals
-            </p>
+      {/* Balance */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#123222] via-card to-card p-5">
+        <div className="pointer-events-none absolute -right-10 -top-14 size-48 rounded-full bg-brand/15 blur-3xl" />
+        <p className="relative text-xs font-medium text-muted">Balance</p>
+        <p className="relative mt-1 text-[40px] font-black leading-none tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</p>
+        <div className="relative mt-2 flex flex-wrap items-center gap-2 text-xs">
+          {change24h !== 0 && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold tabular-nums ${
+                change24h > 0 ? "bg-yes/15 text-yes" : "bg-no/15 text-no"
+              }`}
+            >
+              {change24h > 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+              {formatSignedNaira(change24h)} 24h
+            </span>
           )}
-        </section>
-
-        <section className="space-y-3 rounded-2xl border border-line bg-card p-4">
-          <h2 className="font-semibold text-white">Add money</h2>
-          <DepositForm minKobo={settings.min_deposit_kobo} />
-          {isTestMode && (
-            <div className="flex gap-2 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-[11px] text-amber-100">
-              <CreditCard className="size-4 shrink-0 text-amber-300" />
-              <p>
-                Test mode. Use Paystack&apos;s test card <span className="font-mono">4084 0840 8408 4081</span>, any future
-                expiry, CVV <span className="font-mono">408</span>, PIN <span className="font-mono">0000</span>, OTP{" "}
-                <span className="font-mono">123456</span>.
-              </p>
-            </div>
+          {held > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 font-semibold text-amber-300">
+              <Clock className="size-3" /> {formatNaira(held)} withdrawing
+            </span>
           )}
-        </section>
+        </div>
 
-        <section className="space-y-3 rounded-2xl border border-line bg-card p-4">
-          <h2 className="font-semibold text-white">Withdraw</h2>
-          <WithdrawForm minKobo={settings.min_withdrawal_kobo} balanceKobo={viewer.balanceKobo} account={account ?? null} />
-        </section>
+        <div className="relative mt-5">
+          <WalletActions
+            minDepositKobo={settings.min_deposit_kobo}
+            minWithdrawalKobo={settings.min_withdrawal_kobo}
+            balanceKobo={viewer.balanceKobo}
+            account={account ?? null}
+            p2p={(p2p as P2PStatus | null) ?? null}
+            initial={initial}
+            testModeNote={
+              isTestMode ? (
+                <div className="flex gap-2 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-[11px] text-amber-100">
+                  <CreditCard className="size-4 shrink-0 text-amber-300" />
+                  <p>
+                    Test card <span className="font-mono">4084 0840 8408 4081</span>, any future expiry, CVV{" "}
+                    <span className="font-mono">408</span>, PIN <span className="font-mono">0000</span>, OTP{" "}
+                    <span className="font-mono">123456</span>.
+                  </p>
+                </div>
+              ) : null
+            }
+          />
+        </div>
+      </section>
 
-        <section className="space-y-3 rounded-2xl border border-line bg-card p-4">
-          <h2 className="font-semibold text-white">Send to a member</h2>
-          <SendMoneyForm status={(p2p as P2PStatus | null) ?? null} />
-        </section>
+      {/* Pending withdrawals, only when there are some */}
+      {pending.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {pending.map((w) => (
+            <li key={w.id} className="flex items-center justify-between rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5 text-sm">
+              <span className="inline-flex items-center gap-2 text-amber-100">
+                <Clock className="size-4 text-amber-300" /> Withdrawal {w.status === "pending" ? "in review" : "on its way"}
+              </span>
+              <span className="font-bold tabular-nums text-white">{formatNaira(w.amount_kobo)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
-        <section className="space-y-3 rounded-2xl border border-line bg-card p-4 lg:col-span-3">
-          <h2 className="font-semibold text-white">Pending withdrawals</h2>
-          {(withdrawals ?? []).length === 0 ? (
-            <p className="text-sm text-muted">None right now.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {(withdrawals as Withdrawal[]).map((w) => (
-                <li key={w.id} className="flex items-center justify-between rounded-xl bg-bg px-3 py-2">
-                  <span>
-                    <span className="font-semibold tabular-nums text-white">{formatNaira(w.amount_kobo)}</span>
-                    <span className="block text-[11px] text-muted">{formatDate(w.created_at)}</span>
-                  </span>
-                  <span className={`text-xs font-semibold capitalize ${W_STATUS[w.status]}`}>
-                    {w.status === "pending" ? "In review" : w.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="space-y-3 rounded-2xl border border-line bg-card p-4 lg:col-span-3">
-          <h2 className="flex items-center gap-1.5 font-semibold text-white">
-            <Receipt className="size-4" /> Transactions
-          </h2>
-          {(ledger ?? []).length === 0 ? (
-            <p className="text-sm text-muted">No transactions yet. Fund your wallet to get started.</p>
-          ) : (
-            <ul className="divide-y divide-line text-sm">
-              {(ledger as LedgerEntry[]).map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-white">{l.description}</span>
-                    <span className="text-[11px] text-muted">{formatDate(l.created_at)}</span>
-                  </span>
-                  <span className="shrink-0 text-right tabular-nums">
-                    <span className={`block font-semibold ${l.amount_kobo >= 0 ? "text-yes" : "text-white"}`}>
-                      {formatSignedNaira(l.amount_kobo)}
-                    </span>
-                    <span className="text-[11px] text-muted">Bal {formatNaira(l.balance_after_kobo)}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <div className="mt-4">
+        <Activity ledger={entries} />
       </div>
     </Container>
   );
