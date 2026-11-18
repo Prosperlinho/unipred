@@ -1,4 +1,4 @@
-import { ArrowRight, Gift } from "lucide-react";
+import { ArrowRight, Gift, Trophy } from "lucide-react";
 import Link from "next/link";
 import { HeroBackground } from "@/components/hero/HeroBackground";
 import { AutoRefresh } from "@/components/LiveRefresh";
@@ -23,6 +23,8 @@ export default async function HomePage() {
   const now = getRequestTime();
 
   const supabase = await createClient();
+  const { data: pool } = await supabase.rpc("prize_board", { p_weeks_ago: 0 }).limit(1);
+  const poolKobo = Number((pool as Array<{ pool_kobo: number }> | null)?.[0]?.pool_kobo ?? 0);
   const { data } = await supabase
     .from("markets")
     .select("*")
@@ -51,6 +53,16 @@ export default async function HomePage() {
           <p className="mt-3 hidden max-w-md text-lg text-white/75 lg:block">
             Right for YES, left for NO. The campus is betting, are you in?
           </p>
+
+          {poolKobo > 0 && (
+            <Link
+              href="/leaderboard"
+              className="mx-auto mt-4 flex w-fit items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300 lg:mx-0"
+            >
+              <Trophy className="size-4" /> {formatNaira(poolKobo)} prize pool this week · top 5 win
+              <ArrowRight className="size-4" />
+            </Link>
+          )}
 
           {!viewer && bonus && (
             <Link

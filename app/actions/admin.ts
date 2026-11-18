@@ -267,3 +267,38 @@ export async function featureMarket(id: string | null): Promise<ActionResult> {
   refreshAll();
   return { ok: true, value: undefined };
 }
+
+/** Sets the fixed prize pool for a week (Monday date, YYYY-MM-DD). */
+export async function setWeeklyPool(weekStart: string, naira: number): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) return { ok: false, error: "Invalid week." };
+  if (!(naira >= 0 && naira <= 100_000_000)) return { ok: false, error: "Enter an amount in naira." };
+  const admin = createAdminClient();
+  const { data: existing } = await admin.from("weekly_prizes").select("status").eq("week_start", weekStart).maybeSingle<{ status: string }>();
+  if (existing?.status === "paid") return { ok: false, error: "That week's prizes were already paid." };
+  const { error } = await admin
+    .from("weekly_prizes")
+    .upsert({ week_start: weekStart, pool_kobo: Math.round(naira * 100), updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/leaderboard");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return { ok: true, value: undefined };
+}
+
+/** Pays the top 5 of a finished week into their wallets. */
+export async function payWeeklyPrizes(weekStart: string): Promise<ActionResult<string>> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("pay_weekly_prizes", { p_week: weekStart });
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  refreshAll();
+  after(() => dispatchNotifications().catch(() => undefined));
+  const r = data as { winners: number; paid_kobo: number; unused_kobo: number };
+  return {
+    ok: true,
+    value: `Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s).${r.unused_kobo > 0 ? ` ${formatNaira(r.unused_kobo)} unused (fewer than 5 qualified).` : ""}`,
+  };
+}

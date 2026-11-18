@@ -32,11 +32,20 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   const school = typeof sp.school === "string" && activeSchools.some((s) => s.id === sp.school) ? sp.school : "all";
 
   const supabase = await createClient();
-  const [{ data: rows }, { data: startIso }] = await Promise.all([
+  const [{ data: rows }, { data: startIso }, { data: prizeRows }] = await Promise.all([
     supabase.rpc("leaderboard", { p_period: period, p_school: school === "all" ? null : school, p_limit: 100 }),
+    period === "all" ? Promise.resolve({ data: null }) : supabase.rpc("prize_board", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
     supabase.rpc("season_start", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
   ]);
   const board = (rows ?? []) as Row[];
+  const prizeList = (prizeRows ?? []) as Array<{ pool_kobo: number; status: string; rank: number | null; username: string | null; prize_kobo: number | null }>;
+  const prize = prizeList.length
+    ? {
+        pool: Number(prizeList[0].pool_kobo ?? 0),
+        status: prizeList[0].status,
+        rows: prizeList.filter((r) => r.rank !== null) as Array<{ rank: number; username: string | null; prize_kobo: number }>,
+      }
+    : null;
   const schoolLabel = Object.fromEntries(allSchools.map((s) => [s.id, s.short_name]));
   const now = getRequestTime();
   const start = typeof startIso === "string" ? new Date(startIso).getTime() : now;
@@ -62,6 +71,44 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       <div className="mb-4">
         <LeaderboardControls schools={activeSchools} school={school} period={period} mySchoolId={viewer?.profile.school_id ?? null} />
       </div>
+
+      {prize && prize.pool > 0 && (
+        <section className="mb-4 overflow-hidden rounded-3xl border border-amber-400/30 bg-linear-to-br from-amber-400/15 via-card to-card p-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+                {prize.status === "paid" ? "Prize pool · paid" : period === "week" ? "This week's prize pool" : "Last week's prize pool"}
+              </p>
+              <p className="text-3xl font-black tabular-nums text-white">{formatNaira(prize.pool)}</p>
+            </div>
+            <Trophy className="size-10 shrink-0 text-amber-300" />
+          </div>
+          <ol className="mt-3 space-y-1.5">
+            {[0.4, 0.25, 0.15, 0.12, 0.08].map((share, i) => {
+              const r = prize.rows.find((x) => x.rank === i + 1);
+              return (
+                <li key={share} className="flex items-center justify-between gap-2 rounded-xl bg-bg/70 px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate">
+                    <span className={`mr-2 font-extrabold ${MEDAL[i] ?? "text-muted"}`}>#{i + 1}</span>
+                    {r ? (
+                      <span className="font-semibold text-white">{r.username ? `@${r.username}` : "A member"}</span>
+                    ) : (
+                      <span className="text-muted">Up for grabs</span>
+                    )}
+                  </span>
+                  <span className="shrink-0 font-bold tabular-nums text-amber-300">
+                    {formatNaira(r?.prize_kobo ?? Math.floor(prize.pool * share))}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-2 text-[11px] text-muted">
+            Top 5 by profit on markets with 3+ bettors. Play at least 5 of them in the week to qualify. Paid to your wallet
+            after Sunday.
+          </p>
+        </section>
+      )}
 
       {mine ? (
         <p className="mb-4 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand">

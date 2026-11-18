@@ -33,6 +33,7 @@ const KIND: Record<string, { title: string; Icon: LucideIcon; tone: string }> = 
   transfer_in: { title: "Received", Icon: Send, tone: "bg-yes/15 text-yes" },
   transfer_out: { title: "Sent", Icon: Send, tone: "bg-white/10 text-white" },
   bonus: { title: "Welcome bonus", Icon: Gift, tone: "bg-brand/15 text-brand" },
+  prize: { title: "Weekly prize", Icon: Trophy, tone: "bg-amber-400/15 text-amber-300" },
   adjustment: { title: "Adjustment", Icon: SlidersHorizontal, tone: "bg-white/10 text-white" },
 };
 const FALLBACK = { title: "Transaction", Icon: Ban, tone: "bg-white/10 text-white" };

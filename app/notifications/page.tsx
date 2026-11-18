@@ -27,6 +27,7 @@ const KIND: Record<string, { Icon: LucideIcon; tone: string }> = {
   new_market: { Icon: Sparkles, tone: "bg-brand/15 text-brand" },
   transfer_in: { Icon: Send, tone: "bg-yes/15 text-yes" },
   bonus: { Icon: Gift, tone: "bg-brand/15 text-brand" },
+  prize: { Icon: Trophy, tone: "bg-amber-400/15 text-amber-300" },
 };
 
 function ago(iso: string): string {

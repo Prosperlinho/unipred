@@ -10,6 +10,7 @@ import type { Market, Withdrawal } from "@/lib/types";
 import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow, type ReviewAccount } from "./AdminPanels";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { ProposerPanel } from "./ProposerPanel";
+import { PrizePoolPanel, type PoolWeek } from "./PrizePoolPanel";
 import { SchedulePanel, type ScheduleRow } from "./SchedulePanel";
 import { DailyChart, TopCategories, type DailyStat } from "./StatsPanel";
 
@@ -95,6 +96,54 @@ export default async function AdminPage() {
   const nameOf = new Map((users ?? []).map((u) => [u.id, u.username]));
   const schoolOf = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
   const now = getRequestTime();
+
+  // ---- Weekly prize pool: last week (to pay), this week (running), next week (to plan) ----
+  const weekDates = await Promise.all(
+    [1, 0, -1].map(async (n) => {
+      const { data } = await admin.rpc("week_start_date", { p_weeks_ago: n });
+      return typeof data === "string" ? data : "";
+    }),
+  );
+  const { data: poolRows } = await admin.from("weekly_prizes").select("*").in("week_start", weekDates.filter(Boolean));
+  const poolWeeks: PoolWeek[] = await Promise.all(
+    weekDates.filter(Boolean).map(async (d, i) => {
+      const row = ((poolRows ?? []) as Array<{ week_start: string; pool_kobo: number; status: "open" | "paid" }>).find((r) => r.week_start === d);
+      let standings: PoolWeek["standings"] = [];
+      if (row?.status === "paid") {
+        const { data: paid } = await admin
+          .from("weekly_prize_payouts")
+          .select("rank, amount_kobo, profit_kobo, profiles(username)")
+          .eq("week_start", d)
+          .order("rank");
+        standings = ((paid ?? []) as unknown as Array<{ rank: number; amount_kobo: number; profit_kobo: number; profiles: { username: string } | null }>).map((p) => ({
+          rank: p.rank,
+          username: p.profiles?.username ?? "member",
+          profitKobo: Number(p.profit_kobo),
+          markets: null,
+          prizeKobo: Number(p.amount_kobo),
+        }));
+      } else if (i < 2) {
+        const { data: st } = await admin.rpc("prize_standings", { p_week: d });
+        standings = ((st ?? []) as Array<{ rank: number; username: string; profit_kobo: number; markets: number; prize_kobo: number }>).map((r) => ({
+          rank: r.rank,
+          username: r.username,
+          profitKobo: Number(r.profit_kobo),
+          markets: r.markets,
+          prizeKobo: Number(r.prize_kobo),
+        }));
+      }
+      const start = new Date(`${d}T00:00:00+01:00`).getTime();
+      const label = `${["Last week", "This week", "Next week"][i]} · from ${new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+      return {
+        weekStart: d,
+        label,
+        poolKobo: Number(row?.pool_kobo ?? 0),
+        status: (row?.status ?? "none") as PoolWeek["status"],
+        ended: start + 7 * 86_400_000 <= getRequestTime(),
+        standings,
+      };
+    }),
+  );
   const needsResult = open.filter((m) => new Date(m.closes_at).getTime() <= now).length;
 
   return (
@@ -159,6 +208,15 @@ export default async function AdminPage() {
             ))}
           </div>
         </Section>
+
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">Weekly prize pool</h2>
+          <p className="text-xs text-muted">
+            Top 5 by profit win 40% / 25% / 15% / 12% / 8%. Only markets with 3+ bettors count, and winners need 5+ of
+            them in the week. Pay after the week ends (Sunday night, Lagos time).
+          </p>
+          <PrizePoolPanel weeks={poolWeeks} />
+        </section>
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
