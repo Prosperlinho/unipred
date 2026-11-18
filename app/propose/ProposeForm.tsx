@@ -139,7 +139,7 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
       </div>
 
       <p className="text-xs text-muted">
-        Goes live instantly. Up to 3 a day.
+        Goes live instantly.
       </p>
 
       <FormMessage error={state.error} />
