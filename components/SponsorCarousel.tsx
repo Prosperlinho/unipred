@@ -67,7 +67,7 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="w-20" />
+        <span className="w-24 shrink-0" />
         <div className="flex justify-center gap-1.5">
         {banners.map((b, i) => (
           <button
@@ -80,7 +80,7 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
           />
         ))}
         </div>
-        <span className="w-20 text-right">{allLink}</span>
+        <span className="w-24 shrink-0 whitespace-nowrap text-right">{allLink}</span>
       </div>
     </div>
   );

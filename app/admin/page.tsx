@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { requireAdmin } from "@/lib/auth";
@@ -40,7 +41,7 @@ function Section({ title, count, children, empty }: { title: string; count: numb
  * light queries; every other panel streams in on its own and can't take the page down if it fails.
  */
 /** The urgent queues: proposals, withdrawals, flagged accounts and live markets. */
-async function CoreQueues() {
+async function CoreQueues({ part }: { part: "todo" | "markets" }) {
   const admin = createAdminClient();
   const [schools, pendingRes, openRes, wRes, reviewRes] = await Promise.all([
     getSchools(),
@@ -85,6 +86,8 @@ async function CoreQueues() {
       )}
 
       <div className="space-y-8">
+        {part === "todo" && (
+        <>
         <Section title="Proposals to review" count={pending.length} empty="No proposals waiting.">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {pending.map((m) => (
@@ -109,48 +112,127 @@ async function CoreQueues() {
           </div>
         </Section>
 
+        </>
+        )}
+        {part === "markets" && (
         <Section title="Live markets (resolve or cancel)" count={open.length} empty="No live markets.">
           <OpenMarketsBySchool markets={open} schoolOf={schoolOf} now={now} />
         </Section>
+        )}
       </div>
     </>
   );
 }
 
-export default async function AdminPage() {
+const TABS = [
+  { id: "todo", label: "To do" },
+  { id: "overview", label: "Overview" },
+  { id: "markets", label: "Markets" },
+  { id: "money", label: "Money" },
+  { id: "sponsors", label: "Sponsors" },
+  { id: "rooms", label: "Rooms" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+/** Small counts for the tab badges (head-only queries, cheap). */
+async function waitingCounts() {
+  const admin = createAdminClient();
+  const head = { count: "exact" as const, head: true };
+  const [p, w, f, c] = await Promise.all([
+    admin.from("markets").select("id", head).eq("status", "pending"),
+    admin.from("withdrawals").select("id", head).in("status", ["pending", "processing"]),
+    admin.from("profiles").select("id", head).or("is_banned.eq.true,flagged_reason.not.is.null"),
+    admin.from("markets").select("id", head).eq("status", "open").is("room_id", null).lte("closes_at", new Date().toISOString()),
+  ]);
+  return { todo: (p.count ?? 0) + (w.count ?? 0) + (f.count ?? 0), markets: c.count ?? 0 };
+}
+
+export default async function AdminPage(props: PageProps<"/admin">) {
   await requireAdmin();
+  const sp = await props.searchParams;
+  const tab: Tab = TABS.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : "todo";
+  const counts = await waitingCounts().catch(() => ({ todo: 0, markets: 0 }));
+  const badge: Partial<Record<Tab, number>> = { todo: counts.todo, markets: counts.markets };
+
   return (
     <Container>
       <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Admin</h1>
-      <div className="space-y-8">
-        <Suspense fallback={<SectionSkeleton title="Platform numbers" tall />}>
-          <StatsSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Proposals, withdrawals & accounts" tall />}>
-          <CoreQueues />
-        </Suspense>
 
-        <Suspense fallback={<SectionSkeleton title="Weekly prize pool" tall />}>
-          <PrizePoolSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Sponsor banners" tall />}>
-          <BannersSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Community rooms" />}>
-          <RoomsSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Repeating markets" />}>
-          <SchedulesSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Who can propose markets" />}>
-          <ProposersSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Partner invite rates" />}>
-          <PartnersSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Recent member transfers" />}>
-          <TransfersSection />
-        </Suspense>
+      <nav className="no-scrollbar -mx-4 mb-6 mt-3 flex gap-2 overflow-x-auto px-4" aria-label="Admin sections">
+        {TABS.map((t) => {
+          const active = t.id === tab;
+          const n = badge[t.id] ?? 0;
+          return (
+            <Link
+              key={t.id}
+              href={`/admin?tab=${t.id}`}
+              scroll={false}
+              aria-current={active ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                active ? "bg-brand text-black" : "border border-line bg-card text-muted hover:text-white"
+              }`}
+            >
+              {t.label}
+              {n > 0 && (
+                <span className={`rounded-full px-1.5 text-[11px] font-extrabold ${active ? "bg-black/20 text-black" : "bg-amber-400 text-black"}`}>{n}</span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="space-y-8">
+        {tab === "todo" && (
+          <Suspense fallback={<SectionSkeleton title="Proposals, withdrawals & accounts" tall />}>
+            <CoreQueues part="todo" />
+          </Suspense>
+        )}
+
+        {tab === "overview" && (
+          <Suspense fallback={<SectionSkeleton title="Platform numbers" tall />}>
+            <StatsSection />
+          </Suspense>
+        )}
+
+        {tab === "markets" && (
+          <>
+            <Suspense fallback={<SectionSkeleton title="Live markets" tall />}>
+              <CoreQueues part="markets" />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton title="Repeating markets" />}>
+              <SchedulesSection />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton title="Who can propose markets" />}>
+              <ProposersSection />
+            </Suspense>
+          </>
+        )}
+
+        {tab === "money" && (
+          <>
+            <Suspense fallback={<SectionSkeleton title="Weekly prize pool" tall />}>
+              <PrizePoolSection />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton title="Partner invite rates" />}>
+              <PartnersSection />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton title="Recent member transfers" />}>
+              <TransfersSection />
+            </Suspense>
+          </>
+        )}
+
+        {tab === "sponsors" && (
+          <Suspense fallback={<SectionSkeleton title="Sponsor banners" tall />}>
+            <BannersSection />
+          </Suspense>
+        )}
+
+        {tab === "rooms" && (
+          <Suspense fallback={<SectionSkeleton title="Community rooms" />}>
+            <RoomsSection />
+          </Suspense>
+        )}
       </div>
     </Container>
   );
