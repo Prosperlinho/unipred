@@ -9,6 +9,9 @@ export function Footer() {
           you can afford to lose.
         </p>
         <nav className="flex flex-wrap gap-x-4 gap-y-1">
+          <Link href="/sponsors" className="hover:text-white">
+            Sponsors
+          </Link>
           <Link href="/rules" className="hover:text-white">
             House Rules
           </Link>

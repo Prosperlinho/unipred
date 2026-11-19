@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2, Lock } from "lucide-react";
 import { useState, useTransition } from "react";
 import { cashOutBet } from "@/app/actions/trade";
 import { useUI } from "@/context/UIContext";
@@ -17,12 +17,14 @@ interface Props {
   closed: boolean;
   /** House-liquidity markets: cash out at the live price instead of the flat exit fee. */
   amm?: { poolYes: number; poolNo: number; shares: Partial<Record<Outcome, number>> } | null;
+  /** Set while cash-out is still locked (first half of the market): when it opens, in ms. */
+  opensAt?: number | null;
 }
 
 const PCTS = [25, 50, 75, 100] as const;
 
 /** Early exit: take part or all of a bet back out of the pot, minus the exit fee. */
-export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, amm }: Props) {
+export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, amm, opensAt }: Props) {
   const { toast } = useUI();
   const held = (["YES", "NO"] as const).filter((o) => (stakes[o] ?? 0) > 0);
   const [choice, setChoice] = useState<Outcome>(held[0] ?? "YES");
@@ -54,6 +56,21 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
       setPct(100);
     });
   };
+
+  if (opensAt && held.length > 0) {
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-line bg-bg p-4 text-sm">
+        <Lock className="mt-0.5 size-5 shrink-0 text-amber-300" />
+        <p className="text-white/85">
+          Cash-out opens{" "}
+          <b className="text-white">
+            {new Date(opensAt).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" })}
+          </b>
+          , halfway to closing. Until then your bet stays in.
+        </p>
+      </div>
+    );
+  }
 
   if (held.length === 0) {
     return <p className="rounded-xl bg-bg p-3 text-sm text-muted">You don&apos;t have a bet on this market to cash out.</p>;

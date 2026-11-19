@@ -35,6 +35,8 @@ interface Props {
   poolNo?: number;
   /** Shares held on each side (house-liquidity markets). */
   myShares?: Partial<Record<Outcome, number>>;
+  /** When cash-out opens (ms): halfway between going live and closing. */
+  cashOutOpensAt?: number;
 }
 
 const QUICK_NAIRA = [500, 1000, 2000, 5000] as const;
@@ -161,6 +163,7 @@ export function TradeBox(props: Props) {
           stakes={props.myStakes}
           exitFeeBps={props.exitFeeBps}
           amm={amm ? { poolYes: props.poolYes ?? 0, poolNo: props.poolNo ?? 0, shares: props.myShares ?? {} } : null}
+          opensAt={props.cashOutOpensAt && now < props.cashOutOpensAt ? props.cashOutOpensAt : null}
           closed={closed}
         />
       ) : (
@@ -278,7 +281,7 @@ export function TradeBox(props: Props) {
       <p className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
         <Info className="mt-0.5 size-3.5 shrink-0" />
         {amm
-          ? "Odds move with every bet · each winning share pays ₦100 · cash out anytime at the live price."
+          ? "Odds move with every bet · each winning share pays ₦100 · cash out from halfway, at the live price."
           : `Estimate only · ${feeBps / 100}% fee on winnings · ${props.exitFeeBps / 100}% fee to cash out early.`}
       </p>
 
@@ -324,7 +327,7 @@ export function TradeBox(props: Props) {
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
               <li>• You lose {formatNaira(stakeKobo)} if {other} wins.</li>
               <li>
-                • {amm ? "Odds can move before your bet goes through. You can cash out anytime at the live price." : `Payout is an estimate. Cashing out early costs ${props.exitFeeBps / 100}%.`}
+                • {amm ? "Odds can move before your bet goes through. Cash-out opens halfway to closing, at the live price." : `Payout is an estimate. Cash-out opens halfway to closing and costs ${props.exitFeeBps / 100}%.`}
               </li>
               <li>• 18+. Only stake what you can afford to lose.</li>
             </ul>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { SponsorBanner as Banner } from "@/lib/types";
 import { SponsorBanner } from "./SponsorBanner";
@@ -23,7 +24,18 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
   }, [count, paused]);
 
   if (count === 0) return null;
-  if (count === 1) return <SponsorBanner banner={banners[0]} className={className} />;
+  const allLink = (
+    <Link href="/sponsors" className="text-[11px] font-semibold text-muted hover:text-brand">
+      All sponsors →
+    </Link>
+  );
+  if (count === 1)
+    return (
+      <div className={className}>
+        <SponsorBanner banner={banners[0]} />
+        <div className="mt-1.5 text-right">{allLink}</div>
+      </div>
+    );
 
   const go = (i: number) => setIndex(((i % count) + count) % count);
 
@@ -54,7 +66,9 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
           ))}
         </div>
       </div>
-      <div className="mt-2 flex justify-center gap-1.5">
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="w-20" />
+        <div className="flex justify-center gap-1.5">
         {banners.map((b, i) => (
           <button
             key={b.id}
@@ -65,6 +79,8 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
             aria-current={i === index}
           />
         ))}
+        </div>
+        <span className="w-20 text-right">{allLink}</span>
       </div>
     </div>
   );

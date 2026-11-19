@@ -201,6 +201,10 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         poolYes={Number(market.pool_yes)}
         poolNo={Number(market.pool_no)}
         myShares={{ YES: Number(holdings.YES?.shares ?? 0), NO: Number(holdings.NO?.shares ?? 0) }}
+        cashOutOpensAt={(() => {
+          const start = new Date(market.approved_at ?? market.created_at).getTime();
+          return start + (new Date(market.closes_at).getTime() - start) / 2;
+        })()}
       />
     );
   }
