@@ -2,9 +2,8 @@ import { Medal, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
-import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getBanners, getSchools } from "@/lib/data";
+import { getActiveSchools, getSchools } from "@/lib/data";
 import { formatNaira, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestTime } from "@/lib/time";
@@ -38,7 +37,7 @@ const MEDAL = ["text-amber-300", "text-slate-300", "text-amber-600"];
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
   const sp = await props.searchParams;
   const period: Period = sp.period === "last_week" || sp.period === "all" ? sp.period : "week";
-  const [viewer, allSchools, activeSchools, banners] = await Promise.all([getViewer(), getSchools(), getActiveSchools(), getBanners("leaderboard")]);
+  const [viewer, allSchools, activeSchools] = await Promise.all([getViewer(), getSchools(), getActiveSchools()]);
   const school = typeof sp.school === "string" && activeSchools.some((s) => s.id === sp.school) ? sp.school : "all";
 
   const supabase = await createClient();
@@ -119,8 +118,6 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
           </p>
         </section>
       )}
-
-      <SponsorCarousel banners={banners} className="mb-4" />
 
       {mine ? (
         <p className="mb-4 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand">

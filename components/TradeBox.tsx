@@ -140,7 +140,7 @@ export function TradeBox(props: Props) {
           <span>
             In the pot <span className="font-semibold tabular-nums text-white">{formatNaira(total)}</span>
           </span>
-          <LiveBadge />
+          <LiveBadge intervalMs={30_000} />
         </div>
         <div className="mt-1 flex justify-between tabular-nums">
           <span className="text-yes">YES {compactNaira(props.stakeYesKobo)}</span>

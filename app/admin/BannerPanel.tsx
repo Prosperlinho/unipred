@@ -38,7 +38,6 @@ export function BannerPanel({ banners, now }: { banners: Banner[]; now: number }
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
   const [preview, setPreview] = useState({ sponsor: "", title: "", description: "", cta: "", link: "", image: "" });
-  const [places, setPlaces] = useState<BannerPlacement[]>(["home", "markets", "leaderboard"]);
   const set = (k: keyof typeof preview, v: string) => setPreview((p) => ({ ...p, [k]: v }));
 
   const previewBanner: Banner = {
@@ -49,7 +48,7 @@ export function BannerPanel({ banners, now }: { banners: Banner[]; now: number }
     cta: preview.cta || null,
     link_url: preview.link ? "https://example.com" : null,
     image_url: preview.image || null,
-    placements: places,
+    placements: PLACES.map((p) => p.id),
     active: true,
     starts_at: null,
     ends_at: null,
@@ -105,22 +104,10 @@ export function BannerPanel({ banners, now }: { banners: Banner[]; now: number }
           />
         </label>
         <input name="image_url" placeholder="…or paste an image link" className={inputCls} onChange={(e) => set("image", e.target.value)} />
-        <fieldset className="space-y-1 pt-1">
-          <legend className="mb-1 text-xs font-semibold text-muted">Show it on</legend>
-          {PLACES.map((p) => (
-            <label key={p.id} className="flex items-center gap-2 text-sm text-white">
-              <input
-                type="checkbox"
-                name="placements"
-                value={p.id}
-                checked={places.includes(p.id)}
-                onChange={(e) => setPlaces((cur) => (e.target.checked ? [...cur, p.id] : cur.filter((x) => x !== p.id)))}
-                className="size-4 accent-brand"
-              />
-              {p.label}
-            </label>
-          ))}
-        </fieldset>
+        {/* Shown in the sponsor bar on every page. */}
+        {PLACES.map((p) => (
+          <input key={p.id} type="hidden" name="placements" value={p.id} />
+        ))}
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs text-muted">
             Start (optional)
