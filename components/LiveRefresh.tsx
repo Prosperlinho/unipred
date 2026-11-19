@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
  * re-fetches every `intervalMs` while the tab is visible (and right away when
  * the user comes back to the tab). Inputs and other on-screen state are kept.
  */
-export function useLiveRefresh(intervalMs = 12_000) {
+export function useLiveRefresh(intervalMs = 20_000) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [updatedAt, setUpdatedAt] = useState(() => Date.now());

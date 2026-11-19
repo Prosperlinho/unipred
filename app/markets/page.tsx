@@ -42,7 +42,7 @@ export default async function MarketsPage(props: PageProps<"/markets">) {
   return (
     <Container>
       <section className="space-y-4">
-        <AutoRefresh intervalMs={30_000} />
+        <AutoRefresh intervalMs={60_000} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">

@@ -73,9 +73,23 @@ async function sendEmail(n: Pending): Promise<boolean> {
  * and, for important kinds, an email. Safe to call often; each notification goes out once.
  */
 export async function dispatchNotifications(): Promise<{ pushed: number; emailed: number }> {
+  // Keep sending in batches of 200 until everything is out (bounded so one call never runs too long).
+  const started = Date.now();
+  let pushed = 0;
+  let emailed = 0;
+  for (let round = 0; round < 15 && Date.now() - started < 45_000; round++) {
+    const r = await dispatchBatch();
+    pushed += r.pushed;
+    emailed += r.emailed;
+    if (r.processed < 200) break;
+  }
+  return { pushed, emailed };
+}
+
+async function dispatchBatch(): Promise<{ pushed: number; emailed: number; processed: number }> {
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("notifications_to_deliver", { p_limit: 200 });
-  if (error || !data || (data as Pending[]).length === 0) return { pushed: 0, emailed: 0 };
+  if (error || !data || (data as Pending[]).length === 0) return { pushed: 0, emailed: 0, processed: 0 };
   const pending = data as Pending[];
 
   const { publicKey, privateKey } = await getVapidKeys();
@@ -117,5 +131,5 @@ export async function dispatchNotifications(): Promise<{ pushed: number; emailed
 
   if (dead.size) await admin.from("push_subscriptions").delete().in("id", [...dead]);
   await admin.rpc("mark_notifications_sent", { p_ids: done, p_emailed: emailed });
-  return { pushed, emailed: emailed.length };
+  return { pushed, emailed: emailed.length, processed: pending.length };
 }

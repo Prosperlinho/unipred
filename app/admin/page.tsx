@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Container } from "@/components/Container";
@@ -24,15 +25,27 @@ export const metadata: Metadata = { title: "Admin · UniPred" };
 // Give slow days some headroom; sections stream in as they finish.
 export const maxDuration = 60;
 
+/** A collapsible section: a compact row with the count; tap to expand. Empty sections are a single line. */
 function Section({ title, count, children, empty }: { title: string; count: number; children: ReactNode; empty: string }) {
+  if (count === 0) {
+    return (
+      <div className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3">
+        <span className="text-sm font-bold text-white">{title}</span>
+        <span className="text-xs text-muted">{empty}</span>
+      </div>
+    );
+  }
   return (
-    <section className="space-y-3">
-      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-        {title}
-        <span className="rounded-full bg-card-2 px-2 py-0.5 text-[11px] text-white">{count}</span>
-      </h2>
-      {count === 0 ? <p className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">{empty}</p> : children}
-    </section>
+    <details className="group rounded-2xl border border-line bg-card">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center gap-2 text-sm font-bold text-white">
+          {title}
+          <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-black">{count}</span>
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-muted transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-line p-3">{children}</div>
+    </details>
   );
 }
 
@@ -85,7 +98,7 @@ async function CoreQueues({ part }: { part: "todo" | "markets" }) {
         </p>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-3">
         {part === "todo" && (
         <>
         <Section title="Proposals to review" count={pending.length} empty="No proposals waiting.">

@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { dispatchNotifications } from "@/lib/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const maxDuration = 60;
+
 /** Called every 10 minutes by the database job (pg_cron + pg_net) to send emails and phone notifications. */
 export async function POST(req: NextRequest) {
   const given = req.headers.get("x-cron-secret") ?? "";

@@ -42,7 +42,7 @@ export default async function HomePage() {
     <section className="relative overflow-hidden" aria-labelledby="home-title">
       <HeroBackground />
       <div className="absolute inset-0 bg-linear-to-b from-bg/40 via-bg/70 to-bg" aria-hidden />
-      <AutoRefresh intervalMs={45_000} />
+      <AutoRefresh intervalMs={60_000} />
 
       {/* Sponsors first: top of the home page, above the swipe deck */}
       {banners.length > 0 && (
