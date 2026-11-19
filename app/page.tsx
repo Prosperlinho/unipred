@@ -4,9 +4,10 @@ import { HeroBackground } from "@/components/hero/HeroBackground";
 import { AutoRefresh } from "@/components/LiveRefresh";
 import { LogoMark } from "@/components/Logo";
 import { PersonalDeck } from "@/components/PersonalFeeds";
+import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getSettings } from "@/lib/data";
+import { getActiveSchools, getLiveBanners, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,7 @@ function trending(m: Market, now: number) {
 
 export default async function HomePage() {
   if (!isSupabaseConfigured) return null;
-  const [viewer, schools, settings] = await Promise.all([getViewer(), getActiveSchools(), getSettings()]);
+  const [viewer, schools, settings, banners] = await Promise.all([getViewer(), getActiveSchools(), getSettings(), getLiveBanners()]);
   const now = getRequestTime();
 
   const supabase = await createClient();
@@ -44,7 +45,12 @@ export default async function HomePage() {
       <div className="absolute inset-0 bg-linear-to-b from-bg/40 via-bg/70 to-bg" aria-hidden />
       <AutoRefresh intervalMs={60_000} />
 
-      
+      {/* Sponsors first: top of the home page, above the swipe deck */}
+      {banners.length > 0 && (
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pt-4">
+          <SponsorCarousel banners={banners} className="mx-auto max-w-3xl" />
+        </div>
+      )}
       <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-4 pb-16 pt-6 lg:grid-cols-[1fr_420px] lg:gap-14 lg:pt-14">
         <div className="text-center lg:text-left">
           <p className="hidden items-center gap-2 text-sm font-medium text-brand lg:flex">
