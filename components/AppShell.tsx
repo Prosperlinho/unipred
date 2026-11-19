@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { UIProvider } from "@/context/UIContext";
 import { ShieldAlert } from "lucide-react";
 import { getViewer } from "@/lib/auth";
-import { getSettings } from "@/lib/data";
+import { getLiveBanners, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
+import { SponsorTicker } from "./SponsorTicker";
 import { HouseRules } from "./HouseRules";
 import { RulesGate } from "./RulesGate";
 import { WelcomeGuide } from "./WelcomeGuide";
@@ -22,7 +23,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function AppShell({ children }: { children: ReactNode }) {
   // Every page is personal (balance, session), so always render per request.
   await connection();
-  const [viewer, settings] = await Promise.all([getViewer(), getSettings()]);
+  const [viewer, settings, sponsorBanners] = await Promise.all([getViewer(), getSettings(), getLiveBanners()]);
   let unread = 0;
   if (viewer) {
     const supabase = await createClient();
@@ -64,6 +65,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
               : null
           }
         />
+        <SponsorTicker banners={sponsorBanners} />
         {profile?.is_banned && (
           <div className="flex items-start justify-center gap-2 bg-no/15 px-4 py-2 text-center text-xs font-medium text-no">
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />

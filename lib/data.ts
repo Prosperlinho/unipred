@@ -67,3 +67,11 @@ export const getBanners = cache(async (placement: BannerPlacement): Promise<Spon
     .limit(10);
   return Array.isArray(data) ? (data as SponsorBanner[]) : [];
 });
+
+/** Every live sponsor banner (any placement), newest first: used by the always-visible sponsor bar. */
+export const getLiveBanners = cache(async (): Promise<SponsorBanner[]> => {
+  if (!isSupabaseConfigured) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.from("sponsor_banners").select("*").order("created_at", { ascending: false }).limit(12);
+  return Array.isArray(data) ? (data as SponsorBanner[]) : [];
+});
