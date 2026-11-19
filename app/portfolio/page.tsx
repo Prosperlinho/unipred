@@ -6,9 +6,9 @@ import { Container } from "@/components/Container";
 import { FormMessage } from "@/components/forms";
 import { getRequestTime } from "@/lib/time";
 import { requireViewer } from "@/lib/auth";
-import { marketProbYes, payoutIfWins, settledResult } from "@/lib/pool";
+import { marketProbYes, payoutIfWins, positionValue, settledResult } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
-import { formatNaira, formatPct, timeLeft } from "@/lib/format";
+import { formatNaira, formatPct, timeLeft, formatSignedNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
@@ -63,7 +63,8 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
     const m = r.market;
     const pos = { outcome: r.outcome, shares: Number(r.shares), cost_kobo: Number(r.cost_kobo) };
     const sideShare = r.outcome === "YES" ? marketProbYes(m) : 1 - marketProbYes(m);
-    return { ...r, pays: payoutIfWins(m, pos, settings.pool_fee_bps), result: settledResult(m, pos, settings.pool_fee_bps), sideShare };
+    const live = m.engine === "amm" && m.status === "open" ? positionValue(m, r.outcome, pos.shares, pos.cost_kobo) : null;
+    return { ...r, pays: payoutIfWins(m, pos, settings.pool_fee_bps), result: settledResult(m, pos, settings.pool_fee_bps), sideShare, live };
   });
   const active = valued.filter((r) => r.market.status === "open");
   const settled = valued.filter((r) => r.market.status === "resolved" || r.market.status === "cancelled");
@@ -130,10 +131,20 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                         <p className="text-[10px] uppercase tracking-wide text-muted">Staked</p>
                         <p className="text-sm font-bold tabular-nums text-white">{formatNaira(Number(r.cost_kobo))}</p>
                       </div>
-                      <div className="rounded-lg bg-bg p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted">{r.outcome} share</p>
-                        <p className="text-sm font-bold tabular-nums text-white">{formatPct(r.sideShare)}</p>
-                      </div>
+                      {r.live ? (
+                        <div className="rounded-lg bg-bg p-2">
+                          <p className="text-[10px] uppercase tracking-wide text-muted">Value now</p>
+                          <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.live.valueKobo)}</p>
+                          <p className={`text-[10px] font-semibold tabular-nums ${r.live.pnlKobo >= 0 ? "text-yes" : "text-no"}`}>
+                            {formatSignedNaira(r.live.pnlKobo)}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="rounded-lg bg-bg p-2">
+                          <p className="text-[10px] uppercase tracking-wide text-muted">{r.outcome} share</p>
+                          <p className="text-sm font-bold tabular-nums text-white">{formatPct(r.sideShare)}</p>
+                        </div>
+                      )}
                       <div className="rounded-lg bg-bg p-2">
                         <p className="text-[10px] uppercase tracking-wide text-muted">If {r.outcome} wins</p>
                         <p className={`text-sm font-bold tabular-nums ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>~{formatNaira(r.pays)}</p>

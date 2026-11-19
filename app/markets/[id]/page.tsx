@@ -13,10 +13,10 @@ import { Sparkline } from "@/components/Sparkline";
 import { TradeBox } from "@/components/TradeBox";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { marketProbYes, payoutIfWins, settledResult, summarizeBets, type Settled } from "@/lib/pool";
+import { marketProbYes, payoutIfWins, positionValue, settledResult, summarizeBets, type Settled } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
-import { compactNaira, formatDate, formatNaira, formatPct, timeLeft } from "@/lib/format";
+import { compactNaira, formatDate, formatNaira, formatPct, timeLeft, formatSignedNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { CommentView, Market, Outcome, Position, PricePoint } from "@/lib/types";
 
@@ -366,7 +366,17 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                     <span className={r.outcome === "YES" ? "font-bold text-yes" : "font-bold text-no"}>{r.outcome}</span>
                   </span>
                   <span className="text-xs tabular-nums text-muted">
-                    {market.status === "open" && (
+                    {market.status === "open" && market.engine === "amm" && (() => {
+                      const v = positionValue(market, r.outcome, Number(holdings[r.outcome]?.shares ?? 0), r.staked);
+                      return (
+                        <>
+                          {v.shares.toFixed(1)} shares @ ₦{(v.avgPriceKobo / 100).toFixed(2)} · now{" "}
+                          <span className="font-semibold text-white">{formatNaira(v.valueKobo)}</span>{" "}
+                          <span className={`font-semibold ${v.pnlKobo >= 0 ? "text-yes" : "text-no"}`}>({formatSignedNaira(v.pnlKobo)})</span>
+                        </>
+                      );
+                    })()}
+                    {market.status === "open" && market.engine !== "amm" && (
                       <>
                         Pays about <span className="font-semibold text-white">{formatNaira(r.pays)}</span> if {r.outcome} wins
                       </>

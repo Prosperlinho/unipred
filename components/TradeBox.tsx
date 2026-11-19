@@ -6,7 +6,8 @@ import { useState, useTransition } from "react";
 import { placeBet } from "@/app/actions/trade";
 import { useUI } from "@/context/UIContext";
 import { compactNaira, formatNaira, formatPct, formatSignedNaira } from "@/lib/format";
-import { estimateBet } from "@/lib/pool";
+import { AMM_TRADE_FEE_BPS, cashOutValue, estimateBet } from "@/lib/pool";
+import { quoteBuy } from "@/lib/amm";
 import { useNow } from "@/lib/useNow";
 import type { Outcome } from "@/lib/types";
 import { CashOutPanel } from "./CashOutPanel";
@@ -69,6 +70,18 @@ export function TradeBox(props: Props) {
   const naira = Number.parseFloat(amount);
   const stakeKobo = Number.isFinite(naira) && naira > 0 ? Math.round(naira * 100) : 0;
   const est = estimateBet(pot, side, stakeKobo, feeBps);
+  // Polymarket-style quote for house-liquidity markets: shares, average price, and what they'd sell for right away.
+  const ammQuote = amm && stakeKobo > 0 ? quoteBuy({ pool_yes: pot.pool_yes, pool_no: pot.pool_no }, side, stakeKobo, AMM_TRADE_FEE_BPS) : null;
+  const sellNowKobo = (() => {
+    if (!ammQuote) return 0;
+    const sets = (stakeKobo - ammQuote.feeKobo) / 10_000;
+    const k = pot.pool_yes * pot.pool_no;
+    const after =
+      side === "YES"
+        ? { pool_no: pot.pool_no + sets, pool_yes: k / (pot.pool_no + sets) }
+        : { pool_yes: pot.pool_yes + sets, pool_no: k / (pot.pool_yes + sets) };
+    return cashOutValue(after, side, ammQuote.shares);
+  })();
   const other: Outcome = side === "YES" ? "NO" : "YES";
   // House liquidity is always on the other side, so a winning bet always profits.
   const otherPot = amm ? 1 : side === "YES" ? props.stakeNoKobo : props.stakeYesKobo;
@@ -185,7 +198,10 @@ export function TradeBox(props: Props) {
               aria-pressed={active}
               className={`flex flex-col items-center rounded-xl py-2.5 font-semibold transition ${active ? activeCls : idleCls}`}
             >
-              <span className="text-base">{s}</span>
+              <span className="text-base">
+                {s}
+                {amm && <span className="ml-1.5 tabular-nums">₦{Math.round((s === "YES" ? yesShare : 1 - yesShare) * 100)}</span>}
+              </span>
               <span className="text-xs tabular-nums opacity-80">{formatPct(s === "YES" ? yesShare : 1 - yesShare)} {amm ? "chance" : "of the pot"}</span>
             </button>
           );
@@ -246,7 +262,36 @@ export function TradeBox(props: Props) {
       </div>
 
       <div className="rounded-xl border border-line bg-bg p-3">
-        {est ? (
+        {amm && ammQuote ? (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[11px] text-muted">You get</p>
+                <p className="text-lg font-extrabold tabular-nums text-white">{ammQuote.shares.toFixed(1)} shares</p>
+                <p className="text-[11px] tabular-nums text-muted">avg ₦{(ammQuote.avgPriceKobo / 100).toFixed(2)} each</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-muted">If {side} wins</p>
+                <p className={`text-lg font-extrabold tabular-nums ${side === "YES" ? "text-yes" : "text-no"}`}>{formatNaira(ammQuote.payoutKobo)}</p>
+                <p className="text-[11px] tabular-nums text-muted">₦100 per share · {formatSignedNaira(ammQuote.profitKobo)}</p>
+              </div>
+            </div>
+            <p className="mt-2 rounded-lg bg-card px-2.5 py-1.5 text-[11px] text-muted">
+              Worth about <b className="text-white">{formatNaira(sellNowKobo)}</b> if you sold straight away (fees + price move), so
+              you only profit if the odds move your way or {side} wins.
+            </p>
+            <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-xs text-muted">
+              <span>{side} price</span>
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                ₦{Math.round((side === "YES" ? yesShare : 1 - yesShare) * 100)}
+                <ArrowRight className="size-3" />
+                <span className="font-semibold text-white">
+                  ₦{Math.round((side === "YES" ? ammQuote.probYesAfter : 1 - ammQuote.probYesAfter) * 100)}
+                </span>
+              </span>
+            </div>
+          </>
+        ) : est ? (
           <>
             <p className="text-xs text-muted">If {side} wins and betting closed now, you&apos;d get</p>
             <p className={`text-2xl font-extrabold tabular-nums ${side === "YES" ? "text-yes" : "text-no"}`}>

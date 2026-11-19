@@ -152,3 +152,34 @@ export function cashOutValue(m: Pick<Market, "pool_yes" | "pool_no">, outcome: O
 export function hasHouseLiquidity(m: Partial<Pick<Market, "engine">>): boolean {
   return m.engine === "amm";
 }
+
+/** Price of one share in kobo (₦0-₦100) on a house-liquidity market: the probability × ₦100. */
+export function sharePriceKobo(m: Pick<Market, "pool_yes" | "pool_no">, outcome: Outcome): number {
+  const y = Number(m.pool_yes);
+  const n = Number(m.pool_no);
+  const pYes = y + n > 0 ? n / (y + n) : 0.5;
+  return Math.round((outcome === "YES" ? pYes : 1 - pYes) * 10_000);
+}
+
+export interface PositionValue {
+  shares: number;
+  avgPriceKobo: number;
+  /** What selling every share right now returns (after the trade fee). */
+  valueKobo: number;
+  /** valueKobo - what's still at stake. */
+  pnlKobo: number;
+  /** ₦100 per share if this side wins. */
+  ifWinsKobo: number;
+}
+
+/** Polymarket-style view of an open position on a house-liquidity market. */
+export function positionValue(m: Pick<Market, "pool_yes" | "pool_no">, outcome: Outcome, shares: number, costKobo: number): PositionValue {
+  const valueKobo = shares > 0 ? cashOutValue(m, outcome, shares) : 0;
+  return {
+    shares,
+    avgPriceKobo: shares > 0 ? costKobo / shares : 0,
+    valueKobo,
+    pnlKobo: valueKobo - costKobo,
+    ifWinsKobo: Math.floor(shares * SHARE_VALUE_KOBO),
+  };
+}
