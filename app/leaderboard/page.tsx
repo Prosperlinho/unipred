@@ -2,8 +2,9 @@ import { Medal, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
+import { SponsorBanner } from "@/components/SponsorBanner";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getSchools } from "@/lib/data";
+import { getActiveSchools, getBanner, getSchools } from "@/lib/data";
 import { formatNaira, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestTime } from "@/lib/time";
@@ -28,17 +29,17 @@ const MEDAL = ["text-amber-300", "text-slate-300", "text-amber-600"];
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
   const sp = await props.searchParams;
   const period: Period = sp.period === "last_week" || sp.period === "all" ? sp.period : "week";
-  const [viewer, allSchools, activeSchools] = await Promise.all([getViewer(), getSchools(), getActiveSchools()]);
+  const [viewer, allSchools, activeSchools, banner] = await Promise.all([getViewer(), getSchools(), getActiveSchools(), getBanner("leaderboard")]);
   const school = typeof sp.school === "string" && activeSchools.some((s) => s.id === sp.school) ? sp.school : "all";
 
   const supabase = await createClient();
-  const [{ data: rows }, { data: startIso }, { data: prizeRows }] = await Promise.all([
+  const [{ data: rows }, { data: prizeRows }, { data: startIso }] = await Promise.all([
     supabase.rpc("leaderboard", { p_period: period, p_school: school === "all" ? null : school, p_limit: 100 }),
     period === "all" ? Promise.resolve({ data: null }) : supabase.rpc("prize_board", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
     supabase.rpc("season_start", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
   ]);
-  const board = (rows ?? []) as Row[];
-  const prizeList = (prizeRows ?? []) as Array<{ pool_kobo: number; status: string; rank: number | null; username: string | null; prize_kobo: number | null }>;
+  const board = (Array.isArray(rows) ? rows : []) as Row[];
+  const prizeList = (Array.isArray(prizeRows) ? prizeRows : []) as Array<{ pool_kobo: number; status: string; rank: number | null; username: string | null; prize_kobo: number | null }>;
   const prize = prizeList.length
     ? {
         pool: Number(prizeList[0].pool_kobo ?? 0),
@@ -109,6 +110,8 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
           </p>
         </section>
       )}
+
+      <SponsorBanner banner={banner} className="mb-4" />
 
       {mine ? (
         <p className="mb-4 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand">

@@ -12,6 +12,8 @@ import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { ProposerPanel } from "./ProposerPanel";
 import { PrizePoolPanel, type PoolWeek } from "./PrizePoolPanel";
 import { RoomsPanel, type AdminRoom } from "./RoomsPanel";
+import { BannerPanel } from "./BannerPanel";
+import type { SponsorBanner as SponsorBannerRow } from "@/lib/types";
 import { SchedulePanel, type ScheduleRow } from "./SchedulePanel";
 import { DailyChart, TopCategories, type DailyStat } from "./StatsPanel";
 
@@ -97,6 +99,9 @@ export default async function AdminPage() {
   const nameOf = new Map((users ?? []).map((u) => [u.id, u.username]));
   const schoolOf = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
   const now = getRequestTime();
+
+  const { data: bannerData } = await admin.from("sponsor_banners").select("*").order("created_at", { ascending: false }).limit(30);
+  const banners = (bannerData ?? []) as SponsorBannerRow[];
 
   // ---- Community rooms (newest first) ----
   const { data: roomData } = await admin
@@ -231,6 +236,14 @@ export default async function AdminPage() {
             ))}
           </div>
         </Section>
+
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+            Sponsor banners
+            <span className="rounded-full bg-card-2 px-2 py-0.5 text-[11px] text-white">{banners.length}</span>
+          </h2>
+          <BannerPanel banners={banners} />
+        </section>
 
         <Section title="Community rooms" count={adminRooms.length} empty="No rooms yet.">
           <RoomsPanel rooms={adminRooms} />

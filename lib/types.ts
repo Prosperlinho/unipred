@@ -177,3 +177,20 @@ export interface Room {
   suspended: boolean;
   created_at: string;
 }
+
+export type BannerPlacement = "home" | "markets" | "leaderboard";
+
+export interface SponsorBanner {
+  id: string;
+  sponsor: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  link_url: string | null;
+  cta: string | null;
+  placements: BannerPlacement[];
+  active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+}

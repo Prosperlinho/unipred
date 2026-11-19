@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/card/*": ["./assets/fonts/**/*"],
   },
+  // Admins upload sponsor banner images through a server action (images are capped at 3MB in the action).
+  experimental: {
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

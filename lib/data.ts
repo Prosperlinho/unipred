@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
-import type { PlatformSettings, School } from "@/lib/types";
+import type { BannerPlacement, PlatformSettings, School, SponsorBanner } from "@/lib/types";
 
 const DEFAULT_SETTINGS: PlatformSettings = {
   pool_fee_bps: 1000,
@@ -54,3 +54,17 @@ export function friendlyError(message: string | undefined): string {
   }
   return message;
 }
+
+/** The newest live sponsor banner for a spot on the site, if any. */
+export const getBanner = cache(async (placement: BannerPlacement): Promise<SponsorBanner | null> => {
+  if (!isSupabaseConfigured) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sponsor_banners")
+    .select("*")
+    .contains("placements", [placement])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<SponsorBanner>();
+  return data ?? null;
+});

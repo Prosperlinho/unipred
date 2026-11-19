@@ -302,3 +302,83 @@ export async function payWeeklyPrizes(weekStart: string): Promise<ActionResult<s
     value: `Paid ${formatNaira(r.paid_kobo)} to ${r.winners} winner(s).${r.unused_kobo > 0 ? ` ${formatNaira(r.unused_kobo)} unused (fewer than 5 qualified).` : ""}`,
   };
 }
+
+const BANNER_PLACEMENTS = ["home", "markets", "leaderboard"] as const;
+
+function httpsUrlOrNull(v: FormDataEntryValue | null): string | null | undefined {
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`);
+    u.protocol = "https:";
+    return u.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+/** Creates a sponsor banner. Image: an uploaded file (stored in the public "banners" bucket) or a pasted link. */
+export async function createBanner(fd: FormData): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const sponsor = String(fd.get("sponsor") ?? "").trim().slice(0, 60);
+  const title = String(fd.get("title") ?? "").trim().slice(0, 80);
+  const description = String(fd.get("description") ?? "").trim().slice(0, 240);
+  const cta = String(fd.get("cta") ?? "").trim().slice(0, 24);
+  const placements = fd.getAll("placements").map(String).filter((p) => (BANNER_PLACEMENTS as readonly string[]).includes(p));
+  const link = httpsUrlOrNull(fd.get("link_url"));
+  let image = httpsUrlOrNull(fd.get("image_url"));
+  if (!sponsor || !title) return { ok: false, error: "Add the sponsor's name and a title." };
+  if (placements.length === 0) return { ok: false, error: "Pick at least one place to show it." };
+  if (link === undefined || image === undefined) return { ok: false, error: "One of the links isn't a valid web address." };
+
+  const admin = createAdminClient();
+  const file = fd.get("image");
+  if (file instanceof File && file.size > 0) {
+    if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) return { ok: false, error: "The image must be PNG, JPG, WEBP or GIF." };
+    if (file.size > 3 * 1024 * 1024) return { ok: false, error: "The image is too big (max 3MB)." };
+    const ext = file.type.split("/")[1].replace("jpeg", "jpg");
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await admin.storage.from("banners").upload(path, Buffer.from(await file.arrayBuffer()), {
+      contentType: file.type,
+      cacheControl: "31536000",
+    });
+    if (upErr) return { ok: false, error: `Upload failed: ${upErr.message}` };
+    image = admin.storage.from("banners").getPublicUrl(path).data.publicUrl;
+  }
+
+  const startsAt = String(fd.get("starts_at") ?? "");
+  const endsAt = String(fd.get("ends_at") ?? "");
+  const { error } = await admin.from("sponsor_banners").insert({
+    sponsor,
+    title,
+    description: description || null,
+    cta: cta || null,
+    link_url: link,
+    image_url: image,
+    placements,
+    starts_at: startsAt ? new Date(`${startsAt}T00:00:00+01:00`).toISOString() : null,
+    ends_at: endsAt ? new Date(`${endsAt}T23:59:59+01:00`).toISOString() : null,
+  });
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/", "layout");
+  return { ok: true, value: undefined };
+}
+
+export async function setBannerActive(id: string, active: boolean): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const { error } = await createAdminClient().from("sponsor_banners").update({ active }).eq("id", id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/", "layout");
+  return { ok: true, value: undefined };
+}
+
+export async function deleteBanner(id: string): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  const { error } = await createAdminClient().from("sponsor_banners").delete().eq("id", id);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/", "layout");
+  return { ok: true, value: undefined };
+}

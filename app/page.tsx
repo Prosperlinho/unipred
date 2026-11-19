@@ -4,9 +4,10 @@ import { HeroBackground } from "@/components/hero/HeroBackground";
 import { AutoRefresh } from "@/components/LiveRefresh";
 import { LogoMark } from "@/components/Logo";
 import { PersonalDeck } from "@/components/PersonalFeeds";
+import { SponsorBanner } from "@/components/SponsorBanner";
 import { getRequestTime } from "@/lib/time";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getSettings } from "@/lib/data";
+import { getActiveSchools, getBanner, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +20,7 @@ function trending(m: Market, now: number) {
 
 export default async function HomePage() {
   if (!isSupabaseConfigured) return null;
-  const [viewer, schools, settings] = await Promise.all([getViewer(), getActiveSchools(), getSettings()]);
+  const [viewer, schools, settings, banner] = await Promise.all([getViewer(), getActiveSchools(), getSettings(), getBanner("home")]);
   const now = getRequestTime();
 
   const supabase = await createClient();
@@ -100,6 +101,7 @@ export default async function HomePage() {
             serverNow={now}
             schoolLabels={schoolLabels}
           />
+          <SponsorBanner banner={banner} className="mx-auto mt-6 max-w-sm" />
           <p className="mt-5 text-center lg:hidden">
             <Link href="/markets" className="text-sm font-semibold text-brand">
               See all markets →
