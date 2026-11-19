@@ -10,6 +10,7 @@ import { getActiveSchools, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedPrizeBoard } from "@/lib/publicData";
 import type { Market } from "@/lib/types";
 
 function trending(m: Market, now: number) {
@@ -23,7 +24,7 @@ export default async function HomePage() {
   const now = getRequestTime();
 
   const supabase = await createClient();
-  const { data: pool } = await supabase.rpc("prize_board", { p_weeks_ago: 0 }).limit(1);
+  const pool = await getCachedPrizeBoard(0).catch(() => []);
   const poolKobo = Number((pool as Array<{ pool_kobo: number }> | null)?.[0]?.pool_kobo ?? 0);
   const { data } = await supabase
     .from("markets")

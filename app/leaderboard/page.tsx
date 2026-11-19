@@ -5,7 +5,7 @@ import { Container } from "@/components/Container";
 import { getViewer } from "@/lib/auth";
 import { getActiveSchools, getSchools } from "@/lib/data";
 import { formatNaira, timeLeft } from "@/lib/format";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedLeaderboard, getCachedPrizeBoard, getCachedSeasonStart } from "@/lib/publicData";
 import { getRequestTime } from "@/lib/time";
 import { LeaderboardControls, type Period } from "./LeaderboardControls";
 
@@ -40,11 +40,12 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   const [viewer, allSchools, activeSchools] = await Promise.all([getViewer(), getSchools(), getActiveSchools()]);
   const school = typeof sp.school === "string" && activeSchools.some((s) => s.id === sp.school) ? sp.school : "all";
 
-  const supabase = await createClient();
-  const [{ data: rows }, { data: prizeRows }, { data: startIso }] = await Promise.all([
-    supabase.rpc("leaderboard", { p_period: period, p_school: school === "all" ? null : school, p_limit: 500 }),
-    period === "all" ? Promise.resolve({ data: null }) : supabase.rpc("prize_board", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
-    supabase.rpc("season_start", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
+  // Rankings are the same for everyone: cached for 60s so busy moments don't hammer the database.
+  const weeksAgo = period === "last_week" ? 1 : 0;
+  const [rows, prizeRows, startIso] = await Promise.all([
+    getCachedLeaderboard(period, school === "all" ? null : school, 500).catch(() => []),
+    period === "all" ? Promise.resolve([]) : getCachedPrizeBoard(weeksAgo).catch(() => []),
+    getCachedSeasonStart(weeksAgo).catch(() => null),
   ]);
   const board = (Array.isArray(rows) ? rows : []) as Row[];
   const prizeList = (Array.isArray(prizeRows) ? prizeRows : []) as Array<{ pool_kobo: number; status: string; rank: number | null; username: string | null; prize_kobo: number | null }>;
