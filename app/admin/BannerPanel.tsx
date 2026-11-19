@@ -14,8 +14,26 @@ const PLACES: Array<{ id: BannerPlacement; label: string }> = [
   { id: "leaderboard", label: "Leaderboard (under the prize pool)" },
 ];
 
+/** Resizes an image to at most 1600px wide and re-encodes it as WebP, so uploads stay small (~100-300KB). */
+async function shrinkImage(file: File): Promise<File> {
+  if (file.type === "image/gif") return file; // keep animations
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".webp", { type: "image/webp" });
+  } catch {
+    return file;
+  }
+}
+
 /** Create sponsor banners (with live preview) and manage existing ones. */
-export function BannerPanel({ banners }: { banners: Banner[] }) {
+export function BannerPanel({ banners, now }: { banners: Banner[]; now: number }) {
   const { toast } = useUI();
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
@@ -47,6 +65,8 @@ export function BannerPanel({ banners }: { banners: Banner[] }) {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           startTransition(async () => {
+            const img = fd.get("image");
+            if (img instanceof File && img.size > 0) fd.set("image", await shrinkImage(img));
             const res = await createBanner(fd);
             if (!res.ok) return toast(res.error, "error");
             toast("Banner is live 🎉");
@@ -72,7 +92,7 @@ export function BannerPanel({ banners }: { banners: Banner[] }) {
         </div>
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line px-3 py-3 text-sm text-muted hover:text-white">
           <ImagePlus className="size-4 shrink-0" />
-          <span className="truncate">Upload banner image (wide works best, e.g. 1200×400, max 3MB)</span>
+          <span className="truncate">Upload banner image (wide works best, e.g. 1200×400; we shrink it for you)</span>
           <input
             type="file"
             name="image"
@@ -128,7 +148,7 @@ export function BannerPanel({ banners }: { banners: Banner[] }) {
             <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-muted">Your banners</p>
             <ul className="divide-y divide-line rounded-2xl border border-line bg-card">
               {banners.map((b) => {
-                const ended = !!b.ends_at && new Date(b.ends_at).getTime() < Date.now();
+                const ended = !!b.ends_at && new Date(b.ends_at).getTime() < now;
                 return (
                   <li key={b.id} className="flex items-center gap-3 p-3 text-sm">
                     <span className="min-w-0 flex-1">

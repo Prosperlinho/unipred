@@ -2,9 +2,9 @@ import { Medal, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
-import { SponsorBanner } from "@/components/SponsorBanner";
+import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getBanner, getSchools } from "@/lib/data";
+import { getActiveSchools, getBanners, getSchools } from "@/lib/data";
 import { formatNaira, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestTime } from "@/lib/time";
@@ -24,17 +24,26 @@ interface Row {
   won: number;
 }
 
+/** Profit label + colour: green gains, red losses, muted when the member hasn't bet in this period. */
+function profitView(r: { profit_kobo: number; markets: number }) {
+  const p = Number(r.profit_kobo);
+  if (r.markets === 0) return { text: "No bets yet", cls: "text-muted font-medium text-xs" };
+  if (p > 0) return { text: `+${formatNaira(p)}`, cls: "text-yes" };
+  if (p < 0) return { text: `-${formatNaira(-p)}`, cls: "text-no" };
+  return { text: formatNaira(0), cls: "text-muted" };
+}
+
 const MEDAL = ["text-amber-300", "text-slate-300", "text-amber-600"];
 
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
   const sp = await props.searchParams;
   const period: Period = sp.period === "last_week" || sp.period === "all" ? sp.period : "week";
-  const [viewer, allSchools, activeSchools, banner] = await Promise.all([getViewer(), getSchools(), getActiveSchools(), getBanner("leaderboard")]);
+  const [viewer, allSchools, activeSchools, banners] = await Promise.all([getViewer(), getSchools(), getActiveSchools(), getBanners("leaderboard")]);
   const school = typeof sp.school === "string" && activeSchools.some((s) => s.id === sp.school) ? sp.school : "all";
 
   const supabase = await createClient();
   const [{ data: rows }, { data: prizeRows }, { data: startIso }] = await Promise.all([
-    supabase.rpc("leaderboard", { p_period: period, p_school: school === "all" ? null : school, p_limit: 100 }),
+    supabase.rpc("leaderboard", { p_period: period, p_school: school === "all" ? null : school, p_limit: 500 }),
     period === "all" ? Promise.resolve({ data: null }) : supabase.rpc("prize_board", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
     supabase.rpc("season_start", { p_weeks_ago: period === "last_week" ? 1 : 0 }),
   ]);
@@ -111,21 +120,29 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
         </section>
       )}
 
-      <SponsorBanner banner={banner} className="mb-4" />
+      <SponsorCarousel banners={banners} className="mb-4" />
 
       {mine ? (
         <p className="mb-4 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand">
-          You&apos;re <b>#{mine.rank}</b> with <b>+{formatNaira(mine.profit_kobo)}</b> profit.
+          You&apos;re <b>#{mine.rank}</b> of {board.length}
+          {mine.markets > 0 ? (
+            <>
+              {" "}
+              with <b>{profitView(mine).text}</b>
+            </>
+          ) : (
+            ". Make a call to climb the board."
+          )}
         </p>
       ) : viewer ? (
         <p className="mb-4 rounded-xl bg-card px-3 py-2 text-xs text-muted">
-          You&apos;re not on this board yet.
+          You&apos;re hidden from the leaderboard. Turn it back on in Settings.
         </p>
       ) : null}
 
       {board.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line py-12 text-center text-sm text-muted">
-          No one in profit {period === "week" ? "this week" : period === "last_week" ? "last week" : "yet"}.
+          No members to show yet.
         </div>
       ) : (
         <>
@@ -146,12 +163,12 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold text-white">@{r.username}</span>
                     <span className="text-[11px] text-muted">
-                      {schoolLabel[r.school_id] ?? r.school_id} · won {r.won} of {r.markets}
+                      {schoolLabel[r.school_id] ?? r.school_id} {r.markets > 0 ? ` · won ${r.won} of ${r.markets}` : ""}
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-[11px] text-muted">#{r.rank}</span>
-                    <span className="font-extrabold tabular-nums text-yes">+{formatNaira(r.profit_kobo)}</span>
+                    <span className={`font-extrabold tabular-nums ${profitView(r).cls}`}>{profitView(r).text}</span>
                   </span>
                 </li>
               );
@@ -168,10 +185,10 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
                     <span className="min-w-0 flex-1">
                       <span className={`block truncate font-semibold ${isMe ? "text-brand" : "text-white"}`}>@{r.username}</span>
                       <span className="text-[11px] text-muted">
-                        {schoolLabel[r.school_id] ?? r.school_id} · won {r.won} of {r.markets}
+                        {schoolLabel[r.school_id] ?? r.school_id} {r.markets > 0 ? ` · won ${r.won} of ${r.markets}` : ""}
                       </span>
                     </span>
-                    <span className="shrink-0 font-bold tabular-nums text-yes">+{formatNaira(r.profit_kobo)}</span>
+                    <span className={`shrink-0 font-bold tabular-nums ${profitView(r).cls}`}>{profitView(r).text}</span>
                   </li>
                 );
               })}
@@ -181,7 +198,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       )}
 
       <p className="mt-4 text-[11px] leading-relaxed text-muted">
-        Profit on resolved markets. Hide yourself in{" "}
+        Everyone is ranked by profit on markets resolved in the period. Hide yourself in{" "}
         <Link href="/settings" className="text-brand underline">
           Settings
         </Link>

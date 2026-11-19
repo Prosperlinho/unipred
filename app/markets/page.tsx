@@ -4,9 +4,9 @@ import { Container } from "@/components/Container";
 import { AutoRefresh } from "@/components/LiveRefresh";
 import { PersonalBoard } from "@/components/PersonalFeeds";
 import { SchoolPicker } from "@/components/SchoolPicker";
-import { SponsorBanner } from "@/components/SponsorBanner";
+import { SponsorCarousel } from "@/components/SponsorCarousel";
 import { getViewer } from "@/lib/auth";
-import { getActiveSchools, getBanner, getSettings } from "@/lib/data";
+import { getActiveSchools, getBanners, getSettings } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestTime } from "@/lib/time";
 import type { Market } from "@/lib/types";
@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Markets · UniPred" };
 
 export default async function MarketsPage(props: PageProps<"/markets">) {
   const searchParams = await props.searchParams;
-  const [viewer, schools, settings, banner] = await Promise.all([getViewer(), getActiveSchools(), getSettings(), getBanner("markets")]);
+  const [viewer, schools, settings, banners] = await Promise.all([getViewer(), getActiveSchools(), getSettings(), getBanners("markets")]);
 
   const requested = typeof searchParams.school === "string" ? searchParams.school : undefined;
   const validRequested = requested === "all" || schools.some((s) => s.id === requested) ? requested : undefined;
@@ -54,7 +54,7 @@ export default async function MarketsPage(props: PageProps<"/markets">) {
           </div>
           {schools.length > 1 && <SchoolPicker schools={schools} selected={selected} mySchoolId={viewer?.profile.school_id ?? null} />}
         </div>
-        <SponsorBanner banner={banner} />
+        <SponsorCarousel banners={banners} />
         <PersonalBoard
           saved={viewer?.profile.interests ?? null}
           loggedIn={!!viewer}

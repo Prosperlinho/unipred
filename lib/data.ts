@@ -55,16 +55,15 @@ export function friendlyError(message: string | undefined): string {
   return message;
 }
 
-/** The newest live sponsor banner for a spot on the site, if any. */
-export const getBanner = cache(async (placement: BannerPlacement): Promise<SponsorBanner | null> => {
-  if (!isSupabaseConfigured) return null;
+/** Every live sponsor banner for a spot on the site (newest first, up to 10); they take turns in a carousel. */
+export const getBanners = cache(async (placement: BannerPlacement): Promise<SponsorBanner[]> => {
+  if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
   const { data } = await supabase
     .from("sponsor_banners")
     .select("*")
     .contains("placements", [placement])
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<SponsorBanner>();
-  return data ?? null;
+    .limit(10);
+  return Array.isArray(data) ? (data as SponsorBanner[]) : [];
 });
