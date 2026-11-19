@@ -68,7 +68,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         {sponsorBanners.length > 0 && (
           // Pinned under the header: stays on screen while scrolling, swipes through every sponsor.
           <div className="sticky top-14 z-30 border-b border-line bg-bg/95 px-3 py-2 backdrop-blur sm:px-4" role="region" aria-label="Sponsors">
-            <SponsorCarousel banners={sponsorBanners} compact className="mx-auto max-w-3xl" />
+            <SponsorCarousel banners={sponsorBanners} className="mx-auto max-w-3xl" />
           </div>
         )}
         {profile?.is_banned && (
