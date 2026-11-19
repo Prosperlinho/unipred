@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { UIProvider } from "@/context/UIContext";
 import { ShieldAlert } from "lucide-react";
 import { getViewer } from "@/lib/auth";
-import { getSettings } from "@/lib/data";
+import { getLiveBanners, getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
@@ -17,12 +17,13 @@ import { SUPPORT_EMAIL } from "./LegalPage";
 import { formatNaira } from "@/lib/format";
 import { Toaster } from "./Toaster";
 import { PwaSetup } from "./AppAlerts";
+import { SponsorCarousel } from "./SponsorCarousel";
 import { createClient } from "@/lib/supabase/server";
 
 export async function AppShell({ children }: { children: ReactNode }) {
   // Every page is personal (balance, session), so always render per request.
   await connection();
-  const [viewer, settings] = await Promise.all([getViewer(), getSettings()]);
+  const [viewer, settings, sponsorBanners] = await Promise.all([getViewer(), getSettings(), getLiveBanners()]);
   let unread = 0;
   if (viewer) {
     const supabase = await createClient();
@@ -64,6 +65,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
               : null
           }
         />
+        {sponsorBanners.length > 0 && (
+          // Pinned under the header: stays on screen while scrolling, swipes through every sponsor.
+          <div className="sticky top-14 z-30 border-b border-line bg-bg/95 px-3 py-2 backdrop-blur sm:px-4" role="region" aria-label="Sponsors">
+            <SponsorCarousel banners={sponsorBanners} compact className="mx-auto max-w-3xl" />
+          </div>
+        )}
         {profile?.is_banned && (
           <div className="flex items-start justify-center gap-2 bg-no/15 px-4 py-2 text-center text-xs font-medium text-no">
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />

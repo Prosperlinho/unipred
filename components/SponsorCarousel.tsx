@@ -11,7 +11,7 @@ const ROTATE_MS = 6000;
  * Every live sponsor gets a turn: auto-rotates every 6s (pauses on hover/touch),
  * with dots to jump and swipe support on phones. One banner renders as a plain card.
  */
-export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]; className?: string }) {
+export function SponsorCarousel({ banners, className = "", compact = false }: { banners: Banner[]; className?: string; compact?: boolean }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const startX = useRef<number | null>(null);
@@ -32,8 +32,8 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
   if (count === 1)
     return (
       <div className={className}>
-        <SponsorBanner banner={banners[0]} />
-        <div className="mt-1.5 text-right">{allLink}</div>
+        <SponsorBanner banner={banners[0]} compact={compact} />
+        {!compact && <div className="mt-1.5 text-right">{allLink}</div>}
       </div>
     );
 
@@ -57,16 +57,16 @@ export function SponsorCarousel({ banners, className = "" }: { banners: Banner[]
       aria-roledescription="carousel"
       aria-label="Sponsors"
     >
-      <div className="overflow-hidden rounded-3xl">
+      <div className={`overflow-hidden ${compact ? "rounded-2xl" : "rounded-3xl"}`}>
         <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
           {banners.map((b, i) => (
             <div key={b.id} className="w-full shrink-0" aria-hidden={i !== index} inert={i !== index}>
-              <SponsorBanner banner={b} />
+              <SponsorBanner banner={b} compact={compact} />
             </div>
           ))}
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className={`flex items-center justify-between gap-2 ${compact ? "mt-1" : "mt-2"}`}>
         <span className="w-24 shrink-0" />
         <div className="flex justify-center gap-1.5">
         {banners.map((b, i) => (
