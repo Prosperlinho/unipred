@@ -123,7 +123,7 @@ export async function setAccountStatus(userId: string, suspend: boolean, reason:
     .update(
       suspend
         ? { is_banned: true, ban_reason: reason.trim() || "Suspended by admin" }
-        : { is_banned: false, ban_reason: null, flagged_reason: null, payout_name_strikes: 0 },
+        : { is_banned: false, ban_reason: null, flagged_reason: null, payout_name_strikes: 0, payer_check_waived: true },
     )
     .eq("id", userId);
   if (error) return { ok: false, error: friendlyError(error.message) };

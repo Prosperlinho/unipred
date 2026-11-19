@@ -20,10 +20,12 @@ export async function checkDepositPayer(reference: string, payer: PayerInfo) {
   if (!dep) return;
   const { data: profile } = await admin
     .from("profiles")
-    .select("full_name")
+    .select("full_name, payer_check_waived")
     .eq("id", dep.user_id)
-    .maybeSingle<{ full_name: string }>();
+    .maybeSingle<{ full_name: string; payer_check_waived: boolean | null }>();
   if (!profile || !isValidFullName(profile.full_name)) return;
+  // An admin already reviewed and cleared this member: don't flag them again for the payer name.
+  if (profile.payer_check_waived) return;
   if (!namesMatch(profile.full_name, name)) {
     await admin
       .from("profiles")

@@ -200,6 +200,18 @@ export interface ReviewAccount {
 export function AccountReviewRow({ a }: { a: ReviewAccount }) {
   const { pending, run } = useRunner();
   const [note, setNote] = useState("");
+  const [done, setDone] = useState(false);
+  // Cleared, restored or suspended accounts leave the list straight away.
+  const act = (suspend: boolean, msg: string) =>
+    run(
+      async () => {
+        const res = await setAccountStatus(a.id, suspend, suspend ? note : "");
+        if (res.ok && !suspend) setDone(true);
+        return res;
+      },
+      () => msg,
+    );
+  if (done) return null;
   return (
     <article className="space-y-2 rounded-2xl border border-line bg-card p-4">
       <div className="flex items-center justify-between gap-2">
@@ -221,7 +233,7 @@ export function AccountReviewRow({ a }: { a: ReviewAccount }) {
           <button
             type="button"
             disabled={pending}
-            onClick={() => run(() => setAccountStatus(a.id, false, ""), () => `@${a.username} restored.`)}
+            onClick={() => act(false, `@${a.username} restored.`)}
             className="col-span-2 rounded-xl border border-line py-2 text-sm font-semibold text-white hover:bg-card-2 disabled:opacity-50"
           >
             Lift suspension
@@ -231,7 +243,7 @@ export function AccountReviewRow({ a }: { a: ReviewAccount }) {
             <button
               type="button"
               disabled={pending}
-              onClick={() => run(() => setAccountStatus(a.id, true, note), () => `@${a.username} suspended.`)}
+              onClick={() => act(true, `@${a.username} suspended.`)}
               className="rounded-xl bg-no py-2 text-sm font-bold text-black disabled:opacity-50"
             >
               Suspend
@@ -239,7 +251,7 @@ export function AccountReviewRow({ a }: { a: ReviewAccount }) {
             <button
               type="button"
               disabled={pending}
-              onClick={() => run(() => setAccountStatus(a.id, false, ""), () => "Flag cleared.")}
+              onClick={() => act(false, `Flag cleared. @${a.username} can deposit without being re-flagged.`)}
               className="rounded-xl border border-line py-2 text-sm font-semibold text-white hover:bg-card-2 disabled:opacity-50"
             >
               Clear flag

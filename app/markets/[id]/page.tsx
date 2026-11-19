@@ -197,6 +197,10 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         serverNow={now}
         myStakes={{ YES: holdings.YES?.cost_kobo ?? 0, NO: holdings.NO?.cost_kobo ?? 0 }}
         exitFeeBps={settings.exit_fee_bps}
+        engine={market.engine === "amm" ? "amm" : "pool"}
+        poolYes={Number(market.pool_yes)}
+        poolNo={Number(market.pool_no)}
+        myShares={{ YES: Number(holdings.YES?.shares ?? 0), NO: Number(holdings.NO?.shares ?? 0) }}
       />
     );
   }

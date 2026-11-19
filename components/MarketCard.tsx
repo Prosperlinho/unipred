@@ -19,7 +19,7 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
   const yesPays = estimateBet(market, "YES", 100_000, feeBps)?.payoutKobo ?? 0;
   const noPays = estimateBet(market, "NO", 100_000, feeBps)?.payoutKobo ?? 0;
   const pot = Number(market.stake_yes_kobo) + Number(market.stake_no_kobo);
-  const hint = (pays: number, otherSide: number) => (otherSide > 0 ? `₦1k wins ~${compactNaira(pays)}` : "Be the first");
+  const hint = (pays: number, otherSide: number) => (otherSide > 0 || market.engine === "amm" ? `₦1k wins ~${compactNaira(pays)}` : "Be the first");
   const closesAt = new Date(market.closes_at).getTime();
   const closed = now >= closesAt;
   const urgent = !closed && closesAt - now < 24 * 3_600_000;

@@ -170,7 +170,7 @@ export function QuickPicks({
               const top = depth === 0;
               const p = marketProbYes(m);
               const closes = new Date(m.closes_at).getTime();
-              const pot = Number(m.stake_yes_kobo) + Number(m.stake_no_kobo);
+              const pot = m.engine === "amm" ? Number(m.volume_kobo) : Number(m.stake_yes_kobo) + Number(m.stake_no_kobo);
               const yesPays = estimateBet(m, "YES", 100_000, feeBps)?.payoutKobo ?? 0;
               const noPays = estimateBet(m, "NO", 100_000, feeBps)?.payoutKobo ?? 0;
               const style = top
@@ -264,8 +264,8 @@ export function QuickPicks({
                       <div className="rounded-r-full bg-no" style={{ width: `${(1 - p) * 100}%` }} />
                     </div>
                     <div className="mt-2 flex justify-between text-[11px] tabular-nums text-muted">
-                      <span>₦1k on YES → ~{compactNaira(Number(m.stake_no_kobo) > 0 ? yesPays : 100_000)}</span>
-                      <span>₦1k on NO → ~{compactNaira(Number(m.stake_yes_kobo) > 0 ? noPays : 100_000)}</span>
+                      <span>₦1k on YES → ~{compactNaira(Number(m.stake_no_kobo) > 0 || m.engine === "amm" ? yesPays : 100_000)}</span>
+                      <span>₦1k on NO → ~{compactNaira(Number(m.stake_yes_kobo) > 0 || m.engine === "amm" ? noPays : 100_000)}</span>
                     </div>
                   </div>
                 </article>

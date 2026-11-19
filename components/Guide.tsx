@@ -92,7 +92,11 @@ function topics(g: GuideInfo): Topic[] {
       body: (
         <>
           <p>
-            Every market is a YES/NO question. Your stake goes into the YES pot or the NO pot. When the result is confirmed,
+            <b>New markets:</b> odds move with every bet. Your money buys YES or NO shares at the current price, each
+            winning share pays ₦100, and you can cash out anytime at the live price (for a profit or a loss).
+          </p>
+          <p className="mt-2">
+            <b>Older pot markets:</b> every market is a YES/NO question. Your stake goes into the YES pot or the NO pot. When the result is confirmed,
             everyone on the winning side gets <b>their stake back plus a share of the losing pot</b>, in proportion to what
             they put in.
           </p>

@@ -29,13 +29,26 @@ interface Props {
   /** Kobo the user has in each pot (for cash-out). */
   myStakes: Partial<Record<Outcome, number>>;
   exitFeeBps: number;
+  /** "amm" = house liquidity: odds move with each bet and cash-out is at the live price. */
+  engine?: "pool" | "amm";
+  poolYes?: number;
+  poolNo?: number;
+  /** Shares held on each side (house-liquidity markets). */
+  myShares?: Partial<Record<Outcome, number>>;
 }
 
 const QUICK_NAIRA = [500, 1000, 2000, 5000] as const;
 
 export function TradeBox(props: Props) {
   const { marketId, feeBps, minTradeKobo, balanceKobo } = props;
-  const pot = { stake_yes_kobo: props.stakeYesKobo, stake_no_kobo: props.stakeNoKobo };
+  const amm = props.engine === "amm";
+  const pot = {
+    stake_yes_kobo: props.stakeYesKobo,
+    stake_no_kobo: props.stakeNoKobo,
+    engine: props.engine ?? "pool",
+    pool_yes: props.poolYes ?? 0,
+    pool_no: props.poolNo ?? 0,
+  };
   const total = props.stakeYesKobo + props.stakeNoKobo;
   const { toast } = useUI();
   const now = useNow(props.serverNow, 15_000);
@@ -55,8 +68,13 @@ export function TradeBox(props: Props) {
   const stakeKobo = Number.isFinite(naira) && naira > 0 ? Math.round(naira * 100) : 0;
   const est = estimateBet(pot, side, stakeKobo, feeBps);
   const other: Outcome = side === "YES" ? "NO" : "YES";
-  const otherPot = side === "YES" ? props.stakeNoKobo : props.stakeYesKobo;
-  const yesShare = total > 0 ? props.stakeYesKobo / total : 0.5;
+  // House liquidity is always on the other side, so a winning bet always profits.
+  const otherPot = amm ? 1 : side === "YES" ? props.stakeNoKobo : props.stakeYesKobo;
+  const yesShare = amm
+    ? (props.poolNo ?? 0) / Math.max(1e-9, (props.poolYes ?? 0) + (props.poolNo ?? 0))
+    : total > 0
+      ? props.stakeYesKobo / total
+      : 0.5;
 
   let blocker: string | null = null;
   if (closed) blocker = "Betting closed";
@@ -142,6 +160,7 @@ export function TradeBox(props: Props) {
           question={props.question}
           stakes={props.myStakes}
           exitFeeBps={props.exitFeeBps}
+          amm={amm ? { poolYes: props.poolYes ?? 0, poolNo: props.poolNo ?? 0, shares: props.myShares ?? {} } : null}
           closed={closed}
         />
       ) : (
@@ -164,7 +183,7 @@ export function TradeBox(props: Props) {
               className={`flex flex-col items-center rounded-xl py-2.5 font-semibold transition ${active ? activeCls : idleCls}`}
             >
               <span className="text-base">{s}</span>
-              <span className="text-xs tabular-nums opacity-80">{formatPct(s === "YES" ? yesShare : 1 - yesShare)} of the pot</span>
+              <span className="text-xs tabular-nums opacity-80">{formatPct(s === "YES" ? yesShare : 1 - yesShare)} {amm ? "chance" : "of the pot"}</span>
             </button>
           );
         })}
@@ -258,7 +277,9 @@ export function TradeBox(props: Props) {
 
       <p className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
         <Info className="mt-0.5 size-3.5 shrink-0" />
-        Estimate only · {feeBps / 100}% fee on winnings · {props.exitFeeBps / 100}% fee to cash out early.
+        {amm
+          ? "Odds move with every bet · each winning share pays ₦100 · cash out anytime at the live price."
+          : `Estimate only · ${feeBps / 100}% fee on winnings · ${props.exitFeeBps / 100}% fee to cash out early.`}
       </p>
 
       {error && (
@@ -302,7 +323,9 @@ export function TradeBox(props: Props) {
             </div>
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
               <li>• You lose {formatNaira(stakeKobo)} if {other} wins.</li>
-              <li>• Payout is an estimate. Cashing out early costs {props.exitFeeBps / 100}%.</li>
+              <li>
+                • {amm ? "Odds can move before your bet goes through. You can cash out anytime at the live price." : `Payout is an estimate. Cashing out early costs ${props.exitFeeBps / 100}%.`}
+              </li>
               <li>• 18+. Only stake what you can afford to lose.</li>
             </ul>
             <p className="mt-2 text-[11px] text-muted">

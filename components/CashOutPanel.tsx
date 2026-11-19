@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { cashOutBet } from "@/app/actions/trade";
 import { useUI } from "@/context/UIContext";
 import { formatNaira } from "@/lib/format";
+import { cashOutValue } from "@/lib/pool";
 import type { Outcome } from "@/lib/types";
 
 interface Props {
@@ -14,12 +15,14 @@ interface Props {
   stakes: Partial<Record<Outcome, number>>;
   exitFeeBps: number;
   closed: boolean;
+  /** House-liquidity markets: cash out at the live price instead of the flat exit fee. */
+  amm?: { poolYes: number; poolNo: number; shares: Partial<Record<Outcome, number>> } | null;
 }
 
 const PCTS = [25, 50, 75, 100] as const;
 
 /** Early exit: take part or all of a bet back out of the pot, minus the exit fee. */
-export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed }: Props) {
+export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, amm }: Props) {
   const { toast } = useUI();
   const held = (["YES", "NO"] as const).filter((o) => (stakes[o] ?? 0) > 0);
   const [choice, setChoice] = useState<Outcome>(held[0] ?? "YES");
@@ -31,9 +34,15 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed }:
 
   const stake = stakes[side] ?? 0;
   const amount = pct === 100 ? stake : Math.floor((stake * pct) / 100);
-  const fee = Math.floor((amount * exitFeeBps) / 10_000);
-  const back = amount - fee;
+  // Pot markets: flat exit fee. House-liquidity markets: sell the shares at today's price (profit or loss).
+  const liveBack = amm
+    ? cashOutValue({ pool_yes: amm.poolYes, pool_no: amm.poolNo }, side, ((amm.shares[side] ?? 0) * pct) / 100)
+    : 0;
+  const fee = amm ? 0 : Math.floor((amount * exitFeeBps) / 10_000);
+  const back = amm ? liveBack : amount - fee;
   const feePct = exitFeeBps / 100;
+  // House-liquidity markets: compare today's value with what that part of the bet cost.
+  const pnl = back - amount;
 
   const confirm = () => {
     setConfirming(false);
@@ -98,10 +107,21 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed }:
       <div className="rounded-xl border border-line bg-bg p-3">
         <p className="text-xs text-muted">You get back now</p>
         <p className="text-2xl font-extrabold tabular-nums text-white">{formatNaira(back)}</p>
-        <p className="text-xs text-muted">
-          {formatNaira(amount)} out of the pot, minus the {feePct}% exit fee ({formatNaira(fee)}).
-          {pct < 100 && ` ${formatNaira(stake - amount)} stays on ${side}.`}
-        </p>
+        {amm ? (
+          <p className="text-xs text-muted">
+            At today&apos;s odds. You paid {formatNaira(amount)} for this part:{" "}
+            <span className={`font-bold ${pnl >= 0 ? "text-yes" : "text-no"}`}>
+              {pnl >= 0 ? "+" : "-"}
+              {formatNaira(Math.abs(pnl))} {pnl >= 0 ? "profit" : "loss"}
+            </span>
+            .{pct < 100 && ` The rest stays on ${side}.`}
+          </p>
+        ) : (
+          <p className="text-xs text-muted">
+            {formatNaira(amount)} out of the pot, minus the {feePct}% exit fee ({formatNaira(fee)}).
+            {pct < 100 && ` ${formatNaira(stake - amount)} stays on ${side}.`}
+          </p>
+        )}
       </div>
 
       {error && (
@@ -120,8 +140,9 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed }:
         {pending ? "Cashing out..." : closed ? "Betting closed" : `Cash out ${formatNaira(back)}`}
       </button>
       <p className="text-center text-[11px] text-muted">
-        Cashing out early always returns less than you put in. If you think you&apos;re right, holding until the result
-        can pay more.
+        {amm
+          ? "The cash-out value moves with the odds. If you think you're right, holding until the result pays ₦100 per share."
+          : "Cashing out early always returns less than you put in. If you think you're right, holding until the result can pay more."}
       </p>
 
       {confirming && (
@@ -140,12 +161,12 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed }:
               <div className="rounded-xl bg-card p-3">
                 <p className="text-[10px] uppercase tracking-wide text-muted">You receive</p>
                 <p className="text-lg font-extrabold tabular-nums text-white">{formatNaira(back)}</p>
-                <p className="text-xs text-muted">after {formatNaira(fee)} fee</p>
+                <p className="text-xs text-muted">{amm ? "at today's odds" : `after ${formatNaira(fee)} fee`}</p>
               </div>
             </div>
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
               <li>• This can&apos;t be undone. To get back in, you&apos;d place a new bet at the new odds.</li>
-              <li>• UniPred keeps a {feePct}% exit fee on the amount you take out.</li>
+              <li>• {amm ? "The amount is set by the odds when it goes through; it can move a little." : `UniPred keeps a ${feePct}% exit fee on the amount you take out.`}</li>
               {pct < 100 && <li>• {formatNaira(stake - amount)} stays on {side} and is settled with the market.</li>}
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-2">

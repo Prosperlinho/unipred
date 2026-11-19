@@ -1,4 +1,4 @@
-import { SHARE_VALUE_KOBO, probYes as ammProbYes } from "./amm";
+import { SHARE_VALUE_KOBO, probYes as ammProbYes, quoteBuy, quoteSell } from "./amm";
 import type { Market, Outcome } from "./types";
 
 /**
@@ -40,14 +40,25 @@ export interface BetEstimate {
   probYesAfter: number;
 }
 
-/** What a new bet would pay if betting closed right after it. */
+/** Trade fee on house-liquidity markets (settings.trade_fee_bps). */
+export const AMM_TRADE_FEE_BPS = 200;
+
+/**
+ * What a new bet would pay: pot markets assume betting closed right after it;
+ * house-liquidity markets ("amm") quote the shares bought at the live price (₦100 per winning share).
+ */
 export function estimateBet(
-  m: Pick<Market, "stake_yes_kobo" | "stake_no_kobo">,
+  m: Pick<Market, "stake_yes_kobo" | "stake_no_kobo"> & Partial<Pick<Market, "engine" | "pool_yes" | "pool_no">>,
   outcome: Outcome,
   amountKobo: number,
   feeBps: number,
 ): BetEstimate | null {
   if (!Number.isFinite(amountKobo) || amountKobo <= 0) return null;
+  if (m.engine === "amm") {
+    const q = quoteBuy({ pool_yes: Number(m.pool_yes), pool_no: Number(m.pool_no) }, outcome, amountKobo, AMM_TRADE_FEE_BPS);
+    if (!q) return null;
+    return { payoutKobo: q.payoutKobo, profitKobo: q.profitKobo, multiplier: q.payoutKobo / amountKobo, probYesAfter: q.probYesAfter };
+  }
   const { win, lose } = pots(m, outcome);
   const payoutKobo = poolPayout(amountKobo, win + amountKobo, lose, feeBps);
   const yesAfter = Number(m.stake_yes_kobo) + (outcome === "YES" ? amountKobo : 0);
@@ -129,4 +140,15 @@ export function summarizeBets(
   const calledIt = results.some((r) => r?.kind === "won");
   const kind = allRefunded ? "refunded" : netKobo > 0 || (netKobo === 0 && calledIt) ? "won" : "lost";
   return { ...base, kind, returnedKobo, netKobo };
+}
+
+/** House-liquidity markets: what selling `shares` back right now returns (after the trade fee). */
+export function cashOutValue(m: Pick<Market, "pool_yes" | "pool_no">, outcome: Outcome, shares: number): number {
+  const q = quoteSell({ pool_yes: Number(m.pool_yes), pool_no: Number(m.pool_no) }, outcome, shares, AMM_TRADE_FEE_BPS);
+  return q ? q.netKobo : 0;
+}
+
+/** Whether a market always has a counterparty (house liquidity), so a bet can profit even if nobody took the other side. */
+export function hasHouseLiquidity(m: Partial<Pick<Market, "engine">>): boolean {
+  return m.engine === "amm";
 }
