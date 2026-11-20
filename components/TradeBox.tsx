@@ -138,14 +138,22 @@ export function TradeBox(props: Props) {
       <div className="rounded-xl bg-bg px-3 py-2 text-xs">
         <div className="flex items-center justify-between text-muted">
           <span>
-            In the pot <span className="font-semibold tabular-nums text-white">{formatNaira(total)}</span>
+            {amm ? (
+              <>Prices move as people trade</>
+            ) : (
+              <>
+                In the pot <span className="font-semibold tabular-nums text-white">{formatNaira(total)}</span>
+              </>
+            )}
           </span>
           <LiveBadge intervalMs={30_000} />
         </div>
-        <div className="mt-1 flex justify-between tabular-nums">
-          <span className="text-yes">YES {compactNaira(props.stakeYesKobo)}</span>
-          <span className="text-no">NO {compactNaira(props.stakeNoKobo)}</span>
-        </div>
+        {!amm && (
+          <div className="mt-1 flex justify-between tabular-nums">
+            <span className="text-yes">YES {compactNaira(props.stakeYesKobo)}</span>
+            <span className="text-no">NO {compactNaira(props.stakeNoKobo)}</span>
+          </div>
+        )}
       </div>
 
       {hasStake && (

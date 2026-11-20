@@ -328,14 +328,17 @@ function StakeSheet({
 }) {
   const { toast } = useUI();
   const router = useRouter();
-  const [naira, setNaira] = useState(500);
+  const [amount, setAmount] = useState("500");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const est = estimateBet(market, side, naira * 100, feeBps);
+  const parsed = Number.parseInt(amount.replace(/[^\d]/g, ""), 10);
+  const naira = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  const est = naira > 0 ? estimateBet(market, side, naira * 100, feeBps) : null;
   const yes = side === "YES";
 
   const confirm = () =>
     startTransition(async () => {
+      if (naira <= 0) return setError("Enter how much you want to bet");
       setError(null);
       const res = await placeBet(market.id, side, naira * 100);
       if (!res.ok) return setError(res.error);
@@ -351,12 +354,39 @@ function StakeSheet({
         <p className={`text-xs font-bold uppercase tracking-wide ${yes ? "text-yes" : "text-no"}`}>Bet {side}</p>
         <p className="mt-1 line-clamp-2 font-semibold text-white">{market.question}</p>
 
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <label htmlFor="stake-amount" className="mt-4 block text-xs font-semibold text-white">
+          How much? Type any amount or tap one below
+        </label>
+        <div className="relative mt-1.5">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted">₦</span>
+          <input
+            id="stake-amount"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            placeholder="0"
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value.replace(/[^\d]/g, "").slice(0, 9));
+              setError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") confirm();
+            }}
+            className="w-full rounded-xl border border-line bg-card py-3 pl-8 pr-3 text-lg font-semibold tabular-nums text-white placeholder:text-muted/60 focus:border-brand focus:outline-none"
+          />
+        </div>
+
+        <div className="mt-2 grid grid-cols-4 gap-2">
           {QUICK.map((q) => (
             <button
               key={q}
               type="button"
-              onClick={() => setNaira(q)}
+              onClick={() => {
+                setAmount(String(q));
+                setError(null);
+              }}
               className={`rounded-xl py-2.5 text-sm font-bold tabular-nums transition ${
                 naira === q ? (yes ? "bg-yes text-black" : "bg-no text-black") : "border border-line bg-card text-white"
               }`}
@@ -379,13 +409,13 @@ function StakeSheet({
           <button
             type="button"
             onClick={confirm}
-            disabled={pending}
+            disabled={pending || naira <= 0}
             className={`flex items-center justify-center gap-2 rounded-xl py-3 font-extrabold text-black transition hover:brightness-110 disabled:opacity-60 ${
               yes ? "bg-yes" : "bg-no"
             }`}
           >
             {pending && <Loader2 className="size-4 animate-spin" />}
-            Bet ₦{naira.toLocaleString("en-NG")} on {side}
+            {naira > 0 ? `Bet ₦${naira.toLocaleString("en-NG")} on ${side}` : "Enter an amount"}
           </button>
         </div>
         <p className="mt-2 text-center text-[11px] text-muted">18+ · Only stake what you can afford to lose.</p>

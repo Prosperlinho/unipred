@@ -8,7 +8,7 @@ import { getRequestTime } from "@/lib/time";
 import { requireViewer } from "@/lib/auth";
 import { marketProbYes, payoutIfWins, positionValue, settledResult } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
-import { formatNaira, formatPct, timeLeft, formatSignedNaira } from "@/lib/format";
+import { compactNaira, formatNaira, formatPct, timeLeft, formatSignedNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
@@ -126,17 +126,17 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                       You bet <span className="font-semibold text-white">{formatNaira(r.cost_kobo)}</span> on{" "}
                       <span className={`font-bold ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>{r.outcome}</span>
                     </p>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-center [&_p]:truncate">
                       <div className="rounded-lg bg-bg p-2">
                         <p className="text-[10px] uppercase tracking-wide text-muted">Staked</p>
-                        <p className="text-sm font-bold tabular-nums text-white">{formatNaira(Number(r.cost_kobo))}</p>
+                        <p className="text-sm font-bold tabular-nums text-white">{compactNaira(Number(r.cost_kobo))}</p>
                       </div>
                       {r.live ? (
                         <div className="rounded-lg bg-bg p-2">
                           <p className="text-[10px] uppercase tracking-wide text-muted">Value now</p>
-                          <p className="text-sm font-bold tabular-nums text-white">{formatNaira(r.live.valueKobo)}</p>
+                          <p className="text-sm font-bold tabular-nums text-white">{compactNaira(r.live.valueKobo)}</p>
                           <p className={`text-[10px] font-semibold tabular-nums ${r.live.pnlKobo >= 0 ? "text-yes" : "text-no"}`}>
-                            {formatSignedNaira(r.live.pnlKobo)}
+                            {r.live.pnlKobo >= 0 ? "+" : "-"}{compactNaira(Math.abs(r.live.pnlKobo))}
                           </p>
                         </div>
                       ) : (
@@ -147,7 +147,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                       )}
                       <div className="rounded-lg bg-bg p-2">
                         <p className="text-[10px] uppercase tracking-wide text-muted">If {r.outcome} wins</p>
-                        <p className={`text-sm font-bold tabular-nums ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>~{formatNaira(r.pays)}</p>
+                        <p className={`text-sm font-bold tabular-nums ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>~{compactNaira(r.pays)}</p>
                       </div>
                     </div>
                   </Link>

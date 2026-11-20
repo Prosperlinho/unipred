@@ -57,7 +57,7 @@ export function SponsorCarousel({ banners, className = "", compact = false }: { 
       aria-roledescription="carousel"
       aria-label="Sponsors"
     >
-      <div className={`overflow-hidden ${compact ? "rounded-2xl" : "rounded-3xl"}`}>
+      <div className={`relative overflow-hidden ${compact ? "rounded-2xl" : "rounded-3xl"}`}>
         <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
           {banners.map((b, i) => (
             <div key={b.id} className="w-full shrink-0" aria-hidden={i !== index} inert={i !== index}>
@@ -65,8 +65,24 @@ export function SponsorCarousel({ banners, className = "", compact = false }: { 
             </div>
           ))}
         </div>
+        {compact && (
+          // Dots sit inside the banner so the pinned card stays short.
+          <div className="absolute right-3 top-2.5 flex gap-1.5">
+            {banners.map((b, i) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => go(i)}
+                className={`h-1.5 rounded-full transition-all ${i === index ? "w-5 bg-brand" : "w-1.5 bg-white/50 hover:bg-white/80"}`}
+                aria-label={`Show sponsor ${i + 1} of ${count}`}
+                aria-current={i === index}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <div className={`flex items-center justify-between gap-2 ${compact ? "mt-1" : "mt-2"}`}>
+      {!compact && (
+      <div className="mt-2 flex items-center justify-between gap-2">
         <span className="w-24 shrink-0" />
         <div className="flex justify-center gap-1.5">
         {banners.map((b, i) => (
@@ -82,6 +98,7 @@ export function SponsorCarousel({ banners, className = "", compact = false }: { 
         </div>
         <span className="w-24 shrink-0 whitespace-nowrap text-right">{allLink}</span>
       </div>
+      )}
     </div>
   );
 }

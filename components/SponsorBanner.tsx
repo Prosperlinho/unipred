@@ -4,28 +4,30 @@ import type { SponsorBanner as Banner } from "@/lib/types";
 /** Sponsored banner card: image, sponsor, title, description and a call-to-action link. */
 export function SponsorBanner({ banner, className = "", compact = false }: { banner: Banner | null; className?: string; compact?: boolean }) {
   if (!banner) return null;
+  // Pinned banner: the sponsor's picture fills a short card (about 100px tall on phones) with the text on top.
   const body = compact ? (
-    <div className="flex items-center gap-3 p-2 sm:p-2.5">
+    <div className="relative h-[100px] sm:h-[120px]">
       {banner.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={banner.image_url} alt={`${banner.sponsor}: ${banner.title}`} className="h-14 w-24 shrink-0 rounded-xl object-cover sm:h-16 sm:w-32" />
+        <img src={banner.image_url} alt={`${banner.sponsor}: ${banner.title}`} className="absolute inset-0 size-full object-cover" />
       ) : (
-        <span className="flex h-14 w-24 shrink-0 items-center justify-center rounded-xl bg-brand/15 px-1 text-center text-xs font-black text-brand sm:h-16 sm:w-32">
-          {banner.sponsor}
-        </span>
+        <div className="absolute inset-0 bg-linear-to-br from-brand/25 via-card to-card" aria-hidden />
       )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted">
-          Sponsored · <span className="text-cream">{banner.sponsor}</span>
-        </p>
-        <p className="truncate text-sm font-extrabold leading-snug text-white">{banner.title}</p>
-        {banner.description && <p className="truncate text-xs text-white/70">{banner.description}</p>}
+      <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/75 to-black/30" aria-hidden />
+      <div className="relative flex h-full items-end justify-between gap-3 p-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-white/70">
+            Sponsored · <span className="text-cream">{banner.sponsor}</span>
+          </p>
+          <p className="truncate font-extrabold leading-snug text-white sm:text-lg">{banner.title}</p>
+          {banner.description && <p className="line-clamp-1 text-xs text-white/80 sm:text-sm">{banner.description}</p>}
+        </div>
+        {banner.link_url && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-xs font-bold text-black">
+            {banner.cta || "Learn more"} <ArrowUpRight className="size-3.5" />
+          </span>
+        )}
       </div>
-      {banner.link_url && (
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-black">
-          {banner.cta || "Learn more"} <ArrowUpRight className="size-3" />
-        </span>
-      )}
     </div>
   ) : (
     <>

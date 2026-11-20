@@ -3,7 +3,7 @@
 import { Bell, Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { formatNaira, initials } from "@/lib/format";
+import { compactNaira, formatNaira, initials } from "@/lib/format";
 import { GuideButton, type GuideInfo } from "./Guide";
 import { LogoTile } from "./Logo";
 
@@ -73,7 +73,8 @@ export function Header({ viewer, guide }: Props) {
                 aria-label="Wallet balance"
               >
                 <Wallet className="hidden size-4 shrink-0 text-amber-300 min-[375px]:block" />
-                <span className="font-bold tabular-nums text-white">{formatNaira(viewer.balanceKobo)}</span>
+                <span className="font-bold tabular-nums text-white sm:hidden">{compactNaira(viewer.balanceKobo)}</span>
+                <span className="hidden font-bold tabular-nums text-white sm:inline">{formatNaira(viewer.balanceKobo)}</span>
               </Link>
               {viewer.canPropose && (
               <Link
