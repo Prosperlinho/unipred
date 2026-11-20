@@ -2,7 +2,7 @@
 
 import { BellRing, Check, Download, Loader2, Share } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { removePushSubscription, savePushSubscription } from "@/app/actions/notifications";
+import { savePushSubscription } from "@/app/actions/notifications";
 import { useUI } from "@/context/UIContext";
 
 interface InstallPromptEvent extends Event {
@@ -42,7 +42,7 @@ const subscribe = (cb: () => void) => {
   return () => listeners.delete(cb);
 };
 
-function useInstallState() {
+export function useInstallState() {
   const canPrompt = useSyncExternalStore(subscribe, () => !!deferredPrompt, () => false);
   const standalone = useSyncExternalStore(
     () => () => {},
@@ -65,6 +65,20 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
+/** Asks for permission (if needed), subscribes this device and saves it. Throws "blocked" if the user said no. */
+export async function subscribeThisDevice(): Promise<void> {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") throw new Error("blocked");
+  const reg = await navigator.serviceWorker.ready;
+  const { publicKey } = (await (await fetch("/api/push/key")).json()) as { publicKey: string };
+  const sub =
+    (await reg.pushManager.getSubscription()) ??
+    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
+  const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+  const res = await savePushSubscription(json);
+  if (!res.ok) throw new Error(res.error);
+}
+
 /** "Get alerts on your phone" card: turn on push notifications and install the app. */
 export function AlertsCard() {
   const { toast } = useUI();
@@ -84,38 +98,19 @@ export function AlertsCard() {
   const enablePush = async () => {
     setBusy(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        toast("Notifications are blocked. Allow them for unipred.site in your browser settings.", "error");
-        return;
+      try {
+        await subscribeThisDevice();
+      } catch (e) {
+        if (e instanceof Error && e.message === "blocked") {
+          toast("Notifications are blocked. Allow them for unipred.site in your browser settings.", "error");
+          return;
+        }
+        throw e;
       }
-      const reg = await navigator.serviceWorker.ready;
-      const { publicKey } = (await (await fetch("/api/push/key")).json()) as { publicKey: string };
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
-      const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-      const res = await savePushSubscription(json);
-      if (!res.ok) throw new Error(res.error);
       setPushOn(true);
       toast("Phone notifications are on 🔔");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Couldn't turn on notifications.", "error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const disablePush = async () => {
-    setBusy(true);
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await removePushSubscription(sub.endpoint);
-        await sub.unsubscribe();
-      }
-      setPushOn(false);
     } finally {
       setBusy(false);
     }
@@ -138,13 +133,13 @@ export function AlertsCard() {
           <button
             type="button"
             disabled={busy}
-            onClick={pushOn ? disablePush : enablePush}
+            onClick={pushOn ? undefined : enablePush}
             className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition disabled:opacity-60 ${
               pushOn ? "border border-line text-white" : "bg-brand text-black hover:brightness-110"
             }`}
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : pushOn ? <Check className="size-4" /> : <BellRing className="size-4" />}
-            {pushOn ? "Phone alerts on (tap to turn off)" : "Turn on phone alerts"}
+            {pushOn ? "Phone alerts are on" : "Turn on phone alerts"}
           </button>
         )}
         {!standalone && canPrompt && (

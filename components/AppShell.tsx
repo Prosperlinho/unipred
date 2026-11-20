@@ -17,6 +17,7 @@ import { SUPPORT_EMAIL } from "./LegalPage";
 import { formatNaira } from "@/lib/format";
 import { Toaster } from "./Toaster";
 import { PwaSetup } from "./AppAlerts";
+import { NotificationsGate } from "./NotificationsGate";
 import { SponsorCarousel } from "./SponsorCarousel";
 import { createClient } from "@/lib/supabase/server";
 
@@ -105,6 +106,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </RulesGate>
       )}
       {showWelcome ? <WelcomeGuide /> : <TourHost />}
+      {viewer && !needsRules && <NotificationsGate />}
       <PwaSetup />
       <Toaster />
     </UIProvider>
