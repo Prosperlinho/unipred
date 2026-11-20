@@ -382,3 +382,14 @@ export async function deleteBanner(id: string): Promise<ActionResult> {
   revalidatePath("/", "layout");
   return { ok: true, value: undefined };
 }
+
+/** Starting house liquidity for NEW live-price markets (existing markets keep theirs). */
+export async function setMarketLiquidity(naira: number): Promise<ActionResult> {
+  const denied = await assertAdmin();
+  if (denied) return { ok: false, error: denied };
+  if (!Number.isFinite(naira) || naira < 10_000 || naira > 5_000_000) return { ok: false, error: "Enter an amount between ₦10,000 and ₦5,000,000." };
+  const { error } = await createAdminClient().from("settings").update({ amm_liquidity_kobo: Math.round(naira) * 100 }).eq("id", 1);
+  if (error) return { ok: false, error: friendlyError(error.message) };
+  revalidatePath("/admin");
+  return { ok: true, value: undefined };
+}

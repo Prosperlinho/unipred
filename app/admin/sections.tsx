@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getRequestTime } from "@/lib/time";
 import type { SponsorBanner as SponsorBannerRow } from "@/lib/types";
 import { BannerPanel } from "./BannerPanel";
+import { LiquidityPanel } from "./LiquidityPanel";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { PrizePoolPanel, type PoolWeek } from "./PrizePoolPanel";
 import { ProposerPanel } from "./ProposerPanel";
@@ -309,6 +310,27 @@ export async function TransfersSection() {
             ))}
           </ul>
         )}
+      </section>
+    );
+  });
+}
+
+export async function LiquiditySection() {
+  return guarded("Market liquidity", async () => {
+    const admin = createAdminClient();
+    const [{ data: s }, { data: open }] = await Promise.all([
+      admin.from("settings").select("amm_liquidity_kobo").eq("id", 1).single<{ amm_liquidity_kobo: number }>(),
+      admin.from("markets").select("liquidity_kobo").eq("status", "open").eq("engine", "amm"),
+    ]);
+    const rows = (open ?? []) as Array<{ liquidity_kobo: number | null }>;
+    return (
+      <section className="space-y-3">
+        <SectionHeading title="Market liquidity" />
+        <LiquidityPanel
+          currentKobo={Number(s?.amm_liquidity_kobo ?? 10_000_000)}
+          openMarkets={rows.length}
+          openLiquidityKobo={rows.reduce((t, r) => t + Number(r.liquidity_kobo ?? 0), 0)}
+        />
       </section>
     );
   });

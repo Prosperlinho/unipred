@@ -12,6 +12,7 @@ import { AccountReviewRow, OpenMarketsBySchool, PendingMarketCard, WithdrawalRow
 import {
   BannersSection,
   PartnersSection,
+  LiquiditySection,
   PrizePoolSection,
   ProposersSection,
   RoomsSection,
@@ -223,6 +224,9 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
         {tab === "money" && (
           <>
+            <Suspense fallback={<SectionSkeleton title="Market liquidity" />}>
+              <LiquiditySection />
+            </Suspense>
             <Suspense fallback={<SectionSkeleton title="Weekly prize pool" tall />}>
               <PrizePoolSection />
             </Suspense>
