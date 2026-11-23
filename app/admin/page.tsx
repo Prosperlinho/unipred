@@ -13,6 +13,7 @@ import {
   BannersSection,
   PartnersSection,
   LiquiditySection,
+  RewardsSection,
   PrizePoolSection,
   ProposersSection,
   RoomsSection,
@@ -226,6 +227,9 @@ export default async function AdminPage(props: PageProps<"/admin">) {
           <>
             <Suspense fallback={<SectionSkeleton title="Market liquidity" />}>
               <LiquiditySection />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton title="Tasks & streak" tall />}>
+              <RewardsSection />
             </Suspense>
             <Suspense fallback={<SectionSkeleton title="Weekly prize pool" tall />}>
               <PrizePoolSection />

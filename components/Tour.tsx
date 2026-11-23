@@ -27,7 +27,7 @@ const STEPS: Step[] = [
   { target: "portfolio", title: "Your bets", text: "Track open bets and results, and download your win cards." },
   { target: "leaderboard", title: "Leaderboard", text: "See the top predictors this week and of all time." },
   { target: "propose", title: "Propose a market", text: "Turn campus gist into a new market." },
-  { target: "profile", title: "Invite & earn", text: "Your invite link, settings and bank account live here." },
+  { target: "profile", title: "Your account", text: "Tap here for your wallet, portfolio, daily streak and tasks, settings and invite link." },
   { target: "guide", title: "Need help?", text: "Tap ? any time for answers, or to replay this tour." },
 ];
 

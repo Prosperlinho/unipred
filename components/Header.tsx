@@ -3,7 +3,8 @@
 import { Bell, Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { compactNaira, formatNaira, initials } from "@/lib/format";
+import { compactNaira, formatNaira } from "@/lib/format";
+import { AccountMenu } from "./AccountMenu";
 import { GuideButton, type GuideInfo } from "./Guide";
 import { LogoTile } from "./Logo";
 
@@ -87,14 +88,7 @@ export function Header({ viewer, guide }: Props) {
                 <span className="hidden sm:inline">Propose</span>
               </Link>
               )}
-              <Link
-                href="/profile"
-                data-tour="profile"
-                className="flex size-8 items-center justify-center rounded-full bg-card-2 text-[11px] font-bold text-white ring-1 ring-line transition hover:ring-brand"
-                aria-label="Your profile"
-              >
-                {initials(viewer.username)}
-              </Link>
+              <AccountMenu username={viewer.username} balanceKobo={viewer.balanceKobo} unread={viewer.unread} isAdmin={viewer.isAdmin} />
             </>
           ) : (
             <>

@@ -9,6 +9,7 @@ import { LiquidityPanel } from "./LiquidityPanel";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
 import { PrizePoolPanel, type PoolWeek } from "./PrizePoolPanel";
 import { ProposerPanel } from "./ProposerPanel";
+import { RewardsPanel, type AdminTask } from "./RewardsPanel";
 import { RoomsPanel, type AdminRoom } from "./RoomsPanel";
 import { SchedulePanel, type ScheduleRow } from "./SchedulePanel";
 import { DailyChart, TopCategories, type DailyStat } from "./StatsPanel";
@@ -330,6 +331,36 @@ export async function LiquiditySection() {
           currentKobo={Number(s?.amm_liquidity_kobo ?? 10_000_000)}
           openMarkets={rows.length}
           openLiquidityKobo={rows.reduce((t, r) => t + Number(r.liquidity_kobo ?? 0), 0)}
+        />
+      </section>
+    );
+  });
+}
+
+export async function RewardsSection() {
+  return guarded("Tasks & streak", async () => {
+    const admin = createAdminClient();
+    const lagosToday = new Date(getRequestTime() + 3_600_000).toISOString().slice(0, 10);
+    const weekAgo = new Date(getRequestTime() - 7 * 86_400_000).toISOString();
+    const [{ data: s }, tasksRes, claimsRes, today, week] = await Promise.all([
+      admin.from("settings").select("streak_rewards_kobo").eq("id", 1).single<{ streak_rewards_kobo: number[] }>(),
+      admin.from("reward_tasks").select("*").order("sort").order("created_at"),
+      admin.from("task_claims").select("task_id"),
+      admin.from("streak_claims").select("user_id", { count: "exact", head: true }).eq("day", lagosToday),
+      admin.from("streak_claims").select("reward_kobo").gte("claimed_at", weekAgo),
+    ]);
+    const counts = new Map<string, number>();
+    for (const c of (must(claimsRes) ?? []) as Array<{ task_id: string }>) counts.set(c.task_id, (counts.get(c.task_id) ?? 0) + 1);
+    const tasks: AdminTask[] = ((must(tasksRes) ?? []) as Array<Omit<AdminTask, "claims">>).map((t) => ({ ...t, claims: counts.get(t.id) ?? 0 }));
+    const paidWeekKobo = ((week.data ?? []) as Array<{ reward_kobo: number }>).reduce((t, r) => t + Number(r.reward_kobo), 0);
+    return (
+      <section className="space-y-3">
+        <SectionHeading title="Tasks & streak" />
+        <RewardsPanel
+          rewardsKobo={(s?.streak_rewards_kobo ?? [2000, 3000, 5000, 7000, 10000, 15000, 30000]).map(Number)}
+          tasks={tasks}
+          claimsToday={today.count ?? 0}
+          paidWeekKobo={paidWeekKobo}
         />
       </section>
     );
