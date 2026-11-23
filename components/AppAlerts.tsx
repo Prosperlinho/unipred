@@ -65,15 +65,30 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
 /** Asks for permission (if needed), subscribes this device and saves it. Throws "blocked" if the user said no. */
 export async function subscribeThisDevice(): Promise<void> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("blocked");
-  const reg = await navigator.serviceWorker.ready;
-  const { publicKey } = (await (await fetch("/api/push/key")).json()) as { publicKey: string };
-  const sub =
-    (await reg.pushManager.getSubscription()) ??
-    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
+  // Make sure our service worker is registered and active (don't wait forever if it isn't).
+  if (!(await navigator.serviceWorker.getRegistration())) await navigator.serviceWorker.register("/sw.js");
+  const reg = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Notifications took too long to start. Try again.")), 15_000)),
+  ]);
+  const { publicKey } = (await (await fetch("/api/push/key", { cache: "no-store" })).json()) as { publicKey: string };
+  const key = urlBase64ToUint8Array(publicKey);
+  let sub = await reg.pushManager.getSubscription();
+  // An old subscription made with a different key can't receive our messages: replace it.
+  const oldKey = sub?.options.applicationServerKey;
+  if (sub && oldKey && !sameBytes(new Uint8Array(oldKey), key)) {
+    await sub.unsubscribe().catch(() => undefined);
+    sub = null;
+  }
+  sub ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
   const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
   const res = await savePushSubscription(json);
   if (!res.ok) throw new Error(res.error);

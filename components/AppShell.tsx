@@ -106,7 +106,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </RulesGate>
       )}
       {showWelcome ? <WelcomeGuide /> : <TourHost />}
-      {viewer && !needsRules && <NotificationsGate />}
+      {viewer && !needsRules && !showWelcome && <NotificationsGate />}
       <PwaSetup />
       <Toaster />
     </UIProvider>

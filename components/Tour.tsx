@@ -10,6 +10,8 @@ export const TOUR_EVENT = "unipred:tour";
 export function startTour() {
   window.dispatchEvent(new Event(TOUR_EVENT));
 }
+/** Fired when the walkthrough is running / closed, so other pop-ups can wait their turn. */
+export const TOUR_STATE_EVENT = "unipred:tour-state";
 
 interface Step {
   /** Matches data-tour="..." on the element to spotlight. */
@@ -239,6 +241,12 @@ export function TourHost({ autoStart = false, onFinish }: { autoStart?: boolean;
     setRunning(false);
     onFinish?.();
   }, [onFinish]);
+
+  useEffect(() => {
+    const busy = running || requested;
+    window.dispatchEvent(new CustomEvent(TOUR_STATE_EVENT, { detail: busy }));
+    (window as Window & { __unipredTour?: boolean }).__unipredTour = busy;
+  }, [running, requested]);
 
   return running ? <Walkthrough onClose={close} /> : null;
 }
