@@ -10,7 +10,7 @@ import { acceptTerms } from "@/app/actions/settings";
  * before they can use anything else. The database enforces the same rule.
  */
 /** Pages that must stay readable while the gate is up. */
-const OPEN_PATHS = ["/rules", "/terms", "/privacy"];
+const OPEN_PATHS = ["/rules", "/terms", "/privacy", "/docs"];
 
 export function RulesGate({ children }: { children: ReactNode }) {
   const router = useRouter();

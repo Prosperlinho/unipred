@@ -21,6 +21,7 @@ export async function updateProfile(_prev: FormState, fd: FormData): Promise<For
   const username = String(fd.get("username") ?? "").trim();
   const schoolId = String(fd.get("school_id") ?? "").trim();
   if (!USERNAME_RE.test(username)) return { error: "Username must be 3-20 letters, numbers or underscores." };
+  if (schoolId === "all") return { error: "Choose your own university." };
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ username, school_id: schoolId }).eq("id", viewer.id);

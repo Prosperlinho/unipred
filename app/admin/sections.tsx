@@ -3,7 +3,7 @@ import { getActiveSchools, getSchools, getSettings } from "@/lib/data";
 import { compactNaira, formatDate, formatNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRequestTime } from "@/lib/time";
-import type { SponsorBanner as SponsorBannerRow } from "@/lib/types";
+import { GENERAL_SCHOOL_ID, type SponsorBanner as SponsorBannerRow } from "@/lib/types";
 import { BannerPanel } from "./BannerPanel";
 import { LiquidityPanel } from "./LiquidityPanel";
 import { PartnerPanel, type Partner } from "./PartnerPanel";
@@ -243,7 +243,7 @@ export async function SchedulesSection() {
     return (
       <section className="space-y-3">
         <SectionHeading title="Repeating markets" count={schedules.length} />
-        <SchedulePanel schools={active.map((sc) => ({ id: sc.id, short_name: sc.short_name }))} schedules={schedules} />
+        <SchedulePanel schools={[{ id: GENERAL_SCHOOL_ID, short_name: "All universities" }, ...active.map((sc) => ({ id: sc.id, short_name: sc.short_name }))]} schedules={schedules} />
       </section>
     );
   });

@@ -5,8 +5,10 @@ import {
   BookOpen,
   Briefcase,
   ChevronDown,
+  FileText,
   Flame,
   LogOut,
+  PlusCircle,
   Settings,
   Shield,
   User,
@@ -24,6 +26,7 @@ interface Props {
   balanceKobo: number;
   unread: number;
   isAdmin: boolean;
+  canPropose: boolean;
 }
 
 interface Item {
@@ -35,7 +38,7 @@ interface Item {
 }
 
 /** The avatar button opens a grouped account menu: money, rewards, account, help. */
-export function AccountMenu({ username, balanceKobo, unread, isAdmin }: Props) {
+export function AccountMenu({ username, balanceKobo, unread, isAdmin, canPropose }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
@@ -69,7 +72,10 @@ export function AccountMenu({ username, balanceKobo, unread, isAdmin }: Props) {
     },
     {
       title: "Earn",
-      items: [{ href: "/tasks", label: "Tasks & Streak", icon: Flame, hint: "Daily rewards and tasks" }],
+      items: [
+        { href: "/tasks", label: "Tasks & Streak", icon: Flame, hint: "Daily rewards and tasks" },
+        ...(canPropose ? [{ href: "/propose", label: "Create a market", icon: PlusCircle, hint: "Turn a question into a market" }] : []),
+      ],
     },
     {
       title: "Account",
@@ -82,6 +88,7 @@ export function AccountMenu({ username, balanceKobo, unread, isAdmin }: Props) {
     {
       title: "Help",
       items: [
+        { href: "/docs", label: "Docs", icon: FileText, hint: "How UniPred works" },
         { href: "/rules", label: "House rules", icon: BookOpen },
         ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
       ],

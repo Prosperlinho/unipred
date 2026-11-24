@@ -3,12 +3,15 @@
 import {
   ArrowRight,
   BadgeCheck,
+  BellRing,
   Banknote,
   BookOpen,
   ChevronDown,
   CircleHelp,
+  Flame,
   Gavel,
   Gift,
+  Globe2,
   HandCoins,
   Image as ImageIcon,
   LayoutGrid,
@@ -244,6 +247,55 @@ function topics(g: GuideInfo): Topic[] {
       link: { href: "/portfolio", label: "Open your portfolio" },
     },
     {
+      id: "general",
+      title: "General markets (all universities)",
+      Icon: Globe2,
+      tone: "text-brand",
+      keywords: "general national all universities nationwide jamb asuu news",
+      body: (
+        <p>
+          Some questions matter to every student: exams, ASUU, national news, big matches. These are <b>general markets</b>, open to
+          every university. Find them in your feed and in the <b>General</b> tab on Markets. They work exactly like your school&apos;s
+          markets, and only UniPred admins can create them.
+        </p>
+      ),
+      link: { href: "/markets?school=general", label: "See general markets" },
+    },
+    {
+      id: "streak",
+      title: "Tasks & daily streak",
+      Icon: Flame,
+      tone: "text-amber-300",
+      keywords: "tasks streak daily reward claim follow social earn free",
+      body: (
+        <ul className="list-disc space-y-1 pl-4">
+          <li>
+            <b>Streak:</b> make at least one trade each day, then claim your streak reward in Tasks &amp; Streak. It grows from Day 1 to
+            Day 7, then starts again. Miss a day and you&apos;re back to Day 1 (days run midnight to midnight, Lagos time).
+          </li>
+          <li>
+            <b>Tasks:</b> follow UniPred on social media and similar one-off tasks. Tap Go, do it, come back and tap Claim. Each pays
+            once per account, straight into your wallet.
+          </li>
+        </ul>
+      ),
+      link: { href: "/tasks", label: "Open Tasks & Streak" },
+    },
+    {
+      id: "notifications",
+      title: "Notifications",
+      Icon: BellRing,
+      tone: "text-brand",
+      keywords: "notifications alerts push phone allow blocked iphone install home screen",
+      body: (
+        <p>
+          Notifications must be on to use UniPred, so you never miss a result, a payout or a market about to close. If you blocked
+          them, allow them for unipred.site in your browser&apos;s site settings. On iPhone, add UniPred to your Home Screen (Share →
+          Add to Home Screen) and open it from there first.
+        </p>
+      ),
+    },
+    {
       id: "safety",
       title: "Staying safe",
       Icon: ShieldCheck,
@@ -445,5 +497,63 @@ export function GuideButton({ info, className = "flex" }: { info: GuideInfo; cla
       </button>
       {open && <GuideSheet info={info} title="UniPred guide" subtitle="Everything you need to know, in one place." onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+/** Full documentation page: contents on the side, every topic written out, with search. */
+export function GuideDocs({ info }: { info: GuideInfo }) {
+  const all = useMemo(() => topics(info), [info]);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const shown = q ? all.filter((t) => `${t.title} ${t.keywords}`.toLowerCase().includes(q)) : all;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr] lg:gap-10">
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted">Contents</p>
+        <nav className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0">
+          {all.map((t) => (
+            <a
+              key={t.id}
+              href={`#${t.id}`}
+              className="flex shrink-0 items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:text-white lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2 lg:py-1.5 lg:text-sm lg:hover:bg-card"
+            >
+              <t.Icon className={`size-3.5 shrink-0 ${t.tone}`} />
+              {t.title}
+            </a>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="min-w-0 space-y-4">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search the docs: deposit, withdraw, streak, cash out…"
+            aria-label="Search the docs"
+            className="w-full rounded-xl border border-line bg-card py-3 pl-9 pr-3 text-sm text-white placeholder:text-muted focus:border-brand/50 focus:outline-none"
+          />
+        </div>
+        {shown.length === 0 && <p className="py-10 text-center text-sm text-muted">Nothing found. Try another word.</p>}
+        {shown.map((t) => (
+          <section key={t.id} id={t.id} className="scroll-mt-28 rounded-2xl border border-line bg-card p-4 sm:p-5">
+            <h2 className="flex items-center gap-3 text-lg font-extrabold text-white">
+              <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg bg-bg ${t.tone}`}>
+                <t.Icon className="size-[18px]" />
+              </span>
+              {t.title}
+            </h2>
+            <div className="mt-3 text-sm leading-relaxed text-white/80">{t.body}</div>
+            {t.link && (
+              <Link href={t.link.href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline">
+                {t.link.label} <ArrowRight className="size-4" />
+              </Link>
+            )}
+          </section>
+        ))}
+      </div>
+    </div>
   );
 }

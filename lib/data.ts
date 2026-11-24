@@ -3,7 +3,7 @@ import { cache } from "react";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { tradeWording } from "@/lib/wording";
-import type { BannerPlacement, PlatformSettings, School, SponsorBanner } from "@/lib/types";
+import { GENERAL_SCHOOL_ID, type BannerPlacement, type PlatformSettings, type School, type SponsorBanner } from "@/lib/types";
 
 const DEFAULT_SETTINGS: PlatformSettings = {
   pool_fee_bps: 1000,
@@ -37,7 +37,8 @@ export const getSettings = cache(async (): Promise<PlatformSettings> => {
 /** Schools UniPred is currently open at: used for pickers and the market feed. */
 export const getActiveSchools = cache(async (): Promise<School[]> => {
   const all = await getSchools();
-  return all.filter((s) => s.active !== false);
+  // Real universities only: "All universities" is for markets, not for members.
+  return all.filter((s) => s.active !== false && s.id !== GENERAL_SCHOOL_ID);
 });
 
 export function schoolMap(schools: School[]): Record<string, School> {

@@ -32,6 +32,7 @@ export async function signUp(_prev: FormState, fd: FormData): Promise<FormState>
   const schoolId = str(fd, "school_id");
   const dob = str(fd, "date_of_birth");
   const values = { email, username, full_name: fullName, school_id: schoolId, date_of_birth: dob };
+  if (schoolId === "all") return { error: "Choose your own university.", values };
   const fail = (error: string): FormState => ({ error, values });
 
   if (!EMAIL_RE.test(email)) return fail("Enter a valid email address.");

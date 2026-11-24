@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Container } from "@/components/Container";
@@ -211,6 +211,21 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
         {tab === "markets" && (
           <>
+            <Link
+              href="/propose"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-brand/40 bg-brand/10 p-4 transition hover:bg-brand/15"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-brand text-black">
+                  <Plus className="size-5" strokeWidth={3} />
+                </span>
+                <span>
+                  <span className="block font-bold text-white">Create a market</span>
+                  <span className="block text-xs text-muted">For one university or all universities</span>
+                </span>
+              </span>
+              <span className="text-sm font-bold text-brand">Open →</span>
+            </Link>
             <Suspense fallback={<SectionSkeleton title="Live markets" tall />}>
               <CoreQueues part="markets" />
             </Suspense>

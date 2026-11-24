@@ -21,6 +21,17 @@ export type WithdrawalStatus = "pending" | "processing" | "paid" | "rejected" | 
 export const SORT_MODES = ["Trending", "Closing Soon", "Newest"] as const;
 export type SortMode = (typeof SORT_MODES)[number];
 
+/** Markets for every university (national topics) use this special school id. */
+export const GENERAL_SCHOOL_ID = "all";
+export const GENERAL_SCHOOL: School = {
+  id: GENERAL_SCHOOL_ID,
+  name: "All universities",
+  short_name: "All Unis",
+  state: "Nationwide",
+  ownership: "Federal",
+  active: true,
+};
+
 export interface School {
   id: string;
   name: string;

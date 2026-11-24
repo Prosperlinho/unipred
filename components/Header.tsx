@@ -88,7 +88,7 @@ export function Header({ viewer, guide }: Props) {
                 <span className="hidden sm:inline">Propose</span>
               </Link>
               )}
-              <AccountMenu username={viewer.username} balanceKobo={viewer.balanceKobo} unread={viewer.unread} isAdmin={viewer.isAdmin} />
+              <AccountMenu username={viewer.username} balanceKobo={viewer.balanceKobo} unread={viewer.unread} isAdmin={viewer.isAdmin} canPropose={viewer.canPropose} />
             </>
           ) : (
             <>

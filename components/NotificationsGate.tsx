@@ -15,7 +15,7 @@ import { TOUR_STATE_EVENT } from "./Tour";
  */
 type State = "checking" | "ok" | "ask" | "blocked" | "ios" | "unsupported";
 
-const OPEN_PATHS = ["/rules", "/terms", "/privacy"];
+const OPEN_PATHS = ["/rules", "/terms", "/privacy", "/docs"];
 const IOS_SKIP_KEY = "unipred_ios_notify_later";
 const SYNCED_KEY = "unipred_push_synced";
 const SKIP_KEY = "unipred_notify_failed_skip";

@@ -12,6 +12,9 @@ export function Footer() {
           <Link href="/sponsors" className="hover:text-white">
             Sponsors
           </Link>
+          <Link href="/docs" className="hover:text-white">
+            Docs
+          </Link>
           <Link href="/rules" className="hover:text-white">
             House Rules
           </Link>

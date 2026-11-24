@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import { proposeMarket } from "@/app/actions/market";
 import { Field, FormMessage, SubmitButton, inputCls } from "@/components/forms";
 import { SchoolCombobox } from "@/components/SchoolCombobox";
-import { CATEGORIES, type Category, type FormState, type School } from "@/lib/types";
+import { CATEGORIES, GENERAL_SCHOOL_ID, type Category, type FormState, type School } from "@/lib/types";
 
 const SOURCE_SUGGESTIONS = [
   "the university's official website",
@@ -64,10 +64,11 @@ const TEMPLATES: Array<{ label: string; question: string; criteria: string; sour
   },
 ];
 
-export function ProposeForm({ schools, defaultSchool }: { schools: School[]; defaultSchool: string }) {
+export function ProposeForm({ schools, defaultSchool, allowGeneral = false }: { schools: School[]; defaultSchool: string; allowGeneral?: boolean }) {
   const [state, action] = useActionState<FormState, FormData>(proposeMarket, {});
   const v = state.values ?? {};
-  const [school, setSchool] = useState(defaultSchool);
+  const [school, setSchool] = useState(v.school_id && v.school_id !== GENERAL_SCHOOL_ID ? v.school_id : defaultSchool);
+  const [general, setGeneral] = useState(allowGeneral && v.school_id === GENERAL_SCHOOL_ID);
   const [condition, setCondition] = useState(v.criteria ?? "");
   const [source, setSource] = useState(v.source ?? "");
   const [closesAt, setClosesAt] = useState(v.closes_at ?? "");
@@ -131,14 +132,42 @@ export function ProposeForm({ schools, defaultSchool }: { schools: School[]; def
       </Field>
 
       <Field label="University" htmlFor="school_id">
-        <SchoolCombobox
-          id="school_id"
-          name="school_id"
-          schools={schools}
-          value={school}
-          onChange={setSchool}
-          mySchoolId={defaultSchool}
-        />
+        {allowGeneral && (
+          <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl border border-line bg-card p-1" role="radiogroup" aria-label="Who is this market for?">
+            {[
+              [false, "One university"],
+              [true, "All universities"],
+            ].map(([val, label]) => (
+              <button
+                key={String(val)}
+                type="button"
+                role="radio"
+                aria-checked={general === val}
+                onClick={() => setGeneral(val as boolean)}
+                className={`rounded-lg py-2 text-sm font-semibold transition ${general === val ? "bg-brand text-black" : "text-muted hover:text-white"}`}
+              >
+                {label as string}
+              </button>
+            ))}
+          </div>
+        )}
+        {general ? (
+          <>
+            <input type="hidden" name="school_id" value={GENERAL_SCHOOL_ID} />
+            <p className="rounded-xl border border-brand/30 bg-brand/10 px-3 py-2.5 text-sm text-white">
+              Shows for every university, in everyone&apos;s feed and the <b>General</b> tab.
+            </p>
+          </>
+        ) : (
+          <SchoolCombobox
+            id="school_id"
+            name="school_id"
+            schools={schools}
+            value={school}
+            onChange={setSchool}
+            mySchoolId={defaultSchool}
+          />
+        )}
       </Field>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

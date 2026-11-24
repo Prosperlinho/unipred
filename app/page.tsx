@@ -11,7 +11,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { formatNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedPrizeBoard } from "@/lib/publicData";
-import type { Market } from "@/lib/types";
+import { GENERAL_SCHOOL, GENERAL_SCHOOL_ID, type Market } from "@/lib/types";
 
 function trending(m: Market, now: number) {
   const ageHours = Math.max(1, (now - new Date(m.approved_at ?? m.created_at).getTime()) / 3_600_000);
@@ -32,10 +32,10 @@ export default async function HomePage() {
     .eq("status", "open")
     .is("room_id", null)
     .gt("closes_at", new Date(now).toISOString())
-    .in("school_id", schools.map((s) => s.id))
+    .in("school_id", [...schools.map((s) => s.id), GENERAL_SCHOOL_ID])
     .limit(60);
   const markets = ((data ?? []) as Market[]).sort((a, b) => trending(b, now) - trending(a, now));
-  const schoolLabels = Object.fromEntries(schools.map((s) => [s.id, s.short_name]));
+  const schoolLabels = { ...Object.fromEntries(schools.map((s) => [s.id, s.short_name])), [GENERAL_SCHOOL_ID]: GENERAL_SCHOOL.short_name };
   const bonus = settings.signup_bonus_kobo > 0 ? formatNaira(settings.signup_bonus_kobo) : null;
 
   return (
