@@ -125,7 +125,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
     ? await supabase.from("public_profiles").select("username").eq("id", room.owner_id).maybeSingle<{ username: string }>()
     : { data: null };
   const requestedSide = searchParams.side === "NO" ? "NO" : "YES";
-  // Pre-filled bet links: /markets/<id>?side=YES&amount=1000
+  // Pre-filled trade links: /markets/<id>?side=YES&amount=1000
   const rawAmount = Number(typeof searchParams.amount === "string" ? searchParams.amount : NaN);
   const requestedAmount = Number.isFinite(rawAmount) && rawAmount >= 1 && rawAmount <= 500_000 ? Math.floor(rawAmount) : null;
   const defaultCommentSide: Outcome | null =
@@ -236,7 +236,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
       return {
         kind: "backing",
         side,
-        caption: `I'm backing ${sum.main} on "${market.question}" Think I'm wrong? Bet against me on UniPred:`,
+        caption: `I'm backing ${sum.main} on "${market.question}" Think I'm wrong? Trade against me on UniPred:`,
       };
     }
     if (sum?.kind === "won") {
@@ -253,12 +253,12 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
       return {
         kind: "lost",
         side,
-        caption: `Took an L of ${formatNaira(-sum.netKobo)} on ${side ? `my ${side} bet on ` : ""}"${market.question}" Next one is mine. Join me on UniPred:`,
+        caption: `Took an L of ${formatNaira(-sum.netKobo)} on ${side ? `my ${side} trade on ` : ""}"${market.question}" Next one is mine. Join me on UniPred:`,
       };
     }
     return null;
   };
-  // Bets on both sides get a separate card for each side; a single bet gets one card.
+  // Trades on both sides get a separate card for each side; a single trade gets one card.
   const cards: Card[] = hedged
     ? positionRows.flatMap((r) => {
         const c = cardFrom(
@@ -315,7 +315,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
             )}
             {searchParams.new === "1" && market.status === "open" && (
               <div className="rounded-xl bg-yes/10 px-3 py-2 text-sm text-yes">
-                Your market is live! Share it so your coursemates can bet on it.
+                Your market is live! Share it so your coursemates can trade it.
               </div>
             )}
           </div>
@@ -358,7 +358,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
         <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-2">
           {positionRows.length > 0 && (
             <div id="your-bets" className="scroll-mt-20 space-y-1.5 rounded-xl border border-line p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Your bets</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Your trades</p>
               {positionRows.map((r) => (
                 <div key={r.outcome} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
                   <span>
@@ -409,7 +409,7 @@ export default async function MarketPage(props: PageProps<"/markets/[id]">) {
                   >
                     <span className="text-xs text-muted">
                       {card.side && (
-                        <span className={`mr-1 font-bold ${card.side === "YES" ? "text-yes" : "text-no"}`}>{card.side} bet:</span>
+                        <span className={`mr-1 font-bold ${card.side === "YES" ? "text-yes" : "text-no"}`}>{card.side} trade:</span>
                       )}
                       {card.kind === "won" ? "Flex it." : card.kind === "lost" ? "Own it." : "Hype your call."} Download or share
                       your card.

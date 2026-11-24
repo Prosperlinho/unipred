@@ -30,7 +30,7 @@ interface Props {
   /** Kobo the user has in each pot (for cash-out). */
   myStakes: Partial<Record<Outcome, number>>;
   exitFeeBps: number;
-  /** "amm" = house liquidity: odds move with each bet and cash-out is at the live price. */
+  /** "amm" = house liquidity: odds move with each trade and cash-out is at the live price. */
   engine?: "pool" | "amm";
   poolYes?: number;
   poolNo?: number;
@@ -83,7 +83,7 @@ export function TradeBox(props: Props) {
     return cashOutValue(after, side, ammQuote.shares);
   })();
   const other: Outcome = side === "YES" ? "NO" : "YES";
-  // House liquidity is always on the other side, so a winning bet always profits.
+  // House liquidity is always on the other side, so a winning trade always profits.
   const otherPot = amm ? 1 : side === "YES" ? props.stakeNoKobo : props.stakeYesKobo;
   const yesShare = amm
     ? (props.poolNo ?? 0) / Math.max(1e-9, (props.poolYes ?? 0) + (props.poolNo ?? 0))
@@ -92,9 +92,9 @@ export function TradeBox(props: Props) {
       : 0.5;
 
   let blocker: string | null = null;
-  if (closed) blocker = "Betting closed";
+  if (closed) blocker = "Trading closed";
   else if (stakeKobo > balance) blocker = "Not enough in your wallet";
-  else if (stakeKobo > 0 && stakeKobo < minTradeKobo) blocker = `Minimum bet is ${formatNaira(minTradeKobo)}`;
+  else if (stakeKobo > 0 && stakeKobo < minTradeKobo) blocker = `Minimum trade is ${formatNaira(minTradeKobo)}`;
 
   const submit = () => {
     if (!est || blocker || pending) return;
@@ -108,7 +108,7 @@ export function TradeBox(props: Props) {
     startTransition(async () => {
       const res = await placeBet(marketId, side, stakeKobo);
       if (!res.ok) return setError(res.error);
-      toast(`Bet placed: ${formatNaira(res.value.amount_kobo)} on ${side}. Good luck!`);
+      toast(`Trade placed: ${formatNaira(res.value.amount_kobo)} on ${side}. Good luck!`);
       setAmount("");
     });
   };
@@ -117,7 +117,7 @@ export function TradeBox(props: Props) {
     return (
       <div className="space-y-3 rounded-2xl border border-line bg-card p-4 text-center">
         <p className="font-semibold text-white">Ready to make your call?</p>
-        <p className="text-sm text-muted">Create a free account, fund your wallet and bet in seconds.</p>
+        <p className="text-sm text-muted">Create a free account, fund your wallet and trade in seconds.</p>
         <div className="grid grid-cols-2 gap-2">
           <Link
             href={`/login?next=${encodeURIComponent(`/markets/${marketId}`)}`}
@@ -160,7 +160,7 @@ export function TradeBox(props: Props) {
         <div className="grid grid-cols-2 rounded-xl border border-line bg-bg p-1">
           {(
             [
-              ["bet", "Bet"],
+              ["bet", "Trade"],
               ["cashout", "Cash out"],
             ] as const
           ).map(([m, label]) => (
@@ -218,7 +218,7 @@ export function TradeBox(props: Props) {
 
       <div>
         <label htmlFor="trade-amount" className="mb-1.5 block text-xs font-semibold text-white">
-          How much do you want to bet?
+          How much do you want to trade?
         </label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted">₦</span>
@@ -301,7 +301,7 @@ export function TradeBox(props: Props) {
           </>
         ) : est ? (
           <>
-            <p className="text-xs text-muted">If {side} wins and betting closed now, you&apos;d get</p>
+            <p className="text-xs text-muted">If {side} wins and trading closed now, you&apos;d get</p>
             <p className={`text-2xl font-extrabold tabular-nums ${side === "YES" ? "text-yes" : "text-no"}`}>
               {formatNaira(est.payoutKobo)}
             </p>
@@ -334,7 +334,7 @@ export function TradeBox(props: Props) {
       <p className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
         <Info className="mt-0.5 size-3.5 shrink-0" />
         {amm
-          ? "Odds move with every bet · each winning share pays ₦100 · cash out from halfway, at the live price."
+          ? "Odds move with every trade · each winning share pays ₦100 · cash out from halfway, at the live price."
           : `Estimate only · ${feeBps / 100}% fee on winnings · ${props.exitFeeBps / 100}% fee to cash out early.`}
       </p>
 
@@ -353,14 +353,14 @@ export function TradeBox(props: Props) {
         }`}
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
-        {pending ? "Placing bet..." : (blocker ?? (stakeKobo > 0 ? `Bet ${formatNaira(stakeKobo)} on ${side}` : "Enter an amount"))}
+        {pending ? "Placing trade..." : (blocker ?? (stakeKobo > 0 ? `Trade ${formatNaira(stakeKobo)} on ${side}` : "Enter an amount"))}
       </button>
 
       {confirming && est && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 sm:items-center sm:p-4" role="alertdialog" aria-modal="true" aria-labelledby="confirm-bet-title">
           <div className="w-full animate-sheet-up rounded-t-2xl border border-line bg-bg p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-md sm:animate-pop-in sm:rounded-2xl">
             <p id="confirm-bet-title" className="flex items-center gap-2 font-bold text-white">
-              <AlertTriangle className="size-5 text-amber-300" /> Confirm your bet
+              <AlertTriangle className="size-5 text-amber-300" /> Confirm your trade
             </p>
             <p className="mt-1 text-sm text-muted">{props.question}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 text-center">
@@ -380,7 +380,7 @@ export function TradeBox(props: Props) {
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
               <li>• You lose {formatNaira(stakeKobo)} if {other} wins.</li>
               <li>
-                • {amm ? "Odds can move before your bet goes through. Cash-out opens halfway to closing, at the live price." : `Payout is an estimate. Cash-out opens halfway to closing and costs ${props.exitFeeBps / 100}%.`}
+                • {amm ? "Odds can move before your trade goes through. Cash-out opens halfway to closing, at the live price." : `Payout is an estimate. Cash-out opens halfway to closing and costs ${props.exitFeeBps / 100}%.`}
               </li>
               <li>• 18+. Only stake what you can afford to lose.</li>
             </ul>
@@ -416,7 +416,7 @@ export function TradeBox(props: Props) {
       <div className="flex justify-center">
         <ShareButton
           variant="subtle"
-          label={stakeKobo > 0 ? `Share this bet (${formatNaira(stakeKobo)} on ${side})` : `Share a ${side} bet link`}
+          label={stakeKobo > 0 ? `Share this trade (${formatNaira(stakeKobo)} on ${side})` : `Share a ${side} trade link`}
           path={`/markets/${marketId}?side=${side}${stakeKobo > 0 ? `&amount=${Math.round(stakeKobo / 100)}` : ""}`}
           text={`I'm backing ${side} on "${props.question}"${stakeKobo > 0 ? ` with ${formatNaira(stakeKobo)}` : ""}. Think I'm wrong? Take the other side on UniPred:`}
           refUsername={props.refUsername}

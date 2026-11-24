@@ -23,10 +23,10 @@ interface Row {
   won: number;
 }
 
-/** Profit label + colour: green gains, red losses, muted when the member hasn't bet in this period. */
+/** Profit label + colour: green gains, red losses, muted when the member hasn't traded in this period. */
 function profitView(r: { profit_kobo: number; markets: number }) {
   const p = Number(r.profit_kobo);
-  if (r.markets === 0) return { text: "No bets yet", cls: "text-muted font-medium text-xs" };
+  if (r.markets === 0) return { text: "No trades yet", cls: "text-muted font-medium text-xs" };
   if (p > 0) return { text: `+${formatNaira(p)}`, cls: "text-yes" };
   if (p < 0) return { text: `-${formatNaira(-p)}`, cls: "text-no" };
   return { text: formatNaira(0), cls: "text-muted" };
@@ -114,7 +114,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
             })}
           </ol>
           <p className="mt-2 text-[11px] text-muted">
-            Top 5 by profit on markets with 3+ bettors. Play at least 5 of them in the week to qualify. Paid to your wallet
+            Top 5 by profit on markets with 3+ traders. Play at least 5 of them in the week to qualify. Paid to your wallet
             after Sunday.
           </p>
         </section>

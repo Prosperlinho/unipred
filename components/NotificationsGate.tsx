@@ -136,7 +136,7 @@ export function NotificationsGate() {
           <h2 id="notify-title" className="mt-3 text-lg font-extrabold leading-tight">
             {title}
           </h2>
-          <p className="mt-1 text-sm text-[#4b5a52]">Required to use UniPred. We only send what matters to your bets.</p>
+          <p className="mt-1 text-sm text-[#4b5a52]">Required to use UniPred. We only send what matters to your trades.</p>
         </div>
 
         {/* What a notification looks like */}

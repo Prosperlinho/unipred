@@ -19,13 +19,14 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatSignedNaira } from "@/lib/format";
+import { tradeWording } from "@/lib/wording";
 import type { LedgerEntry } from "@/lib/types";
 
 const KIND: Record<string, { title: string; Icon: LucideIcon; tone: string }> = {
   deposit: { title: "Deposit", Icon: ArrowDownToLine, tone: "bg-yes/15 text-yes" },
   withdrawal: { title: "Withdrawal", Icon: ArrowUpFromLine, tone: "bg-white/10 text-white" },
   withdrawal_refund: { title: "Withdrawal returned", Icon: Undo2, tone: "bg-amber-400/15 text-amber-300" },
-  trade_buy: { title: "Bet placed", Icon: Target, tone: "bg-brand/15 text-brand" },
+  trade_buy: { title: "Trade placed", Icon: Target, tone: "bg-brand/15 text-brand" },
   trade_sell: { title: "Cashed out", Icon: HandCoins, tone: "bg-sky-400/15 text-sky-300" },
   payout: { title: "Winnings", Icon: Trophy, tone: "bg-yes/15 text-yes" },
   refund: { title: "Refund", Icon: RotateCcw, tone: "bg-amber-400/15 text-amber-300" },
@@ -38,8 +39,8 @@ const KIND: Record<string, { title: string; Icon: LucideIcon; tone: string }> = 
 };
 const FALLBACK = { title: "Transaction", Icon: Ban, tone: "bg-white/10 text-white" };
 
-type Tab = "All" | "In" | "Out" | "Bets";
-const TABS: Tab[] = ["All", "In", "Out", "Bets"];
+type Tab = "All" | "In" | "Out" | "Trades";
+const TABS: Tab[] = ["All", "In", "Out", "Trades"];
 const BET_KINDS = new Set(["trade_buy", "trade_sell", "payout", "refund"]);
 const PAGE = 8;
 
@@ -65,7 +66,7 @@ export function Activity({ ledger }: { ledger: LedgerEntry[] }) {
   const filtered = useMemo(
     () =>
       ledger.filter((l) =>
-        tab === "All" ? true : tab === "Bets" ? BET_KINDS.has(l.kind) : tab === "In" ? l.amount_kobo > 0 : l.amount_kobo < 0,
+        tab === "All" ? true : tab === "Trades" ? BET_KINDS.has(l.kind) : tab === "In" ? l.amount_kobo > 0 : l.amount_kobo < 0,
       ),
     [ledger, tab],
   );
@@ -121,7 +122,7 @@ export function Activity({ ledger }: { ledger: LedgerEntry[] }) {
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold text-white">{k.title}</span>
                         <span className="block truncate text-[11px] text-muted">
-                          {time(l.created_at)} · {l.description}
+                          {time(l.created_at)} · {tradeWording(l.description)}
                         </span>
                       </span>
                       <span className={`shrink-0 text-sm font-bold tabular-nums ${l.amount_kobo >= 0 ? "text-yes" : "text-white"}`}>

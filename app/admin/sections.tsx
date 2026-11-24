@@ -93,8 +93,8 @@ export async function StatsSection() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {[
             { label: "Members", value: stats.users_total.toLocaleString("en-NG"), sub: `+${stats.users_7d} this week` },
-            { label: "Bettors (7d)", value: stats.bettors_7d.toLocaleString("en-NG"), sub: `${stats.live_markets} live markets` },
-            { label: "Money bet (7d)", value: compactNaira(stats.volume_7d), sub: `${stats.awaiting_result} awaiting result` },
+            { label: "Traders (7d)", value: stats.bettors_7d.toLocaleString("en-NG"), sub: `${stats.live_markets} live markets` },
+            { label: "Money traded (7d)", value: compactNaira(stats.volume_7d), sub: `${stats.awaiting_result} awaiting result` },
             { label: "UniPred fees", value: compactNaira(stats.fees_total), sub: `${compactNaira(stats.fees_7d)} this week` },
             { label: "Deposits (7d)", value: compactNaira(stats.deposits_7d), sub: `${compactNaira(stats.withdrawals_7d)} withdrawn` },
             { label: "In wallets", value: compactNaira(stats.wallets_total), sub: `${compactNaira(stats.invite_bonuses_total)} invite bonuses paid` },
@@ -219,7 +219,7 @@ export async function PrizePoolSection() {
       <section className="space-y-3">
         <SectionHeading title="Weekly prize pool" />
         <p className="text-xs text-muted">
-          Top 5 by profit win 40% / 25% / 15% / 12% / 8%. Only markets with 3+ bettors count, and winners need 5+ of them in
+          Top 5 by profit win 40% / 25% / 15% / 12% / 8%. Only markets with 3+ traders count, and winners need 5+ of them in
           the week. Pay after the week ends (Sunday night, Lagos time).
         </p>
         <PrizePoolPanel weeks={weeks} />

@@ -15,7 +15,7 @@ export interface AdminRoom {
   members: number;
 }
 
-/** UniPred admins can suspend a room (no new questions or bets; hidden from the public). */
+/** UniPred admins can suspend a room (no new questions or trades; hidden from the public). */
 export function RoomsPanel({ rooms }: { rooms: AdminRoom[] }) {
   const { toast } = useUI();
   const [pending, startTransition] = useTransition();
@@ -34,7 +34,7 @@ export function RoomsPanel({ rooms }: { rooms: AdminRoom[] }) {
             type="button"
             disabled={pending}
             onClick={() =>
-              (r.suspended || confirm(`Suspend "${r.name}"? Its questions stop taking bets.`)) &&
+              (r.suspended || confirm(`Suspend "${r.name}"? Its questions stop taking trades.`)) &&
               startTransition(async () => {
                 const res = await setRoomSuspended(r.id, !r.suspended);
                 toast(res.ok ? (r.suspended ? "Room restored." : "Room suspended.") : res.error, res.ok ? "success" : "error");

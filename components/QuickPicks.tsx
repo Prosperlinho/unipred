@@ -281,7 +281,7 @@ export function QuickPicks({
               type="button"
               onClick={() => choose("NO")}
               className="flex size-16 items-center justify-center rounded-full border-2 border-no/50 bg-no/10 text-no shadow-lg transition hover:scale-105 hover:bg-no hover:text-black active:scale-95"
-              aria-label="Bet NO"
+              aria-label="Trade NO"
             >
               <X className="size-7" strokeWidth={3} />
             </button>
@@ -297,7 +297,7 @@ export function QuickPicks({
               type="button"
               onClick={() => choose("YES")}
               className="flex size-16 items-center justify-center rounded-full border-2 border-yes/50 bg-yes/10 text-yes shadow-lg transition hover:scale-105 hover:bg-yes hover:text-black active:scale-95"
-              aria-label="Bet YES"
+              aria-label="Trade YES"
             >
               <Check className="size-7" strokeWidth={3} />
             </button>
@@ -338,7 +338,7 @@ function StakeSheet({
 
   const confirm = () =>
     startTransition(async () => {
-      if (naira <= 0) return setError("Enter how much you want to bet");
+      if (naira <= 0) return setError("Enter how much you want to trade");
       setError(null);
       const res = await placeBet(market.id, side, naira * 100);
       if (!res.ok) return setError(res.error);
@@ -348,10 +348,10 @@ function StakeSheet({
     });
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`Bet ${side}`}>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`Trade ${side}`}>
       <button type="button" aria-label="Cancel" tabIndex={-1} onClick={onCancel} className="absolute inset-0 animate-fade-in bg-black/70" />
       <div className="relative w-full animate-sheet-up rounded-t-3xl border border-line bg-bg p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-sm sm:animate-pop-in sm:rounded-3xl">
-        <p className={`text-xs font-bold uppercase tracking-wide ${yes ? "text-yes" : "text-no"}`}>Bet {side}</p>
+        <p className={`text-xs font-bold uppercase tracking-wide ${yes ? "text-yes" : "text-no"}`}>Trade {side}</p>
         <p className="mt-1 line-clamp-2 font-semibold text-white">{market.question}</p>
 
         <label htmlFor="stake-amount" className="mt-4 block text-xs font-semibold text-white">
@@ -415,7 +415,7 @@ function StakeSheet({
             }`}
           >
             {pending && <Loader2 className="size-4 animate-spin" />}
-            {naira > 0 ? `Bet ₦${naira.toLocaleString("en-NG")} on ${side}` : "Enter an amount"}
+            {naira > 0 ? `Trade ₦${naira.toLocaleString("en-NG")} on ${side}` : "Enter an amount"}
           </button>
         </div>
         <p className="mt-2 text-center text-[11px] text-muted">18+ · Only stake what you can afford to lose.</p>

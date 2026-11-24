@@ -13,7 +13,7 @@ export default async function RulesPage() {
       intro={
         <p>
           These rules apply to every market on UniPred. Every member reads and accepts them before using the platform,
-          and they&apos;re shown again each time you place a bet.
+          and they&apos;re shown again each time you make a trade.
         </p>
       }
     >

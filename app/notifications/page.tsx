@@ -5,6 +5,7 @@ import { AlertsCard } from "@/components/AppAlerts";
 import { Container } from "@/components/Container";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { tradeWording } from "@/lib/wording";
 import { MarkRead } from "./MarkRead";
 
 export const metadata: Metadata = { title: "Notifications · UniPred" };
@@ -73,10 +74,10 @@ export default async function NotificationsPage() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className="truncate text-sm font-bold text-white">{n.title}</span>
+                      <span className="truncate text-sm font-bold text-white">{tradeWording(n.title)}</span>
                       {!n.read_at && <span className="size-2 shrink-0 rounded-full bg-brand" aria-label="New" />}
                     </span>
-                    <span className="line-clamp-2 text-xs text-muted">{n.body}</span>
+                    <span className="line-clamp-2 text-xs text-muted">{tradeWording(n.body)}</span>
                   </span>
                   <span className="shrink-0 text-[11px] text-muted">{ago(n.created_at)}</span>
                 </>

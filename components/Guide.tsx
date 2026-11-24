@@ -85,14 +85,14 @@ function topics(g: GuideInfo): Topic[] {
     },
     {
       id: "bet",
-      title: "How betting works",
+      title: "How trading works",
       Icon: LayoutGrid,
       tone: "text-yes",
-      keywords: "bet stake yes no pool pot odds payout fee how win chance percent",
+      keywords: "trade trading bet stake yes no pool pot odds payout fee how win chance percent",
       body: (
         <>
           <p>
-            <b>New markets:</b> odds move with every bet. Your money buys YES or NO shares at the current price, each
+            <b>New markets:</b> odds move with every trade. Your money buys YES or NO shares at the current price, each
             winning share pays ₦100, and once a market is halfway to closing you can cash out at the live price (for a profit or a loss).
           </p>
           <p className="mt-2">
@@ -101,8 +101,8 @@ function topics(g: GuideInfo): Topic[] {
             they put in.
           </p>
           <p className="mt-2">
-            UniPred keeps <b>{g.feePct}% of the winnings</b> (never your stake). The payout you see before betting is an
-            estimate that moves as others bet. The % on each market is the share of money on YES. Minimum bet is{" "}
+            UniPred keeps <b>{g.feePct}% of the winnings</b> (never your stake). The payout you see before trading is an
+            estimate that moves as others trade. The % on each market is the share of money on YES. Minimum trade is{" "}
             <b>{g.minBet}</b>.
           </p>
         </>
@@ -117,8 +117,8 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "cash out sell exit early take back money",
       body: (
         <p>
-          Changed your mind? Before betting closes, open the market, tap <b>Cash out</b> and take back part or all of your
-          bet. You get the amount minus a <b>{g.exitFeePct}% exit fee</b>. After closing time, bets stay in until the
+          Changed your mind? Before trading closes, open the market, tap <b>Cash out</b> and take back part or all of your
+          trade. You get the amount minus a <b>{g.exitFeePct}% exit fee</b>. After closing time, trades stay in until the
           result.
         </p>
       ),
@@ -131,7 +131,7 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "result resolve resolved winner paid refund cancel cancelled source when",
       body: (
         <ul className="list-disc space-y-1 pl-4">
-          <li>Betting stops at the closing time shown on the market.</li>
+          <li>Trading stops at the closing time shown on the market.</li>
           <li>A UniPred admin confirms the result using the official source named on the market, then winners are paid straight to their wallet.</li>
           <li>If nobody backed the losing side, winners just get their stake back. If nobody backed the winning side, everyone is refunded.</li>
           <li>Unclear or unfair markets, or ones with no confirmed result within 7 days, are cancelled and fully refunded.</li>
@@ -162,7 +162,7 @@ function topics(g: GuideInfo): Topic[] {
       body: (
         <p>
           Wallet → Send to a member. Type their username and the amount. You can send once your account is a few days old
-          and you&apos;ve placed a few bets, and both of you need a verified bank account in your own name. The exact rules
+          and you&apos;ve placed a few trades, and both of you need a verified bank account in your own name. The exact rules
           and daily limits show in the Wallet. Transfers are instant and final, so check the username.
         </p>
       ),
@@ -176,8 +176,8 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "invite referral refer bonus earn link friends",
       body: (
         <p>
-          Share your invite link from your Profile. Once a friend who joined through it is <b>active</b> (at least 5 bets a
-          day for 3 days in a row), you earn <b>{g.referralPct}% of UniPred&apos;s fee</b> on their bets whenever a market
+          Share your invite link from your Profile. Once a friend who joined through it is <b>active</b> (at least 5 trades a
+          day for 3 days in a row), you earn <b>{g.referralPct}% of UniPred&apos;s fee</b> on their trades whenever a market
           resolves. Your Profile shows each friend&apos;s progress.
         </p>
       ),
@@ -194,7 +194,7 @@ function topics(g: GuideInfo): Topic[] {
           Proposing is by invitation: UniPred approves who can create markets. If you have access, tap <b>+</b> (Propose)
           at the top. Ask a YES/NO question, say exactly what must happen for YES, name the official
           source that will confirm it, and choose a closing time. Clear proposals go live straight away. Markets about
-          private individuals, or things a bettor can secretly control, aren&apos;t allowed.
+          private individuals, or things a trader can secretly control, aren&apos;t allowed.
         </p>
       ),
       link: { href: "/propose", label: "Propose a market" },
@@ -223,7 +223,7 @@ function topics(g: GuideInfo): Topic[] {
       body: (
         <p>
           See the top predictors this week, last week and of all time, ranked by profit on resolved markets. When there&apos;s
-          a weekly prize pool, the top 5 share it (40/25/15/12/8%): play at least 5 markets with 3+ bettors that week to
+          a weekly prize pool, the top 5 share it (40/25/15/12/8%): play at least 5 markets with 3+ traders that week to
           qualify. Prizes land in your wallet after Sunday.
         </p>
       ),
@@ -237,8 +237,8 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "card share download image win flex portfolio",
       body: (
         <p>
-          On any market you bet on, scroll to <b>Your bets</b> and tap the card button to download or share an image of your
-          bet. Bet on both sides? You get a separate card for each side. Shared links carry your invite code.
+          On any market you traded on, scroll to <b>Your trades</b> and tap the card button to download or share an image of your
+          trade. Traded on both sides? You get a separate card for each side. Shared links carry your invite code.
         </p>
       ),
       link: { href: "/portfolio", label: "Open your portfolio" },

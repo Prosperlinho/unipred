@@ -10,7 +10,7 @@ import type { ActionResult } from "@/lib/types";
 
 const PLATFORMS = ["x", "instagram", "tiktok", "whatsapp", "telegram", "youtube", "facebook", "other"] as const;
 
-/** Claims today's betting-streak reward into the wallet. */
+/** Claims today's trading-streak reward into the wallet. */
 export async function claimStreak(): Promise<ActionResult<string>> {
   const viewer = await getViewer();
   if (!viewer) return { ok: false, error: "Please log in." };

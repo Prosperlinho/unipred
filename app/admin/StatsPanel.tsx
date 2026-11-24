@@ -13,8 +13,8 @@ export interface DailyStat {
 
 type Metric = "volume" | "bettors" | "signups" | "deposits";
 const METRICS: Array<{ id: Metric; label: string; money: boolean }> = [
-  { id: "volume", label: "Money bet", money: true },
-  { id: "bettors", label: "Bettors", money: false },
+  { id: "volume", label: "Money traded", money: true },
+  { id: "bettors", label: "Traders", money: false },
   { id: "signups", label: "Sign-ups", money: false },
   { id: "deposits", label: "Deposits", money: true },
 ];
@@ -122,14 +122,14 @@ export function DailyChart({ daily }: { daily: DailyStat[] }) {
   );
 }
 
-/** Top categories by money bet (30 days) as thin horizontal bars. */
+/** Top categories by money traded (30 days) as thin horizontal bars. */
 export function TopCategories({ rows }: { rows: Array<{ category: string; markets: number; volume: number }> }) {
   const max = Math.max(1, ...rows.map((r) => Number(r.volume)));
   return (
     <section className="rounded-2xl border border-line bg-card p-4">
       <h3 className="mb-3 text-sm font-bold text-white">Top categories · 30 days</h3>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted">No bets yet.</p>
+        <p className="text-sm text-muted">No trades yet.</p>
       ) : (
         <ul className="space-y-2.5">
           {rows.map((r) => (

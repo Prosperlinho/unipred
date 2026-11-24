@@ -245,7 +245,7 @@ export function DropQuestion({ roomId }: { roomId: string }) {
             <option key={c}>{c}</option>
           ))}
         </select>
-        <select value={mins} onChange={(e) => setMins(Number(e.target.value))} className={inputCls} aria-label="Betting closes in">
+        <select value={mins} onChange={(e) => setMins(Number(e.target.value))} className={inputCls} aria-label="Trading closes in">
           {CLOSE_OPTIONS.map((o) => (
             <option key={o.mins} value={o.mins}>
               Closes in {o.label}

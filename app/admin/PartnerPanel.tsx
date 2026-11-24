@@ -33,9 +33,9 @@ export function PartnerPanel({ partners, standardPct }: { partners: Partner[]; s
   return (
     <div className="space-y-3 rounded-2xl border border-line bg-card p-4">
       <p className="text-sm text-muted">
-        Everyone else earns the standard {standardPct}% of UniPred&apos;s fee on their invited friends&apos; bets. Partners earn
+        Everyone else earns the standard {standardPct}% of UniPred&apos;s fee on their invited friends&apos; trades. Partners earn
         the rate you set here, up to 100% of the fee. Like everyone, they only earn from friends who have done{" "}
-        <b className="text-white">5 bets a day for 3 days in a row</b>.
+        <b className="text-white">5 trades a day for 3 days in a row</b>.
       </p>
       <div className="flex flex-wrap gap-2">
         <input

@@ -15,9 +15,9 @@ interface BetResult {
 
 /** Puts `amountKobo` from the wallet into the market's YES or NO pot. */
 export async function placeBet(marketId: string, outcome: Outcome, amountKobo: number): Promise<ActionResult<BetResult>> {
-  if (!(await getViewer())) return { ok: false, error: "Please log in to bet." };
+  if (!(await getViewer())) return { ok: false, error: "Please log in to trade." };
   if ((outcome !== "YES" && outcome !== "NO") || !Number.isInteger(amountKobo) || amountKobo <= 0) {
-    return { ok: false, error: "Invalid bet." };
+    return { ok: false, error: "Invalid trade." };
   }
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("place_bet", {
@@ -39,7 +39,7 @@ interface CashOutResult {
   balance_kobo: number;
 }
 
-/** Takes `percent` of the bet back out of the pot before closing, minus the exit fee. */
+/** Takes `percent` of the trade back out of the pot before closing, minus the exit fee. */
 export async function cashOutBet(marketId: string, outcome: Outcome, percent: number): Promise<ActionResult<CashOutResult>> {
   if (!(await getViewer())) return { ok: false, error: "Please log in." };
   if ((outcome !== "YES" && outcome !== "NO") || !Number.isInteger(percent) || percent < 1 || percent > 100) {

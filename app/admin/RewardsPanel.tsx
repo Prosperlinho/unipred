@@ -36,12 +36,12 @@ function StreakEditor({ rewardsKobo, claimsToday, paidWeekKobo }: { rewardsKobo:
   return (
     <div className="space-y-3 rounded-2xl border border-line bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-semibold text-white">Daily betting streak</p>
+        <p className="font-semibold text-white">Daily trading streak</p>
         <p className="text-xs text-muted">
           {claimsToday} claimed today · {formatNaira(paidWeekKobo)} paid in the last 7 days
         </p>
       </div>
-      <p className="text-xs text-muted">Members claim once a day after placing a bet. Reward for each day of the 7-day ladder (₦):</p>
+      <p className="text-xs text-muted">Members claim once a day after making a trade. Reward for each day of the 7-day ladder (₦):</p>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
         {vals.map((v, i) => (
           <label key={i} className="text-center">

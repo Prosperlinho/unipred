@@ -15,7 +15,7 @@ interface Props {
 
 function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
   const p = marketProbYes(market);
-  // Estimated payout of a ₦1,000 bet on each side if betting closed now.
+  // Estimated payout of a ₦1,000 trade on each side if trading closed now.
   const yesPays = estimateBet(market, "YES", 100_000, feeBps)?.payoutKobo ?? 0;
   const noPays = estimateBet(market, "NO", 100_000, feeBps)?.payoutKobo ?? 0;
   const pot = Number(market.stake_yes_kobo) + Number(market.stake_no_kobo);
@@ -115,14 +115,14 @@ function MarketCardBase({ market, now, schoolLabel, feeBps }: Props) {
             href={`${href}?side=YES`}
             className="flex flex-col items-center rounded-xl bg-yes/12 py-2 text-center text-yes ring-1 ring-inset ring-yes/20 transition hover:bg-yes hover:text-black"
           >
-            <span className="text-sm font-extrabold">Bet YES · {formatPct(p)}</span>
+            <span className="text-sm font-extrabold">Trade YES · {formatPct(p)}</span>
             <span className="text-[11px] tabular-nums opacity-80">{hint(yesPays, Number(market.stake_no_kobo))}</span>
           </Link>
           <Link
             href={`${href}?side=NO`}
             className="flex flex-col items-center rounded-xl bg-no/12 py-2 text-center text-no ring-1 ring-inset ring-no/20 transition hover:bg-no hover:text-black"
           >
-            <span className="text-sm font-extrabold">Bet NO · {formatPct(1 - p)}</span>
+            <span className="text-sm font-extrabold">Trade NO · {formatPct(1 - p)}</span>
             <span className="text-[11px] tabular-nums opacity-80">{hint(noPays, Number(market.stake_yes_kobo))}</span>
           </Link>
         </div>

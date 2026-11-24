@@ -19,7 +19,7 @@ export function LiquidityPanel({ currentKobo, openMarkets, openLiquidityKobo }: 
   return (
     <div className="space-y-3 rounded-2xl border border-line bg-card p-4">
       <p className="text-sm text-muted">
-        Each new market starts with this much house money split 50/50. More liquidity = odds move less per bet. The house can lose up to
+        Each new market starts with this much house money split 50/50. More liquidity = odds move less per trade. The house can lose up to
         about this amount on a market.
       </p>
       <div className="flex items-center gap-2">

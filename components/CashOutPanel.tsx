@@ -23,7 +23,7 @@ interface Props {
 
 const PCTS = [25, 50, 75, 100] as const;
 
-/** Early exit: take part or all of a bet back out of the pot, minus the exit fee. */
+/** Early exit: take part or all of a trade back out of the pot, minus the exit fee. */
 export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, amm, opensAt }: Props) {
   const { toast } = useUI();
   const held = (["YES", "NO"] as const).filter((o) => (stakes[o] ?? 0) > 0);
@@ -43,7 +43,7 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
   const fee = amm ? 0 : Math.floor((amount * exitFeeBps) / 10_000);
   const back = amm ? liveBack : amount - fee;
   const feePct = exitFeeBps / 100;
-  // House-liquidity markets: compare today's value with what that part of the bet cost.
+  // House-liquidity markets: compare today's value with what that part of the trade cost.
   const pnl = back - amount;
 
   const confirm = () => {
@@ -66,14 +66,14 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
           <b className="text-white">
             {new Date(opensAt).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" })}
           </b>
-          , halfway to closing. Until then your bet stays in.
+          , halfway to closing. Until then your trade stays in.
         </p>
       </div>
     );
   }
 
   if (held.length === 0) {
-    return <p className="rounded-xl bg-bg p-3 text-sm text-muted">You don&apos;t have a bet on this market to cash out.</p>;
+    return <p className="rounded-xl bg-bg p-3 text-sm text-muted">You don&apos;t have a trade on this market to cash out.</p>;
   }
 
   return (
@@ -90,7 +90,7 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
                 side === o ? (o === "YES" ? "bg-yes text-black" : "bg-no text-black") : "border border-line text-muted hover:text-white"
               }`}
             >
-              My {o} bet · {formatNaira(stakes[o] ?? 0)}
+              My {o} trade · {formatNaira(stakes[o] ?? 0)}
             </button>
           ))}
         </div>
@@ -154,7 +154,7 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-base font-bold text-black transition hover:brightness-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-muted"
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
-        {pending ? "Cashing out..." : closed ? "Betting closed" : `Cash out ${formatNaira(back)}`}
+        {pending ? "Cashing out..." : closed ? "Trading closed" : `Cash out ${formatNaira(back)}`}
       </button>
       <p className="text-center text-[11px] text-muted">
         {amm
@@ -182,7 +182,7 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
               </div>
             </div>
             <ul className="mt-3 space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs leading-relaxed text-amber-100">
-              <li>• This can&apos;t be undone. To get back in, you&apos;d place a new bet at the new odds.</li>
+              <li>• This can&apos;t be undone. To get back in, you&apos;d place a new trade at the new odds.</li>
               <li>• {amm ? "The amount is set by the odds when it goes through; it can move a little." : `UniPred keeps a ${feePct}% exit fee on the amount you take out.`}</li>
               {pct < 100 && <li>• {formatNaira(stake - amount)} stays on {side} and is settled with the market.</li>}
             </ul>
@@ -192,7 +192,7 @@ export function CashOutPanel({ marketId, question, stakes, exitFeeBps, closed, a
                 onClick={() => setConfirming(false)}
                 className="rounded-xl border border-line py-3 text-sm font-semibold text-white hover:bg-card-2"
               >
-                Keep my bet
+                Keep my trade
               </button>
               <button
                 type="button"

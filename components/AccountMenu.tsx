@@ -64,7 +64,7 @@ export function AccountMenu({ username, balanceKobo, unread, isAdmin }: Props) {
       title: "Money",
       items: [
         { href: "/wallet", label: "Wallet", icon: Wallet, hint: "Deposit, withdraw, send" },
-        { href: "/portfolio", label: "Portfolio", icon: Briefcase, hint: "Open bets and results" },
+        { href: "/portfolio", label: "Portfolio", icon: Briefcase, hint: "Open trades and results" },
       ],
     },
     {

@@ -8,7 +8,7 @@ import { getRequestTime } from "@/lib/time";
 import { requireViewer } from "@/lib/auth";
 import { marketProbYes, payoutIfWins, positionValue, settledResult } from "@/lib/pool";
 import { getSchools, getSettings } from "@/lib/data";
-import { compactNaira, formatNaira, formatPct, timeLeft, formatSignedNaira } from "@/lib/format";
+import { compactNaira, formatNaira, formatPct, timeLeft } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
@@ -84,17 +84,17 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
       <div className="space-y-6">
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Summary label="Wallet" value={formatNaira(viewer.balanceKobo)} />
-          <Summary label="In open bets" value={formatNaira(stakedOpen)} />
+          <Summary label="In open trades" value={formatNaira(stakedOpen)} />
           <Summary label="Could win (est.)" value={formatNaira(couldWin)} tone={couldWin > 0 ? "yes" : undefined} />
-          <Summary label="Wallet + bets" value={formatNaira(viewer.balanceKobo + stakedOpen)} />
+          <Summary label="Wallet + trades" value={formatNaira(viewer.balanceKobo + stakedOpen)} />
         </section>
 
         <section className="space-y-3">
-          <Title count={active.length}>Open bets</Title>
+          <Title count={active.length}>Open trades</Title>
           {active.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-10 text-center">
               <Briefcase className="size-8 text-muted" />
-              <p className="font-medium text-white">No open bets</p>
+              <p className="font-medium text-white">No open trades</p>
               <p className="text-sm text-muted">Pick a side on a market at your school to get started.</p>
               <Link href="/" className="mt-2 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black hover:brightness-110">
                 Browse markets
@@ -123,7 +123,7 @@ export default async function PortfolioPage(props: PageProps<"/portfolio">) {
                     </div>
                     <p className="mt-2 text-sm font-semibold leading-snug text-white">{r.market.question}</p>
                     <p className="mt-2 text-xs text-muted">
-                      You bet <span className="font-semibold text-white">{formatNaira(r.cost_kobo)}</span> on{" "}
+                      You traded <span className="font-semibold text-white">{formatNaira(r.cost_kobo)}</span> on{" "}
                       <span className={`font-bold ${r.outcome === "YES" ? "text-yes" : "text-no"}`}>{r.outcome}</span>
                     </p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-center [&_p]:truncate">

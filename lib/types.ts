@@ -38,7 +38,7 @@ export interface Pools {
 
 export interface Market extends Pools {
   id: string;
-  /** "pool" = pool betting (current); "amm" = old fixed-odds markets that finished before the switch. */
+  /** "pool" = pool trading (current); "amm" = old fixed-odds markets that finished before the switch. */
   engine: "pool" | "amm";
   stake_yes_kobo: number;
   stake_no_kobo: number;
@@ -147,11 +147,11 @@ export interface PlatformSettings {
   min_trade_kobo: number;
   min_deposit_kobo: number;
   min_withdrawal_kobo: number;
-  /** Share of UniPred's fee paid to the inviter of each bettor (2000 = 20%). */
+  /** Share of UniPred's fee paid to the inviter of each trader (2000 = 20%). */
   referral_share_bps: number;
   /** Bump to make everyone accept updated house rules again. */
   terms_version: number;
-  /** Fee for cashing a bet out early (1500 = 15% of the amount taken out). */
+  /** Fee for cashing a trade out early (1500 = 15% of the amount taken out). */
   exit_fee_bps: number;
   /** Welcome bonus credited to new sign-ups (test mode). */
   signup_bonus_kobo: number;

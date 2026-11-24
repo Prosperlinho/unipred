@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { tradeWording } from "@/lib/wording";
 import type { BannerPlacement, PlatformSettings, School, SponsorBanner } from "@/lib/types";
 
 const DEFAULT_SETTINGS: PlatformSettings = {
@@ -52,7 +53,7 @@ export function friendlyError(message: string | undefined): string {
   if (/email rate limit|over_email_send_rate_limit|rate limit exceeded/i.test(message)) {
     return "We're getting a lot of sign-ups right now, so our confirmation emails are paused for a few minutes. Please try again shortly.";
   }
-  return message;
+  return tradeWording(message);
 }
 
 /** Every live sponsor banner for a spot on the site (newest first, up to 10); they take turns in a carousel. */

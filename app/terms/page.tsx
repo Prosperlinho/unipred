@@ -32,8 +32,8 @@ export default async function TermsPage() {
       <Clause n={1} title="What UniPred is">
         <p>
           UniPred is a prediction platform where members back YES or NO on the outcome of events, mostly about university
-          life in Nigeria. Bets are settled through pool betting: stakes go into a pot for each side and winners share the
-          losing side&apos;s pot, as described in the House Rules. UniPred is not a party to any bet and does not bet
+          life in Nigeria. Trades are settled through pool trading: stakes go into a pot for each side and winners share the
+          losing side&apos;s pot, as described in the House Rules. UniPred is not a party to any trade and does not trade
           against members.
         </p>
         <p>
@@ -74,11 +74,11 @@ export default async function TermsPage() {
             Withdrawals are reviewed before they are sent. We may ask for identity documents (for example a valid ID, BVN
             or NIN details) before paying out, and may delay a withdrawal while a check is completed.
           </li>
-          <li>Minimum amounts for bets, deposits and withdrawals are shown in the app and may change.</li>
+          <li>Minimum amounts for trades, deposits and withdrawals are shown in the app and may change.</li>
           <li>Your wallet balance is not a bank deposit and earns no interest.</li>
           <li>
             You may send money from your wallet to another member by username, within the daily limits shown in the app.
-            You must have placed at least 3 bets, both accounts must be at least 3 days old with a verified bank account
+            You must have placed at least 3 trades, both accounts must be at least 3 days old with a verified bank account
             in the owner&apos;s own name, and transfers are final. Transfers can&apos;t be used to pay for goods or
             services, to launder money, or to get around a suspension; transfers we find were used that way may be
             reversed and the accounts suspended.
@@ -86,13 +86,13 @@ export default async function TermsPage() {
         </ul>
       </Clause>
 
-      <Clause n={5} title="Bets, results and fees">
+      <Clause n={5} title="Trades, results and fees">
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Once confirmed, a bet can&apos;t be changed. Before betting closes you may cash out part or all of it and receive
-            the amount taken out minus a {exitFee}% exit fee; after closing, bets can&apos;t be cashed out.
+            Once confirmed, a trade can&apos;t be changed. Before trading closes you may cash out part or all of it and receive
+            the amount taken out minus a {exitFee}% exit fee; after closing, trades can&apos;t be cashed out.
           </li>
-          <li>Payout figures shown before you bet are estimates; the final amount depends on all bets placed before closing.</li>
+          <li>Payout figures shown before you trade are estimates; the final amount depends on all trades placed before closing.</li>
           <li>
             Results are decided by UniPred admins using the official source named on each market. Our decision is final,
             except where we made a clear error, which we will correct.
@@ -112,8 +112,8 @@ export default async function TermsPage() {
 
       <Clause n={7} title="Invite programme">
         <p>
-          Members may share an invite link. Once someone who joined through your link is active (at least 5 bets a day
-          on 3 days in a row, Lagos time), you earn {ref}% of UniPred&apos;s fee on the share of the pot their bets made
+          Members may share an invite link. Once someone who joined through your link is active (at least 5 trades a day
+          on 3 days in a row, Lagos time), you earn {ref}% of UniPred&apos;s fee on the share of the pot their trades made
           up, for every market that resolves after they became active. Markets that resolved before your friend became
           active earn no bonus, and it isn&apos;t paid later. UniPred may agree a different rate with partners. Invite bonuses
           come only out of UniPred&apos;s fee. Inviting yourself or fake accounts is fraud: bonuses earned that way are
@@ -124,7 +124,7 @@ export default async function TermsPage() {
       <Clause n={8} title="Things you must not do">
         <ul className="list-disc space-y-1 pl-5">
           <li>Create or control more than one account, or use another person&apos;s identity, bank account or card.</li>
-          <li>Bet on markets whose outcome you can influence or already know from inside information.</li>
+          <li>Trade on markets whose outcome you can influence or already know from inside information.</li>
           <li>Work with others to manipulate outcomes or the platform.</li>
           <li>Use bots, scripts or exploits, or try to access accounts or data that aren&apos;t yours.</li>
           <li>Post abusive, hateful, defamatory or illegal content in comments or market proposals.</li>
@@ -136,11 +136,11 @@ export default async function TermsPage() {
         <p>
           We may suspend or close an account that breaks these Terms or the House Rules, including trying to withdraw to
           a bank account in another name or linking one bank account to several UniPred accounts. While an account is
-          suspended, betting, proposals and withdrawals are disabled.
+          suspended, trading, proposals and withdrawals are disabled.
         </p>
         <p>
           Where we find fraud, multiple accounts or other serious abuse, we may withhold the balance of the accounts
-          involved while we investigate, void bets and bonuses obtained through the abuse, and report the matter to the
+          involved while we investigate, void trades and bonuses obtained through the abuse, and report the matter to the
           relevant authorities, to the extent allowed by Nigerian law. Balances that are not connected to the abuse will
           be returned to a verified bank account in your name when the review ends.
         </p>
@@ -149,7 +149,7 @@ export default async function TermsPage() {
       <Clause n={10} title="Play responsibly">
         <p>
           Only stake money you can afford to lose. Never borrow, or use school fees or money meant for essentials, to
-          bet. If betting stops being fun, take a break and talk to someone you trust. You can ask us at{" "}
+          trade. If trading stops being fun, take a break and talk to someone you trust. You can ask us at{" "}
           <SupportContact /> to close your account.
         </p>
       </Clause>

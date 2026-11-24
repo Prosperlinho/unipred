@@ -26,7 +26,7 @@ export default function PrivacyPage() {
             deposit and withdrawal records. Card details are entered on Paystack&apos;s page and never reach UniPred.
           </li>
           <li>
-            <b>Activity:</b> your bets, markets you propose, comments, invite link use, and your wallet transaction history.
+            <b>Activity:</b> your trades, markets you propose, comments, invite link use, and your wallet transaction history.
           </li>
           <li>
             <b>Technical data:</b> login session cookies, a referral cookie when you arrive through an invite link, and
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
 
       <Clause n={2} title="Why we use it">
         <ul className="list-disc space-y-1 pl-5">
-          <li>To create and run your account, wallet and bets (performing our contract with you).</li>
+          <li>To create and run your account, wallet and trades (performing our contract with you).</li>
           <li>
             To confirm you are 18 or older, keep to one account per person, match withdrawals to your own bank account and
             prevent fraud and money laundering (legal obligation and legitimate interest).
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           Other members see your username, your university and any comments you post. If you rank on the leaderboard, they
           also see your profit and how many markets you won in that period; you can turn this off in Settings. When you send money to a
           member, they see your username, the amount and your note. Your full name, email, date of
-          birth, balance, bets and bank details are never shown to other members. Result cards you choose to download or
+          birth, balance, trades and bank details are never shown to other members. Result cards you choose to download or
           share show your username, stake and result.
         </p>
       </Clause>

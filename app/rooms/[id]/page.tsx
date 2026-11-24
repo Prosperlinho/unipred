@@ -89,7 +89,7 @@ export default async function RoomPage(props: PageProps<"/rooms/[id]">) {
 
       {room.suspended && (
         <p className="mt-3 flex items-start gap-2 rounded-2xl bg-no/10 p-3 text-sm text-no">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0" /> This room has been suspended by UniPred. Betting is closed.
+          <ShieldAlert className="mt-0.5 size-4 shrink-0" /> This room has been suspended by UniPred. Trading is closed.
         </p>
       )}
       <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-3 text-xs text-amber-100">

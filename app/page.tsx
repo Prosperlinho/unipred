@@ -52,7 +52,7 @@ export default async function HomePage() {
             Swipe. Call it. <em className="italic text-brand">Get paid.</em>
           </h1>
           <p className="mt-3 hidden max-w-md text-lg text-white/75 lg:block">
-            Right for YES, left for NO. The campus is betting, are you in?
+            Right for YES, left for NO. The campus is trading, are you in?
           </p>
 
           {poolKobo > 0 && (

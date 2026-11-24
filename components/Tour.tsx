@@ -24,7 +24,7 @@ const STEPS: Step[] = [
   { target: "deck", title: "Swipe to call it", text: "Swipe right for YES, left for NO, up to skip. Pick an amount and you're in." },
   { target: "markets", title: "All markets", text: "Browse every live market, filtered to what you're into." },
   { target: "wallet", title: "Your wallet", text: "Deposit, withdraw to your own bank, or send money to a friend." },
-  { target: "portfolio", title: "Your bets", text: "Track open bets and results, and download your win cards." },
+  { target: "portfolio", title: "Your trades", text: "Track open trades and results, and download your win cards." },
   { target: "leaderboard", title: "Leaderboard", text: "See the top predictors this week and of all time." },
   { target: "propose", title: "Propose a market", text: "Turn campus gist into a new market." },
   { target: "profile", title: "Your account", text: "Tap here for your wallet, portfolio, daily streak and tasks, settings and invite link." },

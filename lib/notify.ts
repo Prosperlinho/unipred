@@ -1,5 +1,6 @@
 import "server-only";
 import webpush from "web-push";
+import { tradeWording } from "@/lib/wording";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Notification emails are switched off: members get in-app and phone notifications only. */
@@ -50,8 +51,8 @@ function emailHtml(n: Pending): string {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table width="100%" style="max-width:480px;background:#0e2219;border-radius:16px;padding:28px">
 <tr><td style="font-size:20px;font-weight:800;color:#c6f432">UniPred</td></tr>
-<tr><td style="padding-top:18px;font-size:22px;font-weight:800;color:#ffffff">${esc(n.title)}</td></tr>
-<tr><td style="padding-top:8px;font-size:15px;line-height:1.5;color:#cfd8d2">${esc(n.body)}</td></tr>
+<tr><td style="padding-top:18px;font-size:22px;font-weight:800;color:#ffffff">${esc(tradeWording(n.title))}</td></tr>
+<tr><td style="padding-top:8px;font-size:15px;line-height:1.5;color:#cfd8d2">${esc(tradeWording(n.body))}</td></tr>
 <tr><td style="padding-top:22px"><a href="${link}" style="display:inline-block;background:#c6f432;color:#08170f;font-weight:800;text-decoration:none;padding:12px 22px;border-radius:12px">Open UniPred</a></td></tr>
 <tr><td style="padding-top:22px;font-size:11px;color:#8ba596">You can turn these emails off in Settings. 18+ only.</td></tr>
 </table></td></tr></table></body></html>`;
@@ -108,7 +109,7 @@ async function dispatchBatch(): Promise<{ pushed: number; emailed: number; proce
   let pushed = 0;
 
   for (const n of pending) {
-    const payload = JSON.stringify({ title: n.title, body: n.body, url: n.url ?? "/", tag: `n${n.id}` });
+    const payload = JSON.stringify({ title: tradeWording(n.title), body: tradeWording(n.body), url: n.url ?? "/", tag: `n${n.id}` });
     for (const s of byUser.get(n.user_id) ?? []) {
       if (dead.has(s.id)) continue;
       try {

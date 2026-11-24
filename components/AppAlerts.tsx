@@ -142,7 +142,7 @@ export function AlertsCard() {
   return (
     <section className="rounded-3xl border border-brand/30 bg-linear-to-br from-brand/10 to-card p-4">
       <p className="font-bold text-white">Never miss a result</p>
-      <p className="mt-0.5 text-xs text-muted">Get a ping when you win, when a market you bet on is closing, and when new ones drop.</p>
+      <p className="mt-0.5 text-xs text-muted">Get a ping when you win, when a market you traded on is closing, and when new ones drop.</p>
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {supported && pushOn !== null && (
           <button

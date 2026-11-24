@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Market, Position } from "@/lib/types";
 
 /**
- * Personal "I won / I lost / I'm backing" card for the signed-in user's bet on a market.
+ * Personal "I won / I lost / I'm backing" card for the signed-in user's trade on a market.
  * Only the owner can generate it: positions are read through RLS with their own session.
  */
 
@@ -27,7 +27,7 @@ const fontsPromise = Promise.all(
 
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[marketId]">) {
   const { marketId } = await ctx.params;
-  // ?side=YES or ?side=NO makes a card for just that side when the user bet on both.
+  // ?side=YES or ?side=NO makes a card for just that side when the user traded on both.
   const sideParam = req.nextUrl.searchParams.get("side");
   const onlySide = sideParam === "YES" || sideParam === "NO" ? sideParam : null;
   if (!UUID_RE.test(marketId)) return new Response("Not found", { status: 404 });
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
     (p) => Number(p.cost_kobo) > 0 && (!onlySide || p.outcome === onlySide),
   );
   if (!market || positions.length === 0 || (market.status !== "open" && market.status !== "resolved")) {
-    return new Response("No bet to show for this market", { status: 404 });
+    return new Response("No trade to show for this market", { status: 404 });
   }
   const settings = await getSettings();
   const { data: school } = await supabase
@@ -54,17 +54,17 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
     .maybeSingle<{ short_name: string }>();
 
   const summary = summarizeBets(market, positions, settings.pool_fee_bps);
-  if (!summary) return new Response("No bet to show for this market", { status: 404 });
+  if (!summary) return new Response("No trade to show for this market", { status: 404 });
   if (summary.kind === "refunded") {
     return new Response(
-      `This ${onlySide ? `${onlySide} bet` : "bet"} was refunded in full, so there's no win or loss card for it.`,
+      `This ${onlySide ? `${onlySide} trade` : "trade"} was refunded in full, so there's no win or loss card for it.`,
       { status: 404 },
     );
   }
   const hedged = summary.perSide.length > 1;
   const sideBreakdown = summary.perSide.map((p) => `${formatNaira(p.stakeKobo)} on ${p.outcome}`).join(" + ");
 
-  // Candles from the real betting history: YES share of the pot after every bet.
+  // Candles from the real trading history: YES share of the pot after every trade.
   const yesShare = marketProbYes(market);
   const opened = new Date(market.approved_at ?? market.created_at).getTime();
   const lastT = market.resolved_at ? new Date(market.resolved_at).getTime() : Date.now();
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
       kind: "backing",
       headline: `I'm backing ${summary.main}`,
       amount: `~${formatNaira(summary.returnedKobo)}`,
-      detail: hedged ? `Hedged: ${sideBreakdown}` : `What I'd get if ${summary.main} wins and betting closed now`,
+      detail: hedged ? `Hedged: ${sideBreakdown}` : `What I'd get if ${summary.main} wins and trading closed now`,
       status: "Still live",
     };
   } else if (summary.kind === "won") {
@@ -104,7 +104,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/card/[market
         summary.netKobo === 0
           ? "Called it right · stake back (nobody took the other side)"
           : onlySide
-            ? `${formatSignedNaira(summary.netKobo)} profit on my ${onlySide} bet`
+            ? `${formatSignedNaira(summary.netKobo)} profit on my ${onlySide} trade`
             : `${formatSignedNaira(summary.netKobo)} profit · called it right`,
       status: `Result: ${market.resolution}`,
     };

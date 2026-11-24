@@ -2,12 +2,12 @@ import { SHARE_VALUE_KOBO, probYes as ammProbYes, quoteBuy, quoteSell } from "./
 import type { Market, Outcome } from "./types";
 
 /**
- * Pool (parimutuel) betting. Mirrors place_bet / resolve_market in
+ * Pool (parimutuel) trading. Mirrors place_bet / resolve_market in
  * supabase/migrations/0005_pool_betting.sql so the UI shows exactly what gets paid.
  *
  *   winner's payout = stake + stake / (winning pot) * (losing pot) * (1 - fee)
  *
- * UniPred never adds money: if nobody bet on the losing side, winners get their
+ * UniPred never adds money: if nobody traded on the losing side, winners get their
  * stake back; if nobody backed the winning side, everyone is refunded.
  * Markets that finished before the switch used the old fixed-odds engine ("amm").
  */
@@ -44,7 +44,7 @@ export interface BetEstimate {
 export const AMM_TRADE_FEE_BPS = 200;
 
 /**
- * What a new bet would pay: pot markets assume betting closed right after it;
+ * What a new trade would pay: pot markets assume trading closed right after it;
  * house-liquidity markets ("amm") quote the shares bought at the live price (₦100 per winning share).
  */
 export function estimateBet(
@@ -71,7 +71,7 @@ export function estimateBet(
   };
 }
 
-/** What an existing bet pays if its side wins (current pots for open markets, final pots once resolved). */
+/** What an existing trade pays if its side wins (current pots for open markets, final pots once resolved). */
 export function payoutIfWins(
   m: PoolFields,
   pos: { outcome: Outcome; shares: number; cost_kobo: number },
@@ -84,7 +84,7 @@ export function payoutIfWins(
 
 export type Settled = { kind: "won"; amountKobo: number } | { kind: "lost"; amountKobo: number } | { kind: "refunded"; amountKobo: number };
 
-/** Outcome of a bet on a resolved or cancelled market. */
+/** Outcome of a trade on a resolved or cancelled market. */
 export function settledResult(
   m: PoolFields & Pick<Market, "status" | "resolution">,
   pos: { outcome: Outcome; shares: number; cost_kobo: number },
@@ -113,7 +113,7 @@ export interface BetSummary {
   perSide: Array<{ outcome: Outcome; stakeKobo: number }>;
 }
 
-/** One verdict for everything a user staked on a market (handles bets on both sides). */
+/** One verdict for everything a user staked on a market (handles trades on both sides). */
 export function summarizeBets(
   m: PoolFields & Pick<Market, "status" | "resolution">,
   positions: Array<{ outcome: Outcome; shares: number; cost_kobo: number }>,
@@ -148,7 +148,7 @@ export function cashOutValue(m: Pick<Market, "pool_yes" | "pool_no">, outcome: O
   return q ? q.netKobo : 0;
 }
 
-/** Whether a market always has a counterparty (house liquidity), so a bet can profit even if nobody took the other side. */
+/** Whether a market always has a counterparty (house liquidity), so a trade can profit even if nobody took the other side. */
 export function hasHouseLiquidity(m: Partial<Pick<Market, "engine">>): boolean {
   return m.engine === "amm";
 }

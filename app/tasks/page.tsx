@@ -17,7 +17,7 @@ export default async function TasksPage() {
       <div className="mx-auto max-w-2xl space-y-6">
         <header>
           <h1 className="text-2xl font-extrabold tracking-tight text-white">Tasks &amp; Streak</h1>
-          <p className="mt-1 text-sm text-muted">Bet every day to grow your streak, and complete tasks to earn naira straight into your wallet.</p>
+          <p className="mt-1 text-sm text-muted">Trade every day to grow your streak, and complete tasks to earn naira straight into your wallet.</p>
         </header>
         {status ? (
           <>

@@ -7,8 +7,8 @@ export interface Candle {
 }
 
 /**
- * Candles spaced by betting activity rather than time: each candle covers an equal
- * share of the bets, so bursts of betting stay readable and quiet stretches don't
+ * Candles spaced by trading activity rather than time: each candle covers an equal
+ * share of the trades, so bursts of trading stay readable and quiet stretches don't
  * flatten the chart. Each candle opens at the previous close.
  */
 export function buildTradeCandles(points: Array<{ t: number; p: number }>, maxCount = 28): Candle[] {
@@ -37,7 +37,7 @@ export function buildTradeCandles(points: Array<{ t: number; p: number }>, maxCo
 }
 
 /**
- * Turns a market's price history (YES share after each bet) into evenly spaced candles.
+ * Turns a market's price history (YES share after each trade) into evenly spaced candles.
  * Each period opens at the previous close, so the chart reads as one continuous line.
  */
 export function buildCandles(points: Array<{ t: number; p: number }>, count = 28): Candle[] {

@@ -12,7 +12,7 @@ interface Props {
   /** Caption used when sharing, e.g. "I just won ₦3,073 on UniPred". */
   caption: string;
   refUsername: string;
-  /** Card for just this side, when the user bet on both YES and NO. */
+  /** Card for just this side, when the user traded on both YES and NO. */
   side?: "YES" | "NO";
 }
 
@@ -99,7 +99,7 @@ export function ResultCardShare({ marketId, kind, caption, refUsername, side }: 
     };
   };
 
-  const label = kind === "won" ? "Share my win" : kind === "lost" ? "Share my L" : "Share my bet card";
+  const label = kind === "won" ? "Share my win" : kind === "lost" ? "Share my L" : "Share my trade card";
 
   return (
     <>

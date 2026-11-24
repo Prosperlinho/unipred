@@ -75,7 +75,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         {profile?.is_banned && (
           <div className="flex items-start justify-center gap-2 bg-no/15 px-4 py-2 text-center text-xs font-medium text-no">
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />
-            Your account is suspended pending review. Betting, proposals and withdrawals are disabled. Contact UniPred support.
+            Your account is suspended pending review. Trading, proposals and withdrawals are disabled. Contact UniPred support.
           </div>
         )}
         <main className="w-full flex-1">

@@ -71,7 +71,7 @@ export default async function ProfilePage() {
       </section>
 
       <section className="mt-6 grid grid-cols-3 gap-3">
-        <Stat label="Bets" value={String(trades.count ?? 0)} />
+        <Stat label="Trades" value={String(trades.count ?? 0)} />
         <Stat label="Markets" value={String(proposals.count ?? 0)} />
         <Stat label="Invited" value={String(joined)} />
       </section>
@@ -85,8 +85,8 @@ export default async function ProfilePage() {
           )}
         </div>
         <p className="text-sm text-muted">
-          Earn <span className="font-semibold text-white">{ratePct}% of our fee</span> on friends&apos; bets once they&apos;re
-          active ({stats?.min_daily_bets ?? 5} bets a day, {stats?.streak_days ?? 3} days in a row).
+          Earn <span className="font-semibold text-white">{ratePct}% of our fee</span> on friends&apos; trades once they&apos;re
+          active ({stats?.min_daily_bets ?? 5} trades a day, {stats?.streak_days ?? 3} days in a row).
         </p>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-bg p-2.5">

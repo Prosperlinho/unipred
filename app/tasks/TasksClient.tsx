@@ -29,7 +29,7 @@ export interface RewardStatus {
   tasks: RewardTask[];
 }
 
-/** Daily betting streak: a 7-day ladder, claimable once a day after placing a bet. */
+/** Daily trading streak: a 7-day ladder, claimable once a day after making a trade. */
 export function StreakCard({ status }: { status: RewardStatus }) {
   const { toast } = useUI();
   const router = useRouter();
@@ -54,7 +54,7 @@ export function StreakCard({ status }: { status: RewardStatus }) {
             <Flame className="size-6" />
           </span>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Betting streak</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Trading streak</p>
             <p className="text-2xl font-extrabold tabular-nums text-white">
               {status.current_streak} day{status.current_streak === 1 ? "" : "s"}
             </p>
@@ -93,7 +93,7 @@ export function StreakCard({ status }: { status: RewardStatus }) {
       <div className="p-4 sm:p-5">
         {status.claimed_today ? (
           <p className="flex items-center justify-center gap-2 rounded-2xl bg-bg py-3 text-sm font-semibold text-white">
-            <Check className="size-4 text-yes" /> Claimed today. Bet again tomorrow to keep it going.
+            <Check className="size-4 text-yes" /> Claimed today. Trade again tomorrow to keep it going.
           </p>
         ) : status.bet_today ? (
           <button
@@ -107,10 +107,10 @@ export function StreakCard({ status }: { status: RewardStatus }) {
         ) : (
           <div className="space-y-2">
             <p className="flex items-center justify-center gap-2 rounded-2xl bg-bg py-3 text-sm text-muted">
-              <Lock className="size-4" /> Place a bet today to unlock today&apos;s claim
+              <Lock className="size-4" /> Make a trade today to unlock today&apos;s claim
             </p>
             <Link href="/" className="block rounded-2xl bg-brand py-3 text-center font-extrabold text-black transition hover:brightness-110">
-              Place a bet
+              Make a trade
             </Link>
           </div>
         )}

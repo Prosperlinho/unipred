@@ -10,7 +10,7 @@ export interface ReferralStats {
   friends: Array<{ username: string; qualified: boolean; best_streak: number; bets_today: number }>;
 }
 
-/** Each invited friend's progress toward becoming active (N bets a day, K days in a row). */
+/** Each invited friend's progress toward becoming active (N trades a day, K days in a row). */
 export function InviteProgress({ stats }: { stats: ReferralStats }) {
   if (stats.friends.length === 0) return null;
   return (
@@ -29,7 +29,7 @@ export function InviteProgress({ stats }: { stats: ReferralStats }) {
                 {f.best_streak}/{stats.streak_days} days
               </span>
               <span className="block">
-                {Math.min(f.bets_today, stats.min_daily_bets)}/{stats.min_daily_bets} bets today
+                {Math.min(f.bets_today, stats.min_daily_bets)}/{stats.min_daily_bets} trades today
               </span>
             </span>
           )}
