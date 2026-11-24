@@ -166,3 +166,44 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* UniPred loader: the U fills stroke by stroke (lime, then cream), glows, repeats. */
+@keyframes unipred-fill-left {
+  0% { transform: scaleY(0); opacity: 1; }
+  35%, 82% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 0; }
+}
+@keyframes unipred-fill-right {
+  0%, 25% { transform: scaleY(0); opacity: 1; }
+  60%, 82% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 0; }
+}
+@keyframes unipred-glow {
+  0%, 55% { filter: drop-shadow(0 0 0 rgb(198 244 50 / 0)); }
+  72% { filter: drop-shadow(0 0 12px rgb(198 244 50 / 0.7)); }
+  100% { filter: drop-shadow(0 0 0 rgb(198 244 50 / 0)); }
+}
+.unipred-loader-left,
+.unipred-loader-right {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: unipred-fill-left 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+.unipred-loader-right {
+  animation-name: unipred-fill-right;
+}
+.unipred-loader-glow {
+  animation: unipred-glow 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .unipred-loader-left,
+  .unipred-loader-right {
+    animation-duration: 2.8s;
+  }
+}
+
+/* Our own pull-to-refresh replaces the browser's. */
+html,
+body {
+  overscroll-behavior-y: contain;
+}
