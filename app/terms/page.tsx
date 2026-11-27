@@ -77,7 +77,7 @@ export default async function TermsPage() {
           <li>Minimum amounts for trades, deposits and withdrawals are shown in the app and may change.</li>
           <li>Your wallet balance is not a bank deposit and earns no interest.</li>
           <li>
-            You may send money from your wallet to another member by username, within the daily limits shown in the app.
+            You may send money from your wallet to another member by username, up to your wallet balance.
             You must have placed at least 3 trades, both accounts must be at least 3 days old with a verified bank account
             in the owner&apos;s own name, and transfers are final. Transfers can&apos;t be used to pay for goods or
             services, to launder money, or to get around a suspension; transfers we find were used that way may be

@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { lookupMember, sendMoney, type P2PStatus } from "@/app/actions/wallet";
 import { FormMessage, inputCls } from "@/components/forms";
 import { useUI } from "@/context/UIContext";
+import { tradeWording } from "@/lib/wording";
 import { formatNaira } from "@/lib/format";
 
 /** Send money to another member by username. */
@@ -48,13 +49,13 @@ export function SendMoneyForm({ status }: { status: P2PStatus | null }) {
     return (
       <div className="flex gap-2 rounded-xl bg-bg p-3 text-sm text-muted">
         <Info className="mt-0.5 size-4 shrink-0" />
-        <p>{status.reason}</p>
+        <p>{tradeWording(status.reason)}</p>
       </div>
     );
   }
 
   const blocker =
-    !found ? "Enter a username" : kobo < min ? `Minimum ${formatNaira(min)}` : kobo > sendable ? `Up to ${formatNaira(sendable)} today` : null;
+    !found ? "Enter a username" : kobo < min ? `Minimum ${formatNaira(min)}` : kobo > sendable ? `Up to ${formatNaira(sendable)} (your balance)` : null;
 
   const send = () => {
     setConfirming(false);
@@ -71,7 +72,7 @@ export function SendMoneyForm({ status }: { status: P2PStatus | null }) {
   return (
     <div className="space-y-3">
       <p className="rounded-xl bg-bg px-3 py-2 text-xs text-muted">
-        You can send <span className="font-bold text-white">{formatNaira(sendable)}</span> today.
+        You can send any amount up to your balance: <span className="font-bold text-white">{formatNaira(sendable)}</span>.
       </p>
 
       <div>

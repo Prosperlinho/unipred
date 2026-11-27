@@ -165,8 +165,8 @@ function topics(g: GuideInfo): Topic[] {
       body: (
         <p>
           Wallet → Send to a member. Type their username and the amount. You can send once your account is a few days old
-          and you&apos;ve placed a few trades, and both of you need a verified bank account in your own name. The exact rules
-          and daily limits show in the Wallet. Transfers are instant and final, so check the username.
+          and you&apos;ve placed a few trades, and both of you need a verified bank account in your own name. You can send
+          any amount up to your wallet balance. Transfers are instant and final, so check the username.
         </p>
       ),
       link: { href: "/wallet", label: "Send money" },
