@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { friendlyError } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
@@ -52,5 +52,6 @@ export async function cashOutBet(marketId: string, outcome: Outcome, percent: nu
   revalidatePath("/");
   revalidatePath("/portfolio");
   revalidatePath("/wallet");
+  updateTag("leaderboard"); // cash-outs count on this week’s leaderboard straight away
   return { ok: true, value: data as CashOutResult };
 }

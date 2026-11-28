@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { dispatchNotifications } from "@/lib/notify";
 import { getViewer } from "@/lib/auth";
@@ -18,6 +18,7 @@ async function assertAdmin(): Promise<string | null> {
 
 function refreshAll() {
   revalidatePath("/", "layout");
+  updateTag("leaderboard"); // results count on the leaderboard straight away
 }
 
 export async function approveMarket(id: string): Promise<ActionResult> {

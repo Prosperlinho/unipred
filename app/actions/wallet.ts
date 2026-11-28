@@ -6,13 +6,15 @@ import { after } from "next/server";
 import { dispatchNotifications } from "@/lib/notify";
 import { getViewer } from "@/lib/auth";
 import { friendlyError, getSettings } from "@/lib/data";
+import { isTestMode } from "@/lib/env";
 import { getOrigin } from "@/lib/origin";
 import { PaystackError, paystack } from "@/lib/paystack";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
-const MAX_DEPOSIT_KOBO = 50_000_000; // ₦500,000 per deposit
+const MAX_DEPOSIT_KOBO = 50_000_000; // ₦500,000 per test deposit
+const DAILY_TEST_DEPOSITS = 2;
 
 /** Creates a pending deposit and returns the Paystack checkout URL. */
 export async function startDeposit(amountKobo: number): Promise<ActionResult<string>> {
@@ -22,11 +24,29 @@ export async function startDeposit(amountKobo: number): Promise<ActionResult<str
   if (!Number.isInteger(amountKobo) || amountKobo < settings.min_deposit_kobo) {
     return { ok: false, error: `Minimum deposit is ₦${(settings.min_deposit_kobo / 100).toLocaleString()}.` };
   }
-  if (amountKobo > MAX_DEPOSIT_KOBO) return { ok: false, error: "Maximum deposit is ₦500,000 at a time." };
+  // Test funds: members get 2 test deposits a day (Lagos time), up to ₦500,000 each. Admins have no limit.
+  const limited = isTestMode && !viewer.profile.is_admin;
+  if (limited && amountKobo > MAX_DEPOSIT_KOBO) return { ok: false, error: "Maximum test deposit is ₦500,000 at a time." };
 
   const reference = `dep_${randomUUID().replace(/-/g, "")}`;
   try {
     const admin = createAdminClient();
+    if (limited) {
+      const lagosMidnight = new Date(`${new Date(Date.now() + 3_600_000).toISOString().slice(0, 10)}T00:00:00+01:00`).toISOString();
+      const inFlight = new Date(Date.now() - 30 * 60_000).toISOString();
+      const [{ count: paid }, { count: open }] = await Promise.all([
+        admin.from("deposits").select("reference", { count: "exact", head: true }).eq("user_id", viewer.id).eq("status", "success").gte("paid_at", lagosMidnight),
+        admin.from("deposits").select("reference", { count: "exact", head: true }).eq("user_id", viewer.id).eq("status", "pending").gte("created_at", inFlight),
+      ]);
+      if ((paid ?? 0) + (open ?? 0) >= DAILY_TEST_DEPOSITS) {
+        return {
+          ok: false,
+          error: (paid ?? 0) >= DAILY_TEST_DEPOSITS
+            ? `You've used your ${DAILY_TEST_DEPOSITS} test deposits for today. You can get more test funds tomorrow.`
+            : "Finish the test payment you already started (or wait 30 minutes) before starting another.",
+        };
+      }
+    }
     const { error } = await admin
       .from("deposits")
       .insert({ reference, user_id: viewer.id, amount_kobo: amountKobo });

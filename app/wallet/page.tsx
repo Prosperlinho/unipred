@@ -102,6 +102,12 @@ export default async function WalletPage(props: PageProps<"/wallet">) {
                     Test card <span className="font-mono">4084 0840 8408 4081</span>, any future expiry, CVV{" "}
                     <span className="font-mono">408</span>, PIN <span className="font-mono">0000</span>, OTP{" "}
                     <span className="font-mono">123456</span>.
+                    {!viewer.profile.is_admin && (
+                      <>
+                        {" "}
+                        <b>Test funds:</b> up to 2 test deposits a day, ₦500,000 each.
+                      </>
+                    )}
                   </p>
                 </div>
               ) : null
