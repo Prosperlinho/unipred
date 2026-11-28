@@ -225,9 +225,9 @@ function topics(g: GuideInfo): Topic[] {
       keywords: "leaderboard rank top ranking best",
       body: (
         <p>
-          See the top predictors this week, last week and of all time, ranked by profit on resolved markets. When there&apos;s
-          a weekly prize pool, the top 5 share it (40/25/15/12/8%): play at least 5 markets with 3+ traders that week to
-          qualify. Prizes land in your wallet after Sunday.
+          See the top predictors this week, last week and of all time, ranked by profit from results and cash-outs that week. When there&apos;s
+          a weekly prize pool, the top 5 on that week’s leaderboard share it (40/25/15/12/8%), as long as they’re in profit.
+          Prizes land in your wallet after Sunday.
         </p>
       ),
       link: { href: "/leaderboard", label: "See the leaderboard" },

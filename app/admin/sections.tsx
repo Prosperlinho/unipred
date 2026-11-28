@@ -219,8 +219,8 @@ export async function PrizePoolSection() {
       <section className="space-y-3">
         <SectionHeading title="Weekly prize pool" />
         <p className="text-xs text-muted">
-          Top 5 by profit win 40% / 25% / 15% / 12% / 8%. Only markets with 3+ traders count, and winners need 5+ of them in
-          the week. Pay after the week ends (Sunday night, Lagos time).
+          The top 5 on the week’s leaderboard (in profit) win 40% / 25% / 15% / 12% / 8%. Pay after the week ends (Sunday
+          night, Lagos time).
         </p>
         <PrizePoolPanel weeks={weeks} />
       </section>

@@ -114,8 +114,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
             })}
           </ol>
           <p className="mt-2 text-[11px] text-muted">
-            Top 5 by profit on markets with 3+ traders. Play at least 5 of them in the week to qualify. Paid to your wallet
-            after Sunday.
+            The top 5 on this week’s leaderboard win, as long as they’re in profit. Paid to your wallet after Sunday.
           </p>
         </section>
       )}
